@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Generated PDF quotes
+*.pdf
+rozrahunok.pdf
+
+# Local secrets — do NOT commit a real bot token.
+# token.txt ships as a placeholder; if you put a real token in it, keep it local.
