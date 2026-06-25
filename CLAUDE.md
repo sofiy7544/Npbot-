@@ -22,6 +22,9 @@ stanley_bot.py     Main entry point: Telegram handlers, message parsing,
                    scraping, and the price calculation.
 quote_pdf.py       PDF renderer (fpdf2). build_pdf(data, out_path) draws the
                    quote card. Runnable standalone to preview a sample PDF.
+selftest.py        Offline smoke test. Stubs telebot + a fake token, mocks the
+                   Shopify request, and runs parse_message → scrape → calculate
+                   → build_pdf end-to-end. No token, no network needed.
 requirements.txt   Python deps: pyTelegramBotAPI, requests, beautifulsoup4, fpdf2
 token.txt          Telegram bot token, one line. Ships as a PLACEHOLDER
                    (comment lines only) — must be filled in to run.
@@ -30,8 +33,9 @@ start.sh           Linux/macOS launcher (creates .venv, installs deps, runs).
 README.txt         End-user setup guide (non-technical, Russian).
 ```
 
-There is no test suite, no package manifest, and no CI. It's a single-purpose
-script meant to be run on an operator's machine.
+There is no package manifest and no CI. The only test is `selftest.py`, an
+offline smoke test (see below). It's a single-purpose script meant to be run on
+an operator's machine.
 
 ## How it works (key modules)
 
@@ -69,6 +73,20 @@ script meant to be run on an operator's machine.
   qty, unit_price, goods, kg_each, total_kg, shipping, total, ship_rate). If you
   change one, change both.
 
+### `selftest.py`
+- The fast feedback loop for changes to `stanley_bot.py` / `quote_pdf.py`. Run it
+  with `python selftest.py` — exits `0` on success, `1` with a list of failed
+  checks otherwise, and writes `selftest_quote.pdf` so you can eyeball the card.
+- Works around the import-time side effects: it injects a stub `telebot` module
+  and a fake `token.txt` (via a patched `open`) *before* importing `stanley_bot`,
+  then monkeypatches `sb.requests.get` to return a canned Shopify product JSON.
+  No bot token and no network access are required.
+- Covers `parse_message` (incl. `,` decimal separator + the "no URL" path),
+  `scrape` against the mock, the full `calculate` money math, the
+  `WEIGHT_UNKNOWN` path, and that `build_pdf` produces a non-trivial file.
+- If you change `calculate()`'s math or the `data` dict contract, update the
+  expected numbers and assertions here too.
+
 ## Running locally
 
 **Windows (intended audience):** put the token in `token.txt`, double-click
@@ -87,12 +105,16 @@ To run the bot you need a token from `@BotFather` written into `token.txt`.
 
 **Quick checks without a token / without Telegram:**
 ```bash
+# Run the full offline smoke test (parse → scrape → calculate → build_pdf).
+# Stubs telebot + token + the Shopify request; writes selftest_quote.pdf:
+python selftest.py
+
 # Preview the PDF with sample data (no token, no network):
 python quote_pdf.py
-
-# Exercise parse/scrape/calculate by stubbing telebot before import — useful
-# because importing stanley_bot otherwise calls read_token() at module load.
 ```
+`selftest.py` is the model for any new import-time-safe test: importing
+`stanley_bot` calls `read_token()` and builds the `TeleBot` at module load, so a
+token (or a stub) must exist before the import.
 
 Bot usage (in Telegram): send `link`, `link 50`, or `link 50 0.84`
 (qty + manual kg/unit when the site doesn't expose weight).
@@ -103,7 +125,7 @@ Bot usage (in Telegram): send `link`, `link 50`, or `link 50 0.84`
   values; it ships only as a placeholder. Don't print token contents in logs or
   chat.
 - **Don't commit** `.venv/`, `__pycache__/`, or generated `*.pdf` (see
-  `.gitignore`).
+  `.gitignore`) — this includes `rozrahunok.pdf` and `selftest_quote.pdf`.
 - **Import side effects:** `stanley_bot` builds the `TeleBot` at import time, so
   any tooling/tests that import it must provide a token or stub `telebot`.
 - **Scraping is fragile by nature:** it depends on Shopify's `/products/*.json`
@@ -116,6 +138,6 @@ Bot usage (in Telegram): send `link`, `link 50`, or `link 50 0.84`
 
 ## Git workflow
 
-Active development branch for assistant work: `claude/claude-md-docs-tkeav6`.
+Active development branch for assistant work: `claude/claude-md-docs-uc9ur7`.
 Commit with clear messages; push with `git push -u origin <branch>`. Do not open
 pull requests unless explicitly asked.
