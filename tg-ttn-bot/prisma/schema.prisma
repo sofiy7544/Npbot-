@@ -1,0 +1,459 @@
+// Prisma schema — production database for tg-ttn-bot.
+//
+// Migrations: `npx prisma migrate dev --name <description>`
+// Generate client: `npx prisma generate`
+//
+// Conventions:
+//   - All timestamps UTC (Prisma default)
+//   - All money in UAH stored as Int (kopecks would be Decimal, but UAH whole units are fine here)
+//   - Soft-deletes via `deletedAt nullable` — never DELETE rows that have audit/history value
+//   - Indexes on every FK + every WHERE/ORDER BY column we'll actually query
+//   - JSON columns ONLY for opaque blobs (raw NP responses, original message text)
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  OWNER       // Full access incl. admin
+  MANAGER     // Can create/edit shipments, view all
+  OPERATOR    // Can only create shipments in own chats
+  VIEWER      // Read-only
+}
+
+enum DraftStatus {
+  PENDING       // Waiting for confirmation from user
+  CONFIRMED     // User clicked ✅ — queued for TTN creation
+  CANCELLED     // User clicked ❌ or TTL expired
+  TTN_CREATED   // Successfully created TTN (moved to Shipment)
+  TTN_FAILED    // NP API rejected — see Shipment.errorReason
+}
+
+enum ShipmentStatus {
+  CREATED         // TTN issued by NP, awaiting pickup
+  IN_TRANSIT      // Picked up, en route
+  ARRIVED         // At destination warehouse
+  RECEIVED        // Customer picked up
+  RETURNED        // Returned to sender
+  REFUSED         // Customer refused / not picked up
+  CANCELLED       // Manually cancelled
+  UNKNOWN         // NP returned unknown status
+}
+
+enum WarehouseType {
+  BRANCH
+  POSTOMAT
+  COURIER
+}
+
+enum SyncStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+  PARTIAL
+}
+
+enum PaymentMethod {
+  CASH
+  NON_CASH
+}
+
+enum PayerType {
+  SENDER
+  RECIPIENT
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  DEAD     // moved to DLQ after max retries
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// CORE TABLES
+// ─────────────────────────────────────────────────────────────────────
+
+/// Bot users (Telegram users authorised to interact). Created on first /start.
+model User {
+  id              BigInt   @id @default(autoincrement())
+  telegramId      BigInt   @unique
+  username        String?
+  firstName       String?
+  lastName        String?
+  languageCode    String?
+  role            UserRole @default(OPERATOR)
+  isActive        Boolean  @default(true)
+  isBlocked       Boolean  @default(false)  // anti-spam blacklist
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastSeenAt      DateTime?
+
+  drafts          ShipmentDraft[]
+  shipments       Shipment[]
+  messages        IncomingMessage[]
+  auditEvents     AuditLog[]
+
+  @@index([role, isActive])
+  @@index([isBlocked])
+  @@index([lastSeenAt])
+}
+
+/// Allowed chats (DM, group, supergroup, topic). NULL chatId = global default.
+model AllowedChat {
+  id           BigInt   @id @default(autoincrement())
+  chatId       BigInt   @unique
+  chatType     String   // private | group | supergroup | channel
+  title        String?
+  topicId      Int?     // for supergroup topics
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([chatType, isActive])
+}
+
+/// Recipient customers (de-duplicated by phone). Used for repeat-customer analytics.
+model Customer {
+  id           BigInt   @id @default(autoincrement())
+  phone        String   @unique          // normalized E.164: +380XXXXXXXXX
+  fullName     String?
+  cityName     String?
+  notes        String?
+  totalOrders  Int      @default(0)
+  totalSpent   Int      @default(0)      // UAH cumulative
+  firstSeenAt  DateTime @default(now())
+  lastOrderAt  DateTime?
+
+  shipments    Shipment[]
+
+  @@index([phone])
+  @@index([cityName])
+  @@index([lastOrderAt])
+}
+
+/// Draft shipment — parsed from a Telegram message, awaiting confirmation.
+/// TTL ~10 min; if not confirmed → CANCELLED automatically by sweeper.
+model ShipmentDraft {
+  id                  BigInt        @id @default(autoincrement())
+  userId              BigInt
+  user                User          @relation(fields: [userId], references: [id])
+
+  // Telegram source
+  sourceChatId        BigInt
+  sourceMessageId     BigInt
+  sourceText          String        @db.Text    // raw user message
+  replyMessageId      BigInt?                     // bot's preview message id (for edits)
+
+  // Parsed fields
+  recipientName       String?
+  recipientPhone      String?
+  cityName            String?
+  warehouseType       WarehouseType @default(BRANCH)
+  warehouseNumber     String?
+  courierAddress      String?
+  cost                Int?
+  weightKg            Decimal?      @db.Decimal(6, 3)
+  description         String?
+  paymentMethod       PaymentMethod @default(CASH)
+  payerType           PayerType     @default(RECIPIENT)
+
+  // Parser metadata
+  parseConfidence     Float?        // 0..1 aggregate confidence
+  fieldStatus         Json          // { name: "ok"|"missing"|"guessed", ... }
+  warnings            String[]
+
+  status              DraftStatus   @default(PENDING)
+  errorReason         String?
+
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  expiresAt           DateTime
+  confirmedAt         DateTime?
+
+  shipment            Shipment?
+
+  @@unique([sourceChatId, sourceMessageId])      // idempotency on resend
+  @@index([userId, status])
+  @@index([status, expiresAt])
+}
+
+/// Confirmed shipment — has a real (or mock) TTN.
+model Shipment {
+  id                  BigInt           @id @default(autoincrement())
+  draftId             BigInt?          @unique
+  draft               ShipmentDraft?   @relation(fields: [draftId], references: [id])
+  userId              BigInt
+  user                User             @relation(fields: [userId], references: [id])
+  customerId          BigInt?
+  customer            Customer?        @relation(fields: [customerId], references: [id])
+
+  // Idempotency key (sourceChatId:sourceMessageId hash) — protects against double-creation
+  idempotencyKey      String           @unique
+
+  // NP TTN fields
+  ttn                 String           @unique
+  ttnRef              String?          // NP internal Ref UUID
+  estimatedDelivery   DateTime?
+  costOnSite          Int?             // delivery price returned by NP (UAH)
+  pdfMarkingUrl       String?          // 100x100 thermal label PDF
+
+  // Cached recipient info (denormalized for fast list views)
+  recipientName       String
+  recipientPhone      String
+  cityName            String
+  cityRef             String
+  warehouseType       WarehouseType
+  warehouseNumber     String?
+  warehouseRef        String?
+  courierAddress      String?
+
+  cost                Int
+  weightKg            Decimal          @db.Decimal(6, 3)
+  description         String
+  paymentMethod       PaymentMethod
+  payerType           PayerType
+
+  status              ShipmentStatus   @default(CREATED)
+  statusUpdatedAt     DateTime         @default(now())
+  rawNpResponse       Json             // full NP createInternetDocument response
+
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  deletedAt           DateTime?
+
+  events              ShipmentEvent[]
+  jobs                Job[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([customerId])
+  @@index([status, statusUpdatedAt])
+  @@index([ttn])
+  @@index([cityName])
+}
+
+/// Append-only event log for a shipment — used for audit, status history, debugging
+model ShipmentEvent {
+  id          BigInt   @id @default(autoincrement())
+  shipmentId  BigInt
+  shipment    Shipment @relation(fields: [shipmentId], references: [id])
+  type        String   // status_changed | tracking_update | manual_note | callback
+  payload     Json
+  createdAt   DateTime @default(now())
+
+  @@index([shipmentId, createdAt])
+  @@index([type])
+}
+
+/// All inbound Telegram messages (for analytics, debugging, replay).
+/// Keep ~30 days, then sweeper deletes.
+model IncomingMessage {
+  id            BigInt   @id @default(autoincrement())
+  userId        BigInt?
+  user          User?    @relation(fields: [userId], references: [id])
+  chatId        BigInt
+  chatType      String
+  messageId     BigInt
+  topicId       Int?
+  text          String   @db.Text
+  hasMedia      Boolean  @default(false)
+  isOrder       Boolean  @default(false)   // did parser identify as order?
+  rawUpdate     Json
+  receivedAt    DateTime @default(now())
+
+  @@unique([chatId, messageId])
+  @@index([userId, receivedAt])
+  @@index([receivedAt])
+}
+
+/// Nova Poshta reference cache — cities and warehouses are stable, cache 7d.
+model NpCacheEntry {
+  id          BigInt   @id @default(autoincrement())
+  cacheKey    String   @unique           // sha1 of (method + args)
+  method      String                     // findCity | findWarehouse | listWarehouses
+  args        Json
+  result      Json
+  hitCount    Int      @default(0)
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  @@index([method, expiresAt])
+  @@index([expiresAt])
+}
+
+/// Background job queue persisted state (BullMQ uses Redis as source of truth;
+/// this table is our durable audit log for jobs).
+model Job {
+  id              BigInt    @id @default(autoincrement())
+  bullJobId       String    @unique
+  queue           String                            // createTtn | refreshStatus | sweepDrafts
+  shipmentId      BigInt?
+  shipment        Shipment? @relation(fields: [shipmentId], references: [id])
+  payload         Json
+  status          JobStatus @default(PENDING)
+  attempts        Int       @default(0)
+  maxAttempts     Int       @default(3)
+  lastError       String?
+  scheduledAt     DateTime  @default(now())
+  startedAt       DateTime?
+  completedAt     DateTime?
+
+  @@index([queue, status])
+  @@index([status, scheduledAt])
+  @@index([shipmentId])
+}
+
+/// Failed external API requests — kept for postmortem.
+model FailedRequest {
+  id            BigInt   @id @default(autoincrement())
+  service       String                                // nova_poshta | telegram
+  endpoint      String
+  request       Json
+  response      Json?
+  errorMessage  String
+  statusCode    Int?
+  context       Json     @default("{}")               // user_id, shipment_id, request_id
+  occurredAt    DateTime @default(now())
+
+  @@index([service, occurredAt(sort: Desc)])
+}
+
+/// All admin/audit actions (who did what, when, on which entity).
+model AuditLog {
+  id          BigInt   @id @default(autoincrement())
+  actorId     BigInt?
+  actor       User?    @relation(fields: [actorId], references: [id])
+  action      String   // shipment.create | shipment.cancel | user.role_change | ...
+  entityType  String   // Shipment | User | AllowedChat | ...
+  entityId    BigInt?
+  before      Json?
+  after       Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([actorId, createdAt(sort: Desc)])
+  @@index([entityType, entityId])
+  @@index([action])
+}
+
+/// Per-user rate limiting state (persisted; Redis is hot path, this is fallback).
+model RateLimitBucket {
+  key         String   @id              // composite "user:<id>" or "chat:<id>"
+  count       Int      @default(0)
+  windowStart DateTime @default(now())
+
+  @@index([windowStart])
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// NOVA POSHTA WAREHOUSE / POSTOMAT MIRROR
+// ─────────────────────────────────────────────────────────────────────
+
+/// All NP warehouses (branches + postomats) across Ukraine.
+/// Synced weekly from NP API (`Address.getWarehouses`).
+/// Soft-delete only: `isActive=false` keeps history for old shipments.
+///
+/// Primary key = NP's own `Ref` UUID (immutable).
+/// Indexes: city+type for autocomplete, number+city for "find by number".
+model NpWarehouse {
+  ref               String        @id                            // NP UUID — primary key
+  number            String                                       // "5", "23034", "58687" — display number
+  type              WarehouseType
+  cityRef           String                                       // NP city UUID (FK to NpCity)
+  cityName          String                                       // denormalized for fast queries
+  cityNameRu        String?
+  area              String?                                      // "Київська область"
+
+  // Address
+  description       String                                       // "Відділення №5 (до 30 кг): вул. Шевченка, 10"
+  descriptionRu     String?
+  shortAddress      String?
+  shortAddressRu    String?
+
+  // Geo
+  latitude          Decimal?      @db.Decimal(10, 7)
+  longitude         Decimal?      @db.Decimal(10, 7)
+
+  // Capabilities
+  maxWeightKg       Float?
+  receivesCash      Boolean       @default(true)
+  schedule          Json          @default("{}")                 // working hours
+
+  // Sync metadata
+  isActive          Boolean       @default(true)
+  dataVersion       Int           @default(1)                    // incremented on each change
+  rawData           Json                                          // full original NP record (for forensics)
+  firstSeenAt       DateTime      @default(now())
+  lastSyncedAt      DateTime      @default(now())
+  deactivatedAt     DateTime?
+
+  @@index([cityRef, type, isActive])
+  @@index([cityName, number, type])
+  @@index([number, isActive])
+  @@index([lastSyncedAt])
+}
+
+/// City directory (separate table — saves storage vs denormalized in every warehouse).
+/// Synced from `Address.getCities`. ~28k cities/villages in Ukraine.
+model NpCity {
+  ref            String   @id                    // NP UUID
+  name           String                          // "Київ"
+  nameRu         String?
+  area           String                          // "Київська область"
+  areaRef        String?
+  region         String?                         // район
+  settlementType String?                         // "місто" / "село" / "смт"
+
+  warehouseCount Int      @default(0)            // denormalized counter (updated by sync)
+
+  isActive       Boolean  @default(true)
+  dataVersion    Int      @default(1)
+  firstSeenAt    DateTime @default(now())
+  lastSyncedAt   DateTime @default(now())
+
+  @@index([name])
+  @@index([area])
+  @@index([isActive, name])
+}
+
+/// Audit log for every sync run — observability + debugging + alerting.
+model NpSyncRun {
+  id              BigInt     @id @default(autoincrement())
+  startedAt       DateTime   @default(now())
+  finishedAt      DateTime?
+  status          SyncStatus @default(RUNNING)
+  trigger         String                                  // "scheduled" | "manual" | "retry"
+
+  citiesFetched   Int        @default(0)
+  warehousesFetched Int      @default(0)
+
+  // Diff counts
+  inserted        Int        @default(0)
+  updated         Int        @default(0)
+  deactivated     Int        @default(0)
+  reactivated     Int        @default(0)
+  unchanged       Int        @default(0)
+
+  errorMessage    String?
+  errorContext    Json?
+
+  // For incremental resume on crash
+  lastProcessedCityRef String?
+  apiCallsMade    Int        @default(0)
+  durationMs      Int?
+
+  @@index([status, startedAt(sort: Desc)])
+  @@index([startedAt(sort: Desc)])
+}

@@ -1,0 +1,1280 @@
+/* =====================================================================
+   STANLEY BRAND UA — FULL MOBILE CRO PATCH v2
+   Виправляє всі 35 проблем з аудиту.
+   Підключається ПІСЛЯ основного <style>.
+   ===================================================================== */
+
+/* ========== 1. TAP-TARGETS ≥ 44px (Apple HIG) ========== */
+@media (max-width: 900px) {
+  .icon-btn { width: 44px !important; height: 44px !important; }
+  .icon-btn .pill {
+    top: 4px !important; right: 4px !important;
+    min-width: 18px; height: 18px; font-weight: 700;
+    box-shadow: 0 0 0 2px rgba(245,240,232,0.92);
+  }
+  .pdp__qty button {
+    width: 44px !important; height: 44px !important;
+    font-size: 20px;
+  }
+  .pdp__qty { padding: 4px; }
+  .pdp__color {
+    width: 44px !important; height: 44px !important;
+  }
+  #favBtn { width: 54px !important; height: 54px !important; flex-shrink: 0; }
+}
+
+/* ========== 2. HEADER MOBILE — логотип не зникає ========== */
+@media (max-width: 600px) {
+  .site-header { height: 60px; }
+  .site-header__inner { gap: 4px; }
+  .brand-mark { gap: 8px; font-size: 16px; }
+  .brand-mark__logo {
+    width: 30px; height: 30px; font-size: 15px;
+    box-shadow: 0 2px 8px rgba(28,58,46,0.18);
+  }
+  .brand-mark__text {
+    display: inline !important;
+    font-size: 13px;
+    letter-spacing: -0.01em;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    color: var(--text);
+  }
+}
+@media (max-width: 380px) {
+  .brand-mark__text { display: none !important; }
+}
+.site-header.scrolled {
+  background: rgba(245, 240, 232, 0.99) !important;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06) !important;
+}
+@media (max-width: 900px) {
+  .site-header.scrolled { height: 56px; transition: height .2s ease; }
+}
+
+/* ========== 3. ANNOUNCE BAR — на mobile без marquee ========== */
+@media (max-width: 720px) {
+  .announce { font-size: 11.5px !important; }
+  .announce__track {
+    animation: none !important;
+    justify-content: center !important;
+    transform: none !important;
+    width: 100% !important;
+  }
+  .announce__group:not(:first-child) {
+    display: none !important; /* показуємо тільки одну групу, без дубля */
+  }
+  .announce__group {
+    gap: 12px !important;
+    padding-right: 0 !important;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .announce { -webkit-mask-image: none !important; mask-image: none !important; }
+  /* Показуємо тільки головне повідомлення на дуже маленьких */
+  @media (max-width: 480px) {
+    .announce__sep ~ span,
+    .announce__sep { display: none !important; }
+    .announce__group span:first-of-type { display: inline !important; }
+  }
+}
+
+/* ========== 4. HERO MOBILE — премиум-вигляд ========== */
+@media (max-width: 768px) {
+  .hero { padding: 28px 0 36px; }
+  .hero__inner { gap: 22px; }
+  .hero__visual {
+    order: -1;
+    aspect-ratio: 4/3;
+    border-radius: 18px;
+  }
+  .hero__title {
+    font-size: clamp(1.9rem, 7vw, 2.4rem) !important;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+  }
+  .hero__title-prefix {
+    display: none !important;
+  }
+  .hero__eyebrow { display: none; }
+  .hero__sub {
+    font-size: 14.5px;
+    line-height: 1.5;
+    margin-top: 12px;
+  }
+  .hero__sub--p2 { display: none; } /* прибираємо другий параграф на mobile */
+  .hero__cta {
+    margin-top: 20px;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .hero__cta .btn {
+    width: 100%;
+    min-height: 54px;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    border-radius: 14px;
+  }
+  .hero__cta-primary {
+    box-shadow: 0 6px 20px rgba(28,58,46,0.25);
+  }
+  .hero__cta .btn-secondary {
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--accent) !important;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    min-height: 36px !important;
+    padding: 8px 16px !important;
+    font-size: 12px !important;
+  }
+  .hero__trust {
+    margin-top: 24px;
+    padding-top: 20px;
+    gap: 12px 16px;
+    font-size: 11px;
+  }
+}
+
+/* ========== 5. CATALOG — 2 КОЛОНКИ на mobile (критично!) ========== */
+@media (max-width: 720px) {
+  .pgrid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
+  /* Зменшуємо все на картці пропорційно */
+  .pcard__brand { font-size: 9.5px !important; letter-spacing: 0.08em; }
+  .pcard__name { font-size: 12.5px !important; line-height: 1.3; }
+  .pcard__rating { font-size: 10.5px !important; gap: 4px !important; }
+  .pcard__price { font-size: 14px !important; }
+  .pcard__price-old { font-size: 11px !important; }
+  .pcard__swatch { width: 14px !important; height: 14px !important; }
+  .pcard__badges { gap: 4px; }
+  .pcard__badges .badge { font-size: 9px !important; padding: 3px 6px !important; }
+  /* Quick-add — завжди видима на mobile, не on hover */
+  .pcard__quick-add {
+    opacity: 1 !important;
+    transform: none !important;
+    bottom: 8px !important; right: 8px !important;
+    padding: 8px 12px !important;
+    font-size: 10px !important;
+    border-radius: 999px !important;
+  }
+  /* Fav-кнопка на картці */
+  .pcard__fav {
+    top: 8px !important; right: 8px !important;
+    width: 32px !important; height: 32px !important;
+  }
+  .pcard__media { border-radius: 12px; }
+}
+@media (max-width: 380px) {
+  .pgrid { gap: 8px !important; }
+}
+
+/* ========== 6. CATALOG HEADER — компактніше ========== */
+@media (max-width: 720px) {
+  .catalog__head h1 {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    text-align: left !important;
+    margin: 0 0 14px !important;
+    letter-spacing: -0.01em !important;
+  }
+  .catalog__head { padding: 12px 0 4px !important; }
+  /* Filter pills контейнер */
+  .filters {
+    padding: 12px !important;
+    border-radius: 14px !important;
+  }
+  .fpill {
+    font-size: 11.5px !important;
+    padding: 8px 12px !important;
+    min-height: 36px !important;
+  }
+  .fpill__n {
+    font-size: 10px !important;
+    padding: 1px 6px !important;
+  }
+  .filter-row {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-row .fpill { flex-shrink: 0; }
+  .filter-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  #sortSel, select.select {
+    font-size: 13px !important;
+    min-height: 36px !important;
+    padding: 6px 30px 6px 12px !important;
+    border-radius: 999px !important;
+  }
+}
+
+/* Filter pills — fix контраст active/default */
+.fpill[aria-pressed="true"] {
+  background: var(--accent) !important;
+  color: var(--bg) !important;
+}
+.fpill[aria-pressed="true"] .fpill__n {
+  background: rgba(255,255,255,0.18) !important;
+  color: var(--bg) !important;
+}
+
+/* ========== 7. STICKY ADD-TO-CART — RICH version ========== */
+.sticky-cta { display: none !important; }
+.sticky-cta--rich {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 45;
+  background: rgba(255,255,255,0.97);
+  -webkit-backdrop-filter: saturate(160%) blur(18px);
+  backdrop-filter: saturate(160%) blur(18px);
+  border-top: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.08);
+  padding: 10px 16px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  display: none;
+  align-items: center;
+  gap: 10px;
+  transform: translateY(110%);
+  transition: transform .35s cubic-bezier(.2,.7,.2,1);
+}
+.sticky-cta--rich.visible {
+  transform: translateY(0);
+  display: flex;
+}
+.sticky-cta--rich__thumb {
+  width: 48px; height: 48px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: grid; place-items: center;
+}
+.sticky-cta--rich__thumb img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.sticky-cta--rich__info {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: 1px;
+}
+.sticky-cta--rich__name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.2;
+}
+.sticky-cta--rich__meta {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.sticky-cta--rich__price {
+  font-size: 15px; font-weight: 800; color: var(--text);
+  letter-spacing: -0.01em;
+}
+.sticky-cta--rich__old {
+  font-size: 11px; color: var(--text-muted);
+  text-decoration: line-through;
+}
+.sticky-cta--rich__btn {
+  flex-shrink: 0;
+  background: var(--accent);
+  color: var(--bg);
+  padding: 14px 22px;
+  min-height: 50px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 6px;
+  box-shadow: 0 4px 14px rgba(28,58,46,0.28);
+  transition: transform .15s ease, background .2s ease;
+  white-space: nowrap;
+}
+.sticky-cta--rich__btn:active {
+  transform: scale(0.96);
+  background: var(--accent-2);
+}
+@media (max-width: 380px) {
+  .sticky-cta--rich__btn { padding: 14px 14px; font-size: 11px; }
+  .sticky-cta--rich__thumb { width: 42px; height: 42px; }
+  .sticky-cta--rich__name { font-size: 11.5px; }
+}
+body.has-sticky-cta-rich .fab-contact {
+  bottom: calc(78px + env(safe-area-inset-bottom)) !important;
+}
+
+/* ========== 8. BOTTOM NAVIGATION (Rozetka-style) ========== */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 39;
+  background: rgba(255,255,255,0.98);
+  -webkit-backdrop-filter: saturate(160%) blur(18px);
+  backdrop-filter: saturate(160%) blur(18px);
+  border-top: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 -2px 16px rgba(0,0,0,0.04);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  display: none;
+}
+@media (max-width: 900px) { .bottom-nav { display: flex; } }
+.bottom-nav__inner {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  width: 100%;
+  gap: 2px;
+}
+.bottom-nav__item {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 3px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  color: var(--text-muted);
+  position: relative;
+  transition: color .15s ease;
+  text-decoration: none;
+}
+.bottom-nav__item:active { background: rgba(0,0,0,0.04); }
+.bottom-nav__item[aria-current="page"] { color: var(--accent); }
+.bottom-nav__item[aria-current="page"]::before {
+  content: ""; position: absolute; top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 24px; height: 2.5px;
+  background: var(--accent); border-radius: 0 0 4px 4px;
+}
+.bottom-nav__item svg {
+  width: 22px; height: 22px;
+}
+.bottom-nav__label {
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+.bottom-nav__badge {
+  position: absolute;
+  top: 4px;
+  right: calc(50% - 18px);
+  min-width: 16px; height: 16px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 9px; font-weight: 700;
+  border-radius: 999px;
+  display: grid; place-items: center;
+  padding: 0 4px;
+  line-height: 1;
+  box-shadow: 0 0 0 2px #fff;
+}
+body.has-sticky-cta-rich .bottom-nav { display: none; }
+@media (max-width: 900px) {
+  body { padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
+  body.has-sticky-cta-rich { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+  .fab-contact { bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
+}
+
+/* ========== 9. PDP — CTA fix + Trust chips + Quick-buy ========== */
+@media (max-width: 720px) {
+  .pdp__cta {
+    flex-wrap: nowrap;
+    margin-top: 20px;
+    gap: 8px !important;
+    align-items: stretch;
+  }
+  .pdp__cta .pdp__qty {
+    order: 1;
+    flex-shrink: 0;
+  }
+  .pdp__cta #addBtn {
+    order: 2;
+    flex: 1 1 0%;
+    min-width: 0;
+    border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(28,58,46,0.22);
+    font-size: 12px !important;
+    padding: 14px 12px !important;
+    letter-spacing: 0.04em !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pdp__cta #favBtn {
+    order: 3;
+    border-radius: 50% !important;
+    width: 54px !important;
+    height: 54px !important;
+    flex-shrink: 0;
+  }
+}
+@media (max-width: 380px) {
+  .pdp__cta .pdp__qty button { width: 38px !important; height: 38px !important; }
+  .pdp__cta #addBtn { font-size: 11px !important; padding: 12px 8px !important; }
+  .pdp__cta #favBtn { width: 48px !important; height: 48px !important; }
+}
+
+/* PDP trust chips під CTA */
+.pdp-trust-row {
+  margin-top: 14px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.pdp-trust-row__chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px;
+  background: var(--surface);
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.pdp-trust-row__chip svg {
+  width: 14px; height: 14px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* Quick-buy Telegram CTA */
+.pdp__quick-buy {
+  margin-top: 10px;
+  width: 100%;
+  padding: 13px 18px;
+  background: transparent;
+  color: var(--text);
+  border-radius: 12px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: inset 0 0 0 1.5px var(--text);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all .2s ease;
+  min-height: 48px;
+}
+.pdp__quick-buy:hover { background: var(--text); color: var(--bg); }
+.pdp__quick-buy svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* PDP fix — color label не вилазить за viewport */
+@media (max-width: 720px) {
+  .pdp__option-label {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+  .pdp__option-label > span:first-child {
+    font-size: 11px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted) !important;
+  }
+  #colorLabel {
+    font-weight: 600 !important;
+    color: var(--text) !important;
+    font-size: 13px !important;
+  }
+}
+
+/* PDP color picker — обмежуємо висоту, додаємо scroll */
+.pdp__color-row {
+  max-height: 120px;
+  overflow: hidden;
+  position: relative;
+  transition: max-height .3s ease;
+}
+.pdp__color-row.expanded {
+  max-height: 500px;
+}
+.pdp__color-row::after {
+  content: "";
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 30px;
+  background: linear-gradient(to top, var(--bg), transparent);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity .2s ease;
+}
+.pdp__color-row.expanded::after { opacity: 0; }
+.pdp__color-toggle {
+  display: inline-flex;
+  align-items: center; gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  padding: 8px 0;
+  margin-top: 4px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* Selected color — виразніший */
+.pdp__color[aria-checked="true"] {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent) !important;
+}
+
+/* PDP delivery-widget — виразніший на mobile */
+@media (max-width: 720px) {
+  .delivery-widget {
+    border-radius: 14px;
+    padding: 14px;
+    border-left: 3px solid var(--accent);
+  }
+}
+
+/* PDP rating — більше і виразніше */
+@media (max-width: 720px) {
+  .pdp__rating {
+    margin-top: 8px;
+    gap: 8px;
+    font-size: 14px;
+  }
+  .pdp__rating .stars { font-size: 16px; }
+  .pdp__rating strong { font-size: 15px; }
+  .pdp__rating a {
+    color: var(--accent) !important;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+/* Discount badge на PDP — більший і виразний */
+@media (max-width: 720px) {
+  .badge-success {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+  }
+}
+
+/* Parallel import disclaimer — приховуємо одразу після CTA */
+.pdp__disclaimer {
+  display: none !important;
+}
+/* Замість цього — додамо у Returns секцію через JS */
+
+/* ========== 10. TRUST STRIP — 2×2 на mobile, виразніший ========== */
+@media (max-width: 640px) {
+  .trust-strip { padding: 20px 0; }
+  .trust-strip__inner {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+  .trust-strip__item {
+    background: rgba(255,255,255,0.7);
+    padding: 12px;
+    border-radius: 14px;
+    font-size: 11.5px;
+    font-weight: 600;
+    align-items: flex-start;
+    line-height: 1.3;
+    gap: 8px;
+  }
+  .trust-strip__item svg {
+    width: 16px; height: 16px;
+    padding: 6px;
+    background: var(--accent);
+    color: var(--bg);
+    border-radius: 8px;
+    box-sizing: content-box;
+    flex-shrink: 0;
+  }
+}
+
+/* ========== 11. CART DRAWER — full-screen mobile + swipe handle ========== */
+@media (max-width: 900px) {
+  #cart-drawer .drawer-panel {
+    max-width: 100% !important;
+    width: 100%;
+  }
+  #cart-drawer .drawer-panel::before {
+    content: "";
+    position: absolute; top: 8px; left: 50%;
+    transform: translateX(-50%);
+    width: 40px; height: 4px;
+    background: rgba(0,0,0,0.16);
+    border-radius: 999px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  #cart-drawer .drawer-header {
+    padding-top: 22px !important;
+  }
+  #cart-drawer .drawer-footer {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, rgba(255,255,255,1) 60%, rgba(255,255,255,0.95));
+    border-top: 1px solid var(--line);
+  }
+  #cart-drawer .drawer-footer .btn-primary {
+    min-height: 56px;
+    border-radius: 999px;
+    font-size: 14px;
+    box-shadow: 0 4px 14px rgba(28,58,46,0.25);
+  }
+}
+
+/* Cart shipping label — не зелений жирний (вводить в оману) */
+[class*="shipping_calc"],
+.cart-shipping-calc {
+  font-weight: 400 !important;
+  color: var(--text-muted) !important;
+}
+
+/* ========== 12. SKELETON LOADER для PDP image ========== */
+.pdp__media.is-loading::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(110deg, transparent 40%, rgba(255,255,255,0.6) 50%, transparent 60%);
+  background-size: 200% 100%;
+  animation: pdp-skel 1.2s infinite;
+  pointer-events: none;
+}
+@keyframes pdp-skel {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ========== 13. CHECKOUT — mobile fixes ========== */
+@media (max-width: 720px) {
+  .grid-2 {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .cs {
+    padding: 16px !important;
+    border-radius: 14px !important;
+    margin-bottom: 12px !important;
+  }
+  .cs h2 {
+    font-size: 14px !important;
+    margin-bottom: 12px !important;
+  }
+  .cs h2 .num {
+    width: 24px !important; height: 24px !important;
+    font-size: 12px !important;
+  }
+  .input {
+    min-height: 48px !important;
+    font-size: 16px !important; /* iOS не зумить при focus */
+    border-radius: 10px !important;
+  }
+  .field-label {
+    font-size: 12px !important;
+    margin-bottom: 6px !important;
+  }
+  .choice {
+    padding: 12px !important;
+    border-radius: 12px !important;
+    gap: 10px !important;
+  }
+  .choice__title { font-size: 13px !important; }
+  .choice__sub { font-size: 11px !important; }
+  .choice__price { font-size: 13px !important; }
+  #placeOrder {
+    min-height: 56px !important;
+    border-radius: 999px !important;
+    font-size: 14px !important;
+    box-shadow: 0 6px 20px rgba(28,58,46,0.25);
+  }
+  /* Order summary collapse на mobile */
+  .order-summary {
+    position: static !important;
+    margin-top: 20px;
+    padding: 16px !important;
+    border-radius: 14px !important;
+  }
+}
+
+/* ========== 14. FOOTER mobile improvements ========== */
+@media (max-width: 720px) {
+  .site-footer {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important; /* місце під bottom-nav */
+  }
+  .footer-grid {
+    gap: 24px !important;
+  }
+  .payments-strip {
+    flex-wrap: wrap;
+    gap: 6px !important;
+  }
+  .pay-badge {
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+  }
+}
+
+/* ========== 15. MOBILE SELECT — нормальні розміри ========== */
+@media (max-width: 640px) {
+  #sortSel, select.select {
+    font-size: 13px !important;
+    min-height: 38px !important;
+    padding: 6px 32px 6px 12px !important;
+  }
+}
+
+/* ========== 16. Touch optimizations ========== */
+button, .btn, .icon-btn, .pdp__color, .pdp__qty button,
+.bottom-nav__item, .fpill, .pcard, .pcard__quick-add {
+  touch-action: manipulation;
+}
+
+@media (hover: none) {
+  .icon-btn:hover { background: transparent; color: var(--text); }
+  .pdp__color:hover { transform: none; }
+  /* Quick-add завжди видна */
+  .pcard__quick-add {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ========== 17. FOCUS — без серого outline ========== */
+button:focus, a:focus, .btn:focus, .icon-btn:focus,
+.pdp__color:focus, .fpill:focus, .bottom-nav__item:focus {
+  outline: none;
+}
+button:focus-visible, a:focus-visible, .btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ========== 18. TOAST — не показувати якщо drawer відкритий ========== */
+body.cart-open .toast,
+body.scroll-lock .toast {
+  display: none !important;
+}
+
+/* ========== 19. Collections card — price arrow на правильному боці ========== */
+@media (max-width: 720px) {
+  .coll-card__price {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+  }
+}
+
+/* ========== 20. Cart empty popular — clickable + кнопка В кошик ========== */
+.cart-empty__popular-item {
+  position: relative;
+  padding-right: 100px;
+}
+.cart-empty__popular-quick {
+  position: absolute;
+  right: 8px; top: 50%;
+  transform: translateY(-50%);
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+}
+.cart-empty__popular-quick:active { background: var(--accent-2); }
+
+/* ========== 21. Hero badge — компактніше на mobile ========== */
+@media (max-width: 480px) {
+  .hero__badge { bottom: 10px; left: 10px; padding: 8px 10px; min-width: 84px; }
+  .hero__badge-year { font-size: 18px; }
+  .hero__badge-line { font-size: 8px; letter-spacing: 0.14em; }
+}
+
+/* ========== 22. PDP image — кращі пропорції ========== */
+@media (max-width: 720px) {
+  .pdp__media {
+    aspect-ratio: 1 / 1 !important;
+    background: var(--surface-2);
+    border-radius: 16px;
+  }
+  .pdp__thumbs {
+    margin-top: 10px !important;
+    gap: 6px !important;
+  }
+  .pdp__thumb {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 8px !important;
+  }
+}
+
+/* ========== 23. Breadcrumb — менш помітний на mobile ========== */
+@media (max-width: 720px) {
+  .pdp__breadcrumb {
+    font-size: 11px !important;
+    padding: 8px 0 12px !important;
+    color: var(--text-muted) !important;
+  }
+}
+
+/* ========== 24. Description text size fix ========== */
+@media (max-width: 720px) {
+  .pdp p {
+    font-size: 14px !important;
+    line-height: 1.55 !important;
+  }
+}
+
+/* ========== 25. iOS safe-area для всіх sticky-елементів ========== */
+@supports (padding: max(0px)) {
+  .sticky-cta--rich {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+  .bottom-nav {
+    padding-left: max(4px, env(safe-area-inset-left));
+    padding-right: max(4px, env(safe-area-inset-right));
+  }
+}
+
+/* ========== 26. Reduce announce bar height on mobile ========== */
+@media (max-width: 720px) {
+  .announce { padding: 7px 12px !important; }
+}
+
+/* ========== 27. Wishlist heart — viable size ========== */
+@media (max-width: 720px) {
+  .pcard__fav svg {
+    width: 14px !important; height: 14px !important;
+  }
+}
+
+/* ========== 28. Cart line on mobile — compact ========== */
+@media (max-width: 600px) {
+  .cart-line__img {
+    width: 72px !important;
+    height: 72px !important;
+  }
+  .cart-line__name { font-size: 13px !important; }
+}
+
+/* ========== 29. FAB Instagram — не перекриває контент на cart ========== */
+body.scroll-lock .fab-contact { display: none !important; }
+
+/* =====================================================================
+   GALLERY REDESIGN v2.1 — Instagram-style premium grid
+   ===================================================================== */
+
+/* Перекриваємо ВСЕ старе оформлення галереї */
+.gallery-section {
+  padding: clamp(40px, 7vw, 80px) 0 !important;
+  background: var(--bg);
+}
+
+/* Хедер — Instagram-стиль */
+.gallery-section__head {
+  display: block !important;
+  margin-bottom: 20px !important;
+  text-align: center;
+}
+.gallery-section__head h2 {
+  font-family: var(--font-display) !important;
+  font-size: clamp(1.75rem, 1.2rem + 2vw, 2.5rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  margin: 0 0 6px !important;
+}
+.gallery-section__head p {
+  margin: 0 0 16px !important;
+  font-size: 14px !important;
+  color: var(--text-soft) !important;
+}
+
+/* Instagram-CTA strip — над галереєю */
+.gallery-ig-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 auto 24px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-radius: 999px;
+  width: fit-content;
+  max-width: 100%;
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.gallery-ig-strip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06), inset 0 0 0 1px var(--line-strong);
+}
+.gallery-ig-strip__icon {
+  width: 26px; height: 26px;
+  background: linear-gradient(135deg, #F58529, #DD2A7B 50%, #8134AF 100%);
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+.gallery-ig-strip__icon svg {
+  width: 14px; height: 14px;
+}
+.gallery-ig-strip__handle {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.gallery-ig-strip__sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.gallery-ig-strip__sep {
+  width: 3px; height: 3px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+@media (max-width: 480px) {
+  .gallery-ig-strip {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+  .gallery-ig-strip__handle { font-size: 12.5px; }
+  .gallery-ig-strip__sub { font-size: 11px; }
+}
+
+/* === Чиста Instagram-сітка — БЕЗ crossfade, БЕЗ wide/tall === */
+.gallery-grid {
+  display: grid !important;
+  gap: 4px !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+}
+@media (min-width: 640px) {
+  .gallery-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 6px !important;
+  }
+}
+@media (min-width: 900px) {
+  .gallery-grid {
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 8px !important;
+  }
+}
+@media (min-width: 1200px) {
+  .gallery-grid {
+    grid-template-columns: repeat(6, 1fr) !important;
+  }
+}
+
+.gallery-grid__item {
+  position: relative !important;
+  aspect-ratio: 1 / 1 !important;
+  grid-column: auto !important; /* прибираємо span 2 */
+  grid-row: auto !important;
+  overflow: hidden !important;
+  border-radius: 6px !important;
+  background: var(--surface-2) !important;
+  cursor: zoom-in !important;
+  transform: none !important;
+  transition: transform .25s ease !important;
+}
+@media (min-width: 900px) {
+  .gallery-grid__item { border-radius: 10px !important; }
+}
+.gallery-grid__item:hover { transform: none !important; }
+
+.gallery-grid__item img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  opacity: 0;
+  transition: opacity .4s ease, transform .5s ease !important;
+}
+.gallery-grid__item img.is-loaded,
+.gallery-grid__item img.is-active {
+  opacity: 1 !important;
+}
+
+/* (Старі другі img вилучаються JS-патчем, кожна комірка містить рівно 1 img) */
+
+/* Hover overlay тільки на desktop */
+@media (hover: hover) and (min-width: 900px) {
+  .gallery-grid__item::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity .25s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .gallery-grid__item::before {
+    content: "";
+    position: absolute; bottom: 10px; right: 10px;
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.95) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231C3A2E' stroke-width='2.4' stroke-linecap='round'><path d='M15 3h6v6M14 10l7-7M9 21H3v-6M10 14l-7 7'/></svg>") no-repeat center;
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0.7);
+    transition: opacity .25s ease, transform .25s ease;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .gallery-grid__item:hover::after { opacity: 1; }
+  .gallery-grid__item:hover::before { opacity: 1; transform: scale(1); }
+  .gallery-grid__item:hover img.is-active { transform: scale(1.06); }
+}
+
+/* "Завантажити більше" button */
+.gallery-load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+.gallery-load-more button {
+  background: transparent;
+  color: var(--text);
+  padding: 12px 28px;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 1.5px var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all .2s ease;
+  min-height: 44px;
+  cursor: pointer;
+}
+.gallery-load-more button:hover {
+  background: var(--text);
+  color: var(--bg);
+}
+.gallery-load-more button svg {
+  width: 14px; height: 14px;
+  transition: transform .25s ease;
+}
+.gallery-load-more button:hover svg {
+  transform: translateY(2px);
+}
+
+/* Hidden cells */
+.gallery-grid__item.is-hidden {
+  display: none !important;
+}
+
+/* =====================================================================
+   LIGHTBOX REDESIGN — premium with prev/next, swipe, counter
+   ===================================================================== */
+.glb {
+  background: rgba(15, 18, 16, 0.96) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(20px) !important;
+  padding: 0 !important;
+}
+.glb.is-open { display: flex !important; flex-direction: column; }
+
+.glb__top {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 10;
+  padding: 14px 16px;
+  padding-top: calc(14px + env(safe-area-inset-top));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent);
+  pointer-events: none;
+}
+.glb__top > * { pointer-events: auto; }
+.glb__counter {
+  color: rgba(255,255,255,0.92);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+}
+
+.glb__close {
+  position: relative !important;
+  top: 0 !important; right: 0 !important;
+  width: 40px !important; height: 40px !important;
+  background: rgba(255,255,255,0.14) !important;
+  border-radius: 50% !important;
+  cursor: pointer;
+  display: grid !important;
+  place-items: center;
+  color: #fff;
+  transition: background .2s ease, transform .2s ease;
+}
+.glb__close:hover { background: rgba(255,255,255,0.24) !important; }
+.glb__close:active { transform: scale(0.94); }
+
+/* Prev/Next buttons */
+.glb__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px; height: 48px;
+  background: rgba(255,255,255,0.14);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  cursor: pointer;
+  z-index: 10;
+  transition: background .2s ease, transform .15s ease;
+}
+.glb__nav:hover { background: rgba(255,255,255,0.24); }
+.glb__nav:active { transform: translateY(-50%) scale(0.94); }
+.glb__nav--prev { left: 16px; }
+.glb__nav--next { right: 16px; }
+.glb__nav svg { width: 22px; height: 22px; }
+.glb__nav[disabled] { opacity: 0.3; pointer-events: none; }
+
+@media (max-width: 720px) {
+  .glb__nav { display: none; } /* На mobile — тільки swipe */
+}
+
+/* Main image — з swipe анімацією */
+.glb__stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+.glb img,
+.glb__img {
+  max-width: min(94vw, 1100px) !important;
+  max-height: 84vh !important;
+  border-radius: 10px !important;
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6) !important;
+  transition: transform .3s cubic-bezier(.2,.7,.3,1), opacity .25s ease !important;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.glb__img.is-swiping {
+  transition: none !important;
+}
+.glb__img.is-out-left {
+  transform: translateX(-120%);
+  opacity: 0;
+}
+.glb__img.is-out-right {
+  transform: translateX(120%);
+  opacity: 0;
+}
+
+/* Caption */
+.glb__caption {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(0,0,0,0.55), transparent);
+  color: rgba(255,255,255,0.95);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  text-align: center;
+  pointer-events: none;
+  z-index: 5;
+}
+.glb__caption strong {
+  font-weight: 600;
+  color: #fff;
+}
+
+/* Thumb strip (desktop only, на mobile прибираємо) */
+.glb__thumbs {
+  display: none;
+  position: absolute;
+  bottom: 16px; left: 50%;
+  transform: translateX(-50%);
+  padding: 8px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 12px;
+  gap: 6px;
+  max-width: 80vw;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.glb__thumbs::-webkit-scrollbar { display: none; }
+@media (min-width: 900px) {
+  .glb__thumbs { display: flex; }
+  .glb__caption { display: none; }
+}
+.glb__thumb {
+  width: 48px; height: 48px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity .2s ease, transform .2s ease;
+  border: 2px solid transparent;
+}
+.glb__thumb img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.glb__thumb:hover { opacity: 0.85; }
+.glb__thumb.is-active {
+  opacity: 1;
+  border-color: #fff;
+  transform: scale(1.06);
+}
+
+/* =====================================================================
+   CATALOG REFINEMENTS v2.2 — фон карток, swatches, color name on card
+   ===================================================================== */
+
+/* 1. Уніфікований cream-фон для media-блоку картки —
+      маскує білі фони на деяких студійних фото */
+.pcard__media {
+  background: var(--bg) !important; /* #F5F0E8 — той самий, що body */
+}
+.pcard__media img {
+  background: var(--bg) !important;
+}
+
+/* 2. Прибираємо swatches під назвами товарів у каталозі */
+.pcard__swatches {
+  display: none !important;
+}
+
+/* 3. Замість swatches — назва конкретного кольору (рядок під назвою) */
+.pcard__color-name {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  margin-top: 2px;
+  line-height: 1.3;
+  display: block;
+}
+@media (max-width: 720px) {
+  .pcard__color-name { font-size: 10.5px; }
+}
+
+/* 4. Hover-ефект на cards залишаємо мінімальним */
+.pcard__media img {
+  background: var(--bg);
+}

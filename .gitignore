@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Secrets — never commit real env files (only *.example)
+.env
+.env.local
+**/.env
+!**/.env.example
+
+# Logs
+logs/
+*.log
+
+# Prisma generated client / local DB
+**/generated/
+*.sqlite
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local scratch
+*.tmp

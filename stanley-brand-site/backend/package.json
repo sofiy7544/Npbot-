@@ -1,0 +1,19 @@
+{
+  "name": "stanley-brand-backend",
+  "version": "1.0.0",
+  "description": "Stanley Brand UA — Monobank acquiring + Telegram order forwarding backend",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7"
+  }
+}

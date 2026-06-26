@@ -1,0 +1,2433 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1C3A2E">
+<meta name="robots" content="noindex, nofollow">
+<title>DailyUA · Admin</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%231C3A2E'/><text x='16' y='22' text-anchor='middle' font-family='Georgia,serif' font-weight='700' font-size='18' fill='%23F5F0E8'>A</text></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap">
+
+<style>
+:root {
+  --bg: #F5F0E8;
+  --surface: #FFFFFF;
+  --surface-2: #EDE7DC;
+  --line: rgba(42, 42, 42, 0.10);
+  --line-strong: rgba(42, 42, 42, 0.18);
+  --text: #1A1A1C;
+  --text-soft: rgba(26, 26, 28, 0.78);
+  --text-muted: #6B6B5E;
+  --accent: #1C3A2E;
+  --accent-2: #2D5C45;
+  --accent-soft: rgba(28, 58, 46, 0.08);
+  --tan: #C4A882;
+  --danger: #8B2C28;
+  --danger-soft: rgba(139, 44, 40, 0.08);
+  --warning: #B7791F;
+  --success: #1C3A2E;
+  --success-soft: rgba(28, 58, 46, 0.10);
+  --font: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 20px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.06);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,.10);
+  --sidebar-w: 240px;
+  --header-h: 60px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; border: none; background: none; }
+a { color: var(--accent); text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+/* === LOGIN === */
+.login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #F5F0E8 0%, #E8E0D0 100%);
+}
+.login__card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  padding: 36px 28px;
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+.login__logo {
+  width: 56px; height: 56px;
+  margin: 0 auto 16px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--bg);
+  display: grid; place-items: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+}
+.login__title { font-family: var(--font-display); font-size: 22px; font-weight: 600; margin: 0 0 6px; }
+.login__sub { color: var(--text-muted); font-size: 13px; margin: 0 0 24px; }
+.field { display: block; text-align: left; margin-bottom: 14px; }
+.field__label { display: block; font-size: 12px; font-weight: 600; color: var(--text-soft); margin-bottom: 6px; letter-spacing: 0.02em; }
+.field input, .field select, .field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  font-size: 14px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.field textarea { min-height: 80px; resize: vertical; font-family: var(--font); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: var(--r-md);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  transition: background .15s, transform .1s, opacity .15s;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: var(--bg); }
+.btn-primary:hover { background: var(--accent-2); }
+.btn-secondary { background: var(--surface-2); color: var(--text); }
+.btn-secondary:hover { background: #DDD3BD; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: #6E2320; }
+.btn-ghost { color: var(--accent); }
+.btn-ghost:hover { background: var(--accent-soft); }
+.btn-sm { padding: 6px 10px; font-size: 12px; }
+.btn-block { width: 100%; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.login__hint { margin-top: 18px; padding: 10px 12px; background: var(--accent-soft); border-radius: var(--r-md); font-size: 11px; color: var(--text-muted); text-align: left; line-height: 1.4; }
+.login__hint code { background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px; font-family: ui-monospace, monospace; }
+
+/* === SHELL === */
+.shell { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
+.backdrop { display: none; }
+.sidebar {
+  background: var(--accent);
+  color: rgba(245, 240, 232, 0.92);
+  padding: 16px 12px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar__brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px; margin-bottom: 18px; }
+.sidebar__logo { width: 32px; height: 32px; background: var(--bg); color: var(--accent); border-radius: 6px; display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+.sidebar__name { font-family: var(--font-display); font-weight: 600; font-size: 17px; }
+.sidebar__name small { display: block; font-family: var(--font); font-weight: 400; font-size: 10px; letter-spacing: 0.1em; opacity: 0.6; text-transform: uppercase; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--r-md);
+  color: rgba(245, 240, 232, 0.78);
+  font-weight: 500; font-size: 13px;
+  cursor: pointer;
+  margin-bottom: 2px;
+  transition: background .15s, color .15s;
+  width: 100%;
+  text-align: left;
+}
+.nav-item:hover { background: rgba(255,255,255,0.06); color: var(--bg); }
+.nav-item.active { background: rgba(255,255,255,0.12); color: var(--bg); font-weight: 600; }
+.nav-item svg { flex-shrink: 0; opacity: 0.8; }
+.nav-section { padding: 16px 12px 6px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(245,240,232,0.4); font-weight: 600; }
+.sidebar__footer { margin-top: auto; padding: 12px 8px 4px; border-top: 1px solid rgba(255,255,255,0.1); }
+.sidebar__footer .meta { font-size: 11px; opacity: 0.5; padding: 6px 4px; }
+
+.main { display: flex; flex-direction: column; min-width: 0; }
+.topbar {
+  height: var(--header-h);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 10;
+}
+.topbar__title { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+.topbar__actions { display: flex; gap: 8px; align-items: center; }
+.content { padding: 24px; max-width: 1200px; }
+
+/* Mobile */
+.menu-btn { display: none; padding: 6px; }
+@media (max-width: 880px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { position: fixed; left: -100%; top: 0; width: 260px; z-index: 100; transition: left .3s; box-shadow: 4px 0 20px rgba(0,0,0,0.2); }
+  .sidebar.open { left: 0; }
+  .menu-btn { display: inline-flex; }
+  .topbar { padding: 0 16px; }
+  .topbar__title { font-size: 18px; }
+  .content { padding: 16px; }
+  .backdrop { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .backdrop.show { opacity: 1; pointer-events: auto; }
+}
+
+/* === DASHBOARD === */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.stat { background: var(--surface); padding: 18px 20px; border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
+.stat__label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
+.stat__value { font-family: var(--font-display); font-size: 28px; font-weight: 600; line-height: 1.1; }
+.stat__sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.card { background: var(--surface); border-radius: var(--r-lg); padding: 20px; box-shadow: var(--shadow-sm); margin-bottom: 16px; }
+.card__title { font-family: var(--font-display); font-size: 18px; font-weight: 600; margin: 0 0 12px; }
+.card__sub { font-size: 12px; color: var(--text-muted); margin: -8px 0 14px; }
+
+/* === TABLE === */
+.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.search {
+  position: relative;
+  flex: 1; min-width: 200px;
+}
+.search input {
+  width: 100%;
+  padding: 9px 12px 9px 34px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  border-radius: var(--r-md);
+  font-size: 13px;
+  outline: none;
+}
+.search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+.toolbar select { padding: 9px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--surface); font-size: 13px; outline: none; }
+.products-table { background: var(--surface); border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+.products-table table { width: 100%; border-collapse: collapse; }
+.products-table th, .products-table td { padding: 10px 14px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--line); font-size: 13px; }
+.products-table th { background: var(--surface-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+.products-table tr:last-child td { border-bottom: none; }
+.products-table tr:hover td { background: rgba(28,58,46,0.02); }
+.row-thumb { width: 44px; height: 44px; border-radius: 8px; background: var(--surface-2); object-fit: cover; }
+.row-thumb-empty { width: 44px; height: 44px; border-radius: 8px; background: var(--surface-2); display: grid; place-items: center; color: var(--text-muted); font-size: 11px; }
+.row-name { font-weight: 600; line-height: 1.3; }
+.row-name__sub { font-size: 11px; color: var(--text-muted); font-weight: 400; }
+.row-price { font-weight: 600; white-space: nowrap; }
+.row-price__compare { display: block; font-size: 11px; color: var(--text-muted); text-decoration: line-through; font-weight: 400; }
+.row-actions { display: flex; gap: 4px; }
+.icon-btn {
+  width: 30px; height: 30px;
+  display: inline-grid; place-items: center;
+  border-radius: 6px;
+  color: var(--text-soft);
+  transition: background .15s, color .15s;
+}
+.icon-btn:hover { background: var(--accent-soft); color: var(--accent); }
+.icon-btn.danger:hover { background: var(--danger-soft); color: var(--danger); }
+
+/* Toggle */
+.toggle { position: relative; display: inline-block; width: 38px; height: 22px; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle__slider { position: absolute; cursor: pointer; inset: 0; background: var(--line-strong); border-radius: 22px; transition: .2s; }
+.toggle__slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.toggle input:checked + .toggle__slider { background: var(--accent); }
+.toggle input:checked + .toggle__slider:before { transform: translateX(16px); }
+
+/* Badge */
+.badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.badge-new { background: rgba(28, 58, 46, 0.10); color: var(--accent); }
+.badge-best { background: rgba(196, 168, 130, 0.18); color: #6B5230; }
+.badge-sale { background: rgba(139, 44, 40, 0.10); color: var(--danger); }
+.badge-off { background: var(--surface-2); color: var(--text-muted); }
+
+/* === MODAL === */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: grid; place-items: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.modal-backdrop.show { opacity: 1; pointer-events: auto; }
+.modal {
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(10px);
+  transition: transform .2s;
+}
+.modal-backdrop.show .modal { transform: translateY(0); }
+.modal__head { padding: 18px 22px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.modal__title { font-family: var(--font-display); font-weight: 600; font-size: 19px; margin: 0; }
+.modal__close { padding: 6px; border-radius: 6px; color: var(--text-muted); }
+.modal__close:hover { background: var(--surface-2); color: var(--text); }
+.modal__body { overflow-y: auto; padding: 18px 22px; flex: 1; }
+.modal__foot { padding: 14px 22px; border-top: 1px solid var(--line); display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--line); margin: 0 -22px 18px; padding: 0 22px; overflow-x: auto; }
+.tab {
+  padding: 10px 14px;
+  font-size: 13px; font-weight: 500;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  transition: color .15s, border-color .15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
+.row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 600px) { .row3 { grid-template-columns: 1fr 1fr; } }
+
+/* === IMAGE PICKER / DROPZONE === */
+.dropzone {
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  background: var(--surface-2);
+  transition: border-color .15s, background .15s;
+  cursor: pointer;
+}
+.dropzone:hover, .dropzone.drag { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.dropzone__hint { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+
+.img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 12px; }
+.img-card {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 2px solid transparent;
+  transition: border-color .15s;
+  cursor: pointer;
+}
+.img-card.selected { border-color: var(--accent); }
+.img-card img { width: 100%; height: 100%; object-fit: cover; }
+.img-card__del {
+  position: absolute; top: 4px; right: 4px;
+  width: 22px; height: 22px;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 14px; line-height: 1;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.img-card:hover .img-card__del { opacity: 1; }
+.img-card__name { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); color: #fff; font-size: 9px; padding: 2px 4px; opacity: 0; transition: opacity .15s; }
+.img-card:hover .img-card__name { opacity: 1; }
+
+/* Color editor */
+.color-row { display: grid; grid-template-columns: 32px 1fr 1fr 100px 32px; gap: 8px; margin-bottom: 6px; align-items: center; }
+.color-swatch { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--line); }
+.color-row input { padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: 6px; font-size: 12px; outline: none; background: var(--surface); }
+.color-row .icon-btn { width: 28px; height: 28px; }
+
+/* Tag pill */
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: var(--surface-2); border-radius: 999px; font-size: 11px; margin: 2px; }
+.pill__del { width: 14px; height: 14px; background: rgba(0,0,0,0.2); border-radius: 50%; color: white; font-size: 9px; display: grid; place-items: center; cursor: pointer; }
+.pill__del:hover { background: var(--danger); }
+
+/* === ORDERS === */
+.order-card { background: var(--surface); padding: 14px 16px; border-radius: var(--r-md); margin-bottom: 8px; box-shadow: var(--shadow-sm); }
+.order-card__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+.order-card__id { font-family: ui-monospace, monospace; font-weight: 600; font-size: 13px; }
+.order-card__total { font-weight: 700; }
+.order-card__meta { font-size: 11px; color: var(--text-muted); }
+.order-card__items { font-size: 12px; color: var(--text-soft); margin-top: 4px; }
+.status-pill {
+  display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.s-new { background: rgba(28, 58, 46, 0.10); color: var(--accent); }
+.s-paid { background: rgba(196, 168, 130, 0.20); color: #6B5230; }
+.s-shipped { background: rgba(46, 100, 130, 0.10); color: #2C5670; }
+.s-done { background: rgba(60, 100, 60, 0.10); color: #2A5A2A; }
+.s-cancel { background: rgba(139, 44, 40, 0.10); color: var(--danger); }
+
+/* === BANNERS === */
+.banner-preview {
+  background: linear-gradient(180deg, #1C3A2E 0%, #2D5C45 100%);
+  color: var(--bg);
+  padding: 9px 16px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--r-md);
+  margin-top: 10px;
+}
+
+/* === EMPTY === */
+.empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+.empty__icon { width: 56px; height: 56px; margin: 0 auto 12px; opacity: 0.5; }
+.empty__title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+
+/* === TOAST === */
+#toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+.toast { background: var(--accent); color: var(--bg); padding: 10px 16px; border-radius: var(--r-md); font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg); animation: toastIn .2s, toastOut .2s 2.5s forwards; pointer-events: auto; }
+.toast.error { background: var(--danger); color: #fff; }
+@keyframes toastIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes toastOut { to { transform: translateY(20px); opacity: 0; } }
+
+/* misc */
+.hr { height: 1px; background: var(--line); margin: 16px 0; }
+.muted { color: var(--text-muted); font-size: 12px; }
+.warn { color: var(--warning); font-size: 12px; }
+code.kbd { background: var(--surface-2); padding: 1px 6px; border-radius: 4px; font-size: 12px; font-family: ui-monospace, monospace; }
+
+.export-pre {
+  background: #1A1A1C;
+  color: #C8E6C9;
+  padding: 14px;
+  border-radius: var(--r-md);
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  max-height: 360px;
+  overflow: auto;
+  white-space: pre;
+  margin: 10px 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  /* Could add dark mode here later */
+}
+</style>
+
+<!-- Admin Premium Patch v1 — Stripe/Linear/Notion-grade UI -->
+<link rel="stylesheet" href="admin-premium.css">
+</head>
+<body>
+
+<div id="app"></div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   DailyUA Admin Panel
+   - Single-page app, localStorage-based
+   - No backend, no build step
+   - Generates index.html overrides via "Export" tab
+   ===================================================================== */
+
+/* ===== Storage keys ===== */
+const KEYS = {
+  AUTH: "dua_admin_auth",
+  PRODUCTS: "dua_admin_products",
+  COLORS: "dua_admin_colors",
+  BRAND: "dua_admin_brand",
+  BANNER: "dua_admin_banner",
+  IMAGES: "dua_admin_images_v1",  // base64 images
+  ORDERS: "dua_orders",            // shared with site
+  PASSWORD: "dua_admin_pwhash",
+  EMAIL: "dua_email_config",       // EmailJS configuration
+};
+
+/* ===== Default admin password — user changes on first login ===== */
+const DEFAULT_PASSWORD = "Stanley1913Admin!";
+
+/* ===== Original BASE catalog (mirror of index.html) =====
+   Kept in sync by Export-import workflow. Read-only here. */
+const BASE_PRODUCTS = [
+  { id: "stanley-quencher-30", brand: "Stanley", shortName_uk: "Quencher 30oz", name_uk: "Quencher H2.0 FlowState 30oz", volume: "30oz", volumeMl: 887, price: 1799, compareAt: 2199, stock: 24, rating: 4.9, reviews: 128, bestseller: true, isNew: false, primaryImg: "img/IMG_2491.webp", colors: 11 },
+  { id: "stanley-quencher-40", brand: "Stanley", shortName_uk: "Quencher 40oz", name_uk: "Quencher H2.0 FlowState 40oz · 2.0", volume: "40oz", volumeMl: 1180, price: 2500, compareAt: 2899, stock: 18, rating: 4.9, reviews: 86, bestseller: true, isNew: false, primaryImg: "img/q40-cream-front.webp", colors: 22 },
+  { id: "stanley-protour-30", brand: "Stanley", shortName_uk: "ProTour 30oz", name_uk: "Quencher ProTour Flip Straw 30oz", volume: "30oz", volumeMl: 887, price: 3300, compareAt: null, stock: 8, rating: 5.0, reviews: 14, bestseller: false, isNew: true, primaryImg: "img/pt30-cream-front.webp", colors: 15 },
+  { id: "stanley-protour-20", brand: "Stanley", shortName_uk: "ProTour 20oz", name_uk: "Quencher ProTour Flip Straw 20oz", volume: "20oz", volumeMl: 591, price: 2999, compareAt: null, stock: 12, rating: 4.9, reviews: 9, bestseller: false, isNew: true, primaryImg: "img/pt20-cream-front.webp", colors: 8 },
+  { id: "stanley-lsf-holiday", brand: "Stanley", shortName_uk: "LoveShackFancy Holiday", name_uk: "Stanley × LoveShackFancy Holiday Quencher 40oz", volume: "40oz", volumeMl: 1180, price: 3500, compareAt: null, stock: 6, rating: 5.0, reviews: 11, bestseller: false, isNew: true, primaryImg: "img/lsf-pink-front.webp", colors: 4 },
+  { id: "stanley-iceflow", brand: "Stanley", shortName_uk: "IceFlow Flip", name_uk: "IceFlow Flip Straw 24oz", volume: "24oz", volumeMl: 710, price: 1599, compareAt: 1899, stock: 12, rating: 4.8, reviews: 42, bestseller: false, isNew: false, primaryImg: null, colors: 3 },
+  { id: "stanley-classic", brand: "Stanley", shortName_uk: "Classic Travel Mug", name_uk: "Classic Trigger-Action Travel Mug 16oz", volume: "16oz", volumeMl: 470, price: 1399, compareAt: null, stock: 20, rating: 4.7, reviews: 65, bestseller: false, isNew: false, primaryImg: null, colors: 4 },
+  { id: "owala-freesip", brand: "Owala", shortName_uk: "FreeSip 24oz", name_uk: "FreeSip 24oz", volume: "24oz", volumeMl: 710, price: 1299, compareAt: null, stock: 16, rating: 4.8, reviews: 38, bestseller: false, isNew: true, primaryImg: null, colors: 6 },
+  { id: "hydroflask-32", brand: "Hydro Flask", shortName_uk: "Wide Mouth 32oz", name_uk: "Wide Mouth 32oz", volume: "32oz", volumeMl: 946, price: 1699, compareAt: null, stock: 9, rating: 4.9, reviews: 154, bestseller: true, isNew: false, primaryImg: null, colors: 5 },
+  { id: "stanley-aerolight-iceflow", brand: "Stanley", shortName_uk: "AeroLight IceFlow", name_uk: "AeroLight IceFlow Fast Flow 24oz", volume: "24oz", volumeMl: 710, price: 1999, compareAt: 2299, stock: 11, rating: 4.9, reviews: 22, bestseller: false, isNew: true, primaryImg: "img/IMG_2513.webp", colors: 1 },
+  { id: "stanley-aerolight-transit", brand: "Stanley", shortName_uk: "AeroLight Transit", name_uk: "AeroLight Transit Bottle 16oz", volume: "16oz", volumeMl: 470, price: 1499, compareAt: null, stock: 14, rating: 4.8, reviews: 31, bestseller: false, isNew: true, primaryImg: "img/IMG_2499.webp", colors: 1 },
+  { id: "stanley-quencher-carrier", brand: "Stanley", shortName_uk: "Quencher Carrier", name_uk: "Quencher Carrier — сумка для термокружки", volume: "—", volumeMl: 0, price: 899, compareAt: 1099, stock: 22, rating: 4.7, reviews: 18, bestseller: false, isNew: true, primaryImg: "img/IMG_2504.webp", colors: 1 },
+];
+
+const BASE_BRAND = {
+  name: "DailyUA",
+  email: "hello@dailyua.com.ua",
+  phone: "+380 44 333 22 11",
+  whatsapp: "380443332211",
+  telegram: "dailyua",
+  viber: "380443332211",
+  freeShippingFrom: 1500,
+  bundleDiscount: 0.10,
+  bundleMinItems: 2,
+  legalEntity: "ФОП Шевченко О. М. · ЄДРПОУ 1234567890 · м. Київ, вул. Хрещатик, 1",
+};
+
+/* ===== Helpers ===== */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtUAH = n => new Intl.NumberFormat("uk-UA").format(n) + " ₴";
+const fmtDate = iso => { try { return new Intl.DateTimeFormat("uk-UA", {day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(new Date(iso)); } catch(e) { return iso; } };
+const lsGet = (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch(e) { return def; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e) { toast("Помилка збереження: " + e.message, "error"); return false; } };
+
+function toast(msg, kind) {
+  const t = document.createElement("div");
+  t.className = "toast" + (kind === "error" ? " error" : "");
+  t.textContent = msg;
+  $("#toast").appendChild(t);
+  setTimeout(() => t.remove(), 2900);
+}
+
+/* ===== Simple hash for password (not secure, just deters casual access) ===== */
+async function pwHash(s) {
+  const buf = new TextEncoder().encode(s + "::dailyua-salt-v1");
+  const h = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2,"0")).join("");
+}
+
+/* ===== Image storage (base64 in localStorage) ===== */
+function imgStore() { return lsGet(KEYS.IMAGES, {}); }
+function saveImage(name, base64) {
+  const all = imgStore();
+  all[name] = { data: base64, addedAt: Date.now() };
+  return lsSet(KEYS.IMAGES, all);
+}
+function deleteImage(name) {
+  const all = imgStore();
+  delete all[name];
+  return lsSet(KEYS.IMAGES, all);
+}
+function getImage(name) {
+  const all = imgStore();
+  return all[name] ? all[name].data : null;
+}
+function listImages() {
+  return Object.entries(imgStore()).map(([name, v]) => ({ name, data: v.data, addedAt: v.addedAt }));
+}
+
+/* ===== Resolve image URL — handles both base64 stored and original "img/..." paths ===== */
+function resolveImg(src) {
+  if (!src) return "";
+  if (src.startsWith("data:")) return src;
+  if (src.startsWith("img/")) {
+    // First check if user uploaded a replacement with same name
+    const stored = getImage(src);
+    if (stored) return stored;
+    // Otherwise — return as relative path (works when admin.html is alongside index.html)
+    return src;
+  }
+  // Try as image name in store
+  const stored = getImage(src);
+  return stored || src;
+}
+
+/* ===== Image optimization — resize + compress on upload ===== */
+async function optimizeImage(file, maxDim = 1024, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        // Try webp first, fallback to jpeg
+        let dataUrl;
+        try { dataUrl = canvas.toDataURL("image/webp", quality); } catch(e) { dataUrl = canvas.toDataURL("image/jpeg", quality); }
+        if (dataUrl.startsWith("data:image/png")) dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve({ dataUrl, width: w, height: h, size: dataUrl.length });
+      };
+      img.onerror = () => reject(new Error("Image load failed"));
+      img.src = fr.result;
+    };
+    fr.onerror = () => reject(new Error("File read failed"));
+    fr.readAsDataURL(file);
+  });
+}
+
+/* ===== Confirm dialog (replace native confirm) ===== */
+function confirmDialog(msg, dangerLabel = "Видалити") {
+  return new Promise(resolve => {
+    const m = document.createElement("div");
+    m.className = "modal-backdrop show";
+    m.innerHTML = `<div class="modal" style="max-width:420px">
+      <div class="modal__head"><h3 class="modal__title">Підтвердження</h3></div>
+      <div class="modal__body"><p style="margin:0">${esc(msg)}</p></div>
+      <div class="modal__foot">
+        <button class="btn btn-secondary" data-act="cancel">Скасувати</button>
+        <button class="btn btn-danger" data-act="ok">${esc(dangerLabel)}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(m);
+    m.addEventListener("click", e => {
+      if (e.target === m) { m.remove(); resolve(false); return; }
+      const a = e.target.closest("[data-act]");
+      if (a) { m.remove(); resolve(a.dataset.act === "ok"); }
+    });
+  });
+}
+
+/* =========================================================
+   STATE — what admin has overridden vs base
+   ========================================================= */
+let STATE = {
+  // derived list (base + overrides applied)
+  products: [],
+  // raw overrides
+  overrides: { edits: [], add: [], remove: [], disabled: [] },
+  brand: {},
+  banner: { disabled: false, text_uk: "", text_pl: "", text_en: "" },
+  email: {},
+};
+
+function loadState() {
+  STATE.overrides = lsGet(KEYS.PRODUCTS, { edits: [], add: [], remove: [], disabled: [] });
+  STATE.brand = lsGet(KEYS.BRAND, {});
+  STATE.banner = lsGet(KEYS.BANNER, { disabled: false, text_uk: "", text_pl: "", text_en: "" });
+  STATE.email = lsGet(KEYS.EMAIL, {});
+  rebuildProducts();
+}
+function saveOverrides() {
+  lsSet(KEYS.PRODUCTS, STATE.overrides);
+  rebuildProducts();
+}
+function rebuildProducts() {
+  const out = BASE_PRODUCTS.map(p => ({...p}));
+  // Apply edits
+  (STATE.overrides.edits || []).forEach(e => {
+    const i = out.findIndex(p => p.id === e.id);
+    if (i >= 0) Object.assign(out[i], e);
+  });
+  // Append new products from admin
+  (STATE.overrides.add || []).forEach(p => {
+    if (!out.find(x => x.id === p.id)) out.push(p);
+  });
+  // Remove
+  (STATE.overrides.remove || []).forEach(id => {
+    const i = out.findIndex(p => p.id === id);
+    if (i >= 0) out.splice(i, 1);
+  });
+  // Disabled flag
+  out.forEach(p => { p._disabled = (STATE.overrides.disabled || []).includes(p.id); });
+  STATE.products = out;
+}
+
+function setProductEdit(id, partial) {
+  const idx = (STATE.overrides.edits || []).findIndex(e => e.id === id);
+  if (idx >= 0) {
+    Object.assign(STATE.overrides.edits[idx], partial);
+  } else {
+    STATE.overrides.edits = STATE.overrides.edits || [];
+    STATE.overrides.edits.push({ id, ...partial });
+  }
+  saveOverrides();
+}
+function toggleDisabled(id) {
+  STATE.overrides.disabled = STATE.overrides.disabled || [];
+  const i = STATE.overrides.disabled.indexOf(id);
+  if (i >= 0) STATE.overrides.disabled.splice(i, 1);
+  else STATE.overrides.disabled.push(id);
+  saveOverrides();
+}
+
+/* =========================================================
+   ROUTING + UI
+   ========================================================= */
+const ROUTES = {
+  dashboard: { title: "Панель", icon: "M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z" },
+  products:  { title: "Товари", icon: "M21 9V7a2 2 0 0 0-2-2h-4l-2-2h-4L7 5H3a2 2 0 0 0-2 2v2m20 0H1m20 0v8a4 4 0 0 1-4 4H5a4 4 0 0 1-4-4V9" },
+  orders:    { title: "Замовлення", icon: "M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" },
+  reviews:   { title: "Відгуки", icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" },
+  banners:   { title: "Банери та промо", icon: "M3 3h18v6H3V3Zm0 12h18v6H3v-6Z" },
+  brand:     { title: "Контакти / Brand", icon: "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92Z" },
+  seo:       { title: "SEO та Open Graph", icon: "M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" },
+  images:    { title: "Медіатека", icon: "M21 19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14ZM8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM21 15l-5-5L5 21" },
+  analytics: { title: "Аналітика", icon: "M3 3v18h18M7 14l4-4 4 4 6-6" },
+  export:    { title: "Експорт у код", icon: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" },
+  backup:    { title: "Бекап / Відновлення", icon: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" },
+};
+
+let CURRENT_ROUTE = "dashboard";
+
+function navigate(route) {
+  CURRENT_ROUTE = route;
+  if (location.hash !== "#" + route) location.hash = "#" + route;
+  renderApp();
+  $("#sidebar")?.classList.remove("open");
+  $("#backdrop")?.classList.remove("show");
+}
+window.addEventListener("hashchange", () => {
+  const r = location.hash.slice(1) || "dashboard";
+  if (ROUTES[r] && r !== CURRENT_ROUTE) { CURRENT_ROUTE = r; renderApp(); }
+});
+
+/* ===== Main app render ===== */
+async function renderApp() {
+  if (!(await isValidSession())) {
+    sessionStorage.removeItem(KEYS.AUTH);
+    renderLogin();
+    return;
+  }
+  loadState();
+  document.body.innerHTML = `
+    <div class="shell">
+      ${renderSidebar()}
+      <div class="backdrop" id="backdrop"></div>
+      <main class="main">
+        ${renderTopbar()}
+        <section class="content" id="content">${renderContent()}</section>
+      </main>
+    </div>
+    <div id="toast"></div>
+  `;
+  $("#backdrop")?.addEventListener("click", () => { $("#sidebar").classList.remove("open"); $("#backdrop").classList.remove("show"); });
+  bindContent();
+}
+
+function renderSidebar() {
+  let nav = "";
+  const groups = [
+    { items: ["dashboard"] },
+    { label: "Каталог", items: ["products", "orders", "reviews", "banners", "images"] },
+    { label: "Налаштування", items: ["brand", "seo", "analytics"] },
+    { label: "Технічне", items: ["export", "backup"] },
+  ];
+  groups.forEach(g => {
+    if (g.label) nav += `<div class="nav-section">${g.label}</div>`;
+    g.items.forEach(k => {
+      const r = ROUTES[k];
+      nav += `<button type="button" class="nav-item ${k === CURRENT_ROUTE ? 'active' : ''}" data-go="${k}">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="${r.icon}"/></svg>
+        <span>${esc(r.title)}</span>
+      </button>`;
+    });
+  });
+  return `<aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand">
+      <span class="sidebar__logo">D</span>
+      <div class="sidebar__name">DailyUA<small>admin</small></div>
+    </div>
+    <nav>${nav}</nav>
+    <div class="sidebar__footer">
+      <button type="button" class="nav-item" id="logout">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        <span>Вийти</span>
+      </button>
+      <div class="meta">v1.0 · localStorage mode</div>
+    </div>
+  </aside>`;
+}
+
+function renderTopbar() {
+  return `<header class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button type="button" class="btn-ghost menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div class="topbar__title">${esc(ROUTES[CURRENT_ROUTE].title)}</div>
+    </div>
+    <div class="topbar__actions">
+      <a href="index.html" target="_blank" class="btn btn-secondary btn-sm" title="Відкрити магазин у новій вкладці">↗ Відкрити магазин</a>
+    </div>
+  </header>`;
+}
+
+function renderContent() {
+  switch (CURRENT_ROUTE) {
+    case "dashboard": return renderDashboard();
+    case "products":  return renderProducts();
+    case "orders":    return renderOrders();
+    case "reviews":   return renderReviews();
+    case "banners":   return renderBanners();
+    case "brand":     return renderBrand();
+    case "seo":       return renderSeo();
+    case "images":    return renderImages();
+    case "analytics": return renderAnalytics();
+    case "export":    return renderExport();
+    case "backup":    return renderBackup();
+    default: return "";
+  }
+}
+
+function bindContent() {
+  $$(".nav-item[data-go]").forEach(el => el.addEventListener("click", () => navigate(el.dataset.go)));
+  $("#logout")?.addEventListener("click", () => { sessionStorage.removeItem(KEYS.AUTH); renderApp(); });
+  $("#menuBtn")?.addEventListener("click", () => { $("#sidebar").classList.add("open"); $("#backdrop").classList.add("show"); });
+  switch (CURRENT_ROUTE) {
+    case "dashboard": bindDashboard(); break;
+    case "products":  bindProducts(); break;
+    case "orders":    bindOrders(); break;
+    case "reviews":   bindReviews(); break;
+    case "banners":   bindBanners(); break;
+    case "brand":     bindBrand(); break;
+    case "seo":       bindSeo(); break;
+    case "images":    bindImages(); break;
+    case "export":    bindExport(); break;
+    case "backup":    bindBackup(); break;
+  }
+}
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+async function renderLogin() {
+  // First-time setup: ensure password exists
+  if (!localStorage.getItem(KEYS.PASSWORD)) {
+    const h = await pwHash(DEFAULT_PASSWORD);
+    localStorage.setItem(KEYS.PASSWORD, h);
+  }
+  document.body.innerHTML = `
+    <div class="login">
+      <div class="login__card">
+        <div class="login__logo">D</div>
+        <h1 class="login__title">DailyUA Admin</h1>
+        <p class="login__sub">Вхід для адміністратора</p>
+        <form id="loginForm">
+          <label class="field">
+            <span class="field__label">Пароль</span>
+            <input type="password" id="pw" autocomplete="current-password" autofocus required>
+          </label>
+          <button type="submit" class="btn btn-primary btn-block">Увійти</button>
+          <div id="loginErr" style="color:var(--danger);font-size:12px;margin-top:8px;display:none"></div>
+        </form>
+        <div class="login__hint" id="loginHint">
+          <strong>Перший вхід?</strong> Пароль за замовчуванням ти отримав від адміна сайту. Зміни його у розділі <em>Brand → Безпека</em> одразу після першого входу.
+        </div>
+      </div>
+    </div>
+    <div id="toast"></div>
+  `;
+  $("#loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    /* === Brute-force lockout: 5 attempts → 15 min cooldown === */
+    const LOCKOUT_KEY = "dua_admin_lockout";
+    const ATTEMPTS_KEY = "dua_admin_attempts";
+    const lockoutUntil = Number(localStorage.getItem(LOCKOUT_KEY) || 0);
+    if (lockoutUntil > Date.now()) {
+      const minsLeft = Math.ceil((lockoutUntil - Date.now()) / 60000);
+      $("#loginErr").style.display = "block";
+      $("#loginErr").textContent = "Забагато спроб. Спробуй знову через " + minsLeft + " хв.";
+      return;
+    }
+
+    const pw = $("#pw").value;
+    const stored = localStorage.getItem(KEYS.PASSWORD);
+    const inputHash = await pwHash(pw);
+    if (inputHash === stored) {
+      localStorage.removeItem(ATTEMPTS_KEY);
+      localStorage.removeItem(LOCKOUT_KEY);
+      /* Signed session token: includes random nonce + sha256 of (nonce + pwHash).
+         If localStorage is tampered (attacker sets dua_admin_auth = "1"),
+         the token won't validate because they don't have pwHash. */
+      const nonce = crypto.getRandomValues(new Uint8Array(16));
+      const nonceHex = Array.from(nonce).map(b => b.toString(16).padStart(2,"0")).join("");
+      const sig = await pwHash(nonceHex + stored);
+      sessionStorage.setItem(KEYS.AUTH, nonceHex + "." + sig);
+      renderApp();
+    } else {
+      const attempts = Number(localStorage.getItem(ATTEMPTS_KEY) || 0) + 1;
+      localStorage.setItem(ATTEMPTS_KEY, String(attempts));
+      const remaining = 5 - attempts;
+      if (attempts >= 5) {
+        localStorage.setItem(LOCKOUT_KEY, String(Date.now() + 15 * 60 * 1000));
+        localStorage.removeItem(ATTEMPTS_KEY);
+        $("#loginErr").style.display = "block";
+        $("#loginErr").textContent = "Забагато спроб. Доступ заблоковано на 15 хвилин.";
+      } else {
+        $("#loginErr").style.display = "block";
+        $("#loginErr").textContent = "Невірний пароль" + (remaining <= 2 ? " · залишилось " + remaining + " спроб" : "");
+      }
+      $("#pw").value = "";
+    }
+  });
+}
+
+/* ===== Session validation — verifies the signed token, not just presence ===== */
+async function isValidSession() {
+  const token = sessionStorage.getItem(KEYS.AUTH);
+  if (!token || !token.includes(".")) return false;
+  const stored = localStorage.getItem(KEYS.PASSWORD);
+  if (!stored) return false;
+  const [nonceHex, sig] = token.split(".");
+  const expected = await pwHash(nonceHex + stored);
+  return sig === expected;
+}
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+function renderDashboard() {
+  const orders = lsGet(KEYS.ORDERS, []);
+  const newOrders = orders.filter(o => !o.status || o.status === "new").length;
+  const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
+  const products = STATE.products;
+  const active = products.filter(p => !p._disabled).length;
+  const lowStock = products.filter(p => !p._disabled && p.stock < 5 && p.stock > 0).length;
+  const allReviews = (function(){ try { const x = JSON.parse(localStorage.getItem("dua_reviews") || "[]"); return Array.isArray(x) ? x : []; } catch (e) { return []; } })();
+  const pendingReviews = allReviews.filter(r => !r.status || r.status === "pending").length;
+
+  return `
+    <div class="stats">
+      <div class="stat">
+        <div class="stat__label">Замовлення</div>
+        <div class="stat__value">${orders.length}</div>
+        <div class="stat__sub">${newOrders} нових</div>
+      </div>
+      <div class="stat">
+        <div class="stat__label">Виторг (всього)</div>
+        <div class="stat__value">${fmtUAH(totalRevenue).replace(" ₴","")}<span style="font-size:14px;color:var(--text-muted);font-weight:400"> ₴</span></div>
+        <div class="stat__sub">з ${orders.length} замовлень</div>
+      </div>
+      <div class="stat">
+        <div class="stat__label">Активні товари</div>
+        <div class="stat__value">${active}</div>
+        <div class="stat__sub">з ${products.length} у каталозі</div>
+      </div>
+      <div class="stat" ${pendingReviews > 0 ? 'style="cursor:pointer; outline: 2px solid var(--warning); outline-offset:-2px;"' : ''} ${pendingReviews > 0 ? 'data-go="reviews"' : ''}>
+        <div class="stat__label">Відгуки на модерації</div>
+        <div class="stat__value" style="color:${pendingReviews > 0 ? 'var(--warning)' : 'inherit'}">${pendingReviews}</div>
+        <div class="stat__sub">${allReviews.length} всього</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">Швидкі дії</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" data-go="products">📦 Керувати товарами</button>
+        <button class="btn btn-secondary" data-go="orders">📋 Переглянути замовлення</button>
+        ${pendingReviews > 0 ? `<button class="btn btn-secondary" data-go="reviews">⭐ Перевірити відгуки (${pendingReviews})</button>` : ""}
+        <button class="btn btn-secondary" data-go="banners">🎨 Налаштувати банер</button>
+        <button class="btn btn-secondary" data-go="export">⬇ Експорт змін</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">Останні замовлення</h2>
+      ${orders.length === 0
+        ? '<div class="empty"><div class="empty__title">Поки замовлень немає</div><p class="muted">Замовлення з\'являться тут після того як клієнти оформлять покупку через сайт.</p></div>'
+        : orders.slice(0, 5).map(o => renderOrderRow(o, true)).join("")
+      }
+      ${orders.length > 5 ? '<button class="btn btn-ghost btn-sm" data-go="orders" style="margin-top:8px">Дивитись усі ${orders.length} →</button>' : ''}
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">Зміни порівняно з базою</h2>
+      <div class="muted">Що ти змінив через адмінку (потребує експорту в код для остаточного збереження):</div>
+      <div style="margin-top:10px">
+        ${(STATE.overrides.edits||[]).length > 0 ? `<div>✏️ Відредаговано товарів: <strong>${STATE.overrides.edits.length}</strong></div>` : ''}
+        ${(STATE.overrides.add||[]).length > 0 ? `<div>➕ Додано нових товарів: <strong>${STATE.overrides.add.length}</strong></div>` : ''}
+        ${(STATE.overrides.remove||[]).length > 0 ? `<div>🗑 Видалено: <strong>${STATE.overrides.remove.length}</strong></div>` : ''}
+        ${(STATE.overrides.disabled||[]).length > 0 ? `<div>🚫 Вимкнено: <strong>${STATE.overrides.disabled.length}</strong></div>` : ''}
+        ${(STATE.overrides.edits||[]).length + (STATE.overrides.add||[]).length + (STATE.overrides.remove||[]).length + (STATE.overrides.disabled||[]).length === 0 ? '<div class="muted">Поки що змін немає.</div>' : `<button class="btn btn-primary btn-sm" data-go="export" style="margin-top:10px">Експортувати у код →</button>`}
+      </div>
+    </div>
+  `;
+}
+function bindDashboard() {
+  $$("[data-go]").forEach(el => el.addEventListener("click", () => navigate(el.dataset.go)));
+}
+
+function renderOrderRow(o, compact) {
+  const status = o.status || "new";
+  const sLabels = { new: "Нове", paid: "Оплачено", shipped: "Відправлено", done: "Завершено", cancel: "Скасовано" };
+  const itemsStr = (o.items || []).map(i => {
+    const p = STATE.products.find(x => x.id === i.id);
+    return (p ? p.shortName_uk : i.id) + " ×" + i.qty;
+  }).join(", ");
+  return `<div class="order-card" data-order="${esc(o.id)}">
+    <div class="order-card__head">
+      <div>
+        <div class="order-card__id">${esc(o.id)}</div>
+        <div class="order-card__meta">${fmtDate(o.createdAt)} · ${esc((o.shipping||{}).firstName || "")} ${esc((o.shipping||{}).lastName || "")}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="order-card__total">${fmtUAH(o.total || 0)}</div>
+        <span class="status-pill s-${status}">${sLabels[status]}</span>
+      </div>
+    </div>
+    ${compact ? `<div class="order-card__items">${esc(itemsStr)}</div>` : ''}
+  </div>`;
+}
+
+/* =========================================================
+   PRODUCTS
+   ========================================================= */
+let PRODUCTS_FILTER = { search: "", brand: "", status: "" };
+
+function renderProducts() {
+  const brands = [...new Set(BASE_PRODUCTS.map(p => p.brand))];
+  let list = STATE.products;
+  if (PRODUCTS_FILTER.search) {
+    const q = PRODUCTS_FILTER.search.toLowerCase();
+    list = list.filter(p => (p.name_uk + " " + p.id + " " + p.brand + " " + (p.shortName_uk||"")).toLowerCase().includes(q));
+  }
+  if (PRODUCTS_FILTER.brand) list = list.filter(p => p.brand === PRODUCTS_FILTER.brand);
+  if (PRODUCTS_FILTER.status === "active") list = list.filter(p => !p._disabled);
+  if (PRODUCTS_FILTER.status === "off") list = list.filter(p => p._disabled);
+  if (PRODUCTS_FILTER.status === "low") list = list.filter(p => p.stock < 5 && p.stock > 0);
+
+  return `
+    <div class="toolbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" id="searchInp" placeholder="Шукати товари…" value="${esc(PRODUCTS_FILTER.search)}">
+      </div>
+      <select id="brandFilter">
+        <option value="">Всі бренди</option>
+        ${brands.map(b => `<option value="${esc(b)}" ${PRODUCTS_FILTER.brand===b?"selected":""}>${esc(b)}</option>`).join("")}
+      </select>
+      <select id="statusFilter">
+        <option value="">Усі</option>
+        <option value="active" ${PRODUCTS_FILTER.status==="active"?"selected":""}>Активні</option>
+        <option value="off" ${PRODUCTS_FILTER.status==="off"?"selected":""}>Вимкнені</option>
+        <option value="low" ${PRODUCTS_FILTER.status==="low"?"selected":""}>Низький залишок</option>
+      </select>
+      <button class="btn btn-primary" id="addProductBtn">+ Додати товар</button>
+    </div>
+
+    <div class="products-table">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Назва</th>
+            <th>Ціна</th>
+            <th>Залишок</th>
+            <th>Статус</th>
+            <th>Активний</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map(p => `
+            <tr data-pid="${esc(p.id)}">
+              <td>${p.primaryImg ? `<img src="${esc(resolveImg(p.primaryImg))}" class="row-thumb" alt="" onerror="this.outerHTML='<div class=row-thumb-empty>—</div>'">` : '<div class="row-thumb-empty">—</div>'}</td>
+              <td>
+                <div class="row-name">${esc(p.shortName_uk || p.name_uk)}</div>
+                <div class="row-name__sub">${esc(p.brand)} · ${esc(p.volume || "")} · ${p.colors || 0} кольорів</div>
+              </td>
+              <td>
+                <div class="row-price">${fmtUAH(p.price)}</div>
+                ${p.compareAt ? `<span class="row-price__compare">${fmtUAH(p.compareAt)}</span>` : ""}
+              </td>
+              <td>
+                <span style="color:${p.stock < 5 ? 'var(--warning)' : 'inherit'};font-weight:${p.stock < 5 ? 600 : 400}">
+                  ${p.stock} шт.
+                </span>
+              </td>
+              <td>
+                ${p.bestseller ? '<span class="badge badge-best">Хіт</span> ' : ''}
+                ${p.isNew ? '<span class="badge badge-new">New</span> ' : ''}
+                ${p.compareAt ? '<span class="badge badge-sale">Sale</span> ' : ''}
+                ${p._disabled ? '<span class="badge badge-off">Вимкнено</span>' : ''}
+              </td>
+              <td>
+                <label class="toggle">
+                  <input type="checkbox" data-toggle="${esc(p.id)}" ${!p._disabled ? "checked" : ""}>
+                  <span class="toggle__slider"></span>
+                </label>
+              </td>
+              <td>
+                <div class="row-actions">
+                  <button class="icon-btn" data-edit="${esc(p.id)}" title="Редагувати">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5Z"/></svg>
+                  </button>
+                  ${(STATE.overrides.add||[]).find(x => x.id === p.id) ? `<button class="icon-btn danger" data-remove="${esc(p.id)}" title="Видалити (доданий)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14Z"/></svg></button>` : ""}
+                </div>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+      ${list.length === 0 ? '<div class="empty"><div class="empty__title">Нічого не знайдено</div></div>' : ''}
+    </div>
+  `;
+}
+function bindProducts() {
+  $("#searchInp")?.addEventListener("input", e => { PRODUCTS_FILTER.search = e.target.value; renderApp(); $("#searchInp").focus(); });
+  $("#brandFilter")?.addEventListener("change", e => { PRODUCTS_FILTER.brand = e.target.value; renderApp(); });
+  $("#statusFilter")?.addEventListener("change", e => { PRODUCTS_FILTER.status = e.target.value; renderApp(); });
+  $("#addProductBtn")?.addEventListener("click", () => openProductModal(null));
+  $$("[data-edit]").forEach(b => b.addEventListener("click", () => openProductModal(b.dataset.edit)));
+  $$("[data-toggle]").forEach(b => b.addEventListener("change", () => { toggleDisabled(b.dataset.toggle); renderApp(); toast(b.checked ? "Товар увімкнено" : "Товар вимкнено"); }));
+  $$("[data-remove]").forEach(b => b.addEventListener("click", async () => {
+    if (await confirmDialog("Видалити цей доданий товар?")) {
+      STATE.overrides.add = (STATE.overrides.add || []).filter(x => x.id !== b.dataset.remove);
+      saveOverrides();
+      renderApp();
+      toast("Товар видалено");
+    }
+  }));
+}
+
+function openProductModal(id) {
+  const p = id ? STATE.products.find(x => x.id === id) : {
+    id: "new-" + Date.now().toString(36),
+    brand: "Stanley", shortName_uk: "", name_uk: "",
+    volume: "", volumeMl: 0, price: 0, compareAt: null,
+    stock: 0, rating: 5.0, reviews: 0,
+    bestseller: false, isNew: true,
+    primaryImg: null, colors: 1, _new: true,
+  };
+  const isNew = !id || p._new;
+
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop show";
+  modal.innerHTML = `
+    <div class="modal">
+      <div class="modal__head">
+        <h3 class="modal__title">${isNew ? "Новий товар" : "Редагувати: " + esc(p.shortName_uk || p.name_uk)}</h3>
+        <button class="modal__close" data-act="close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 6-12 12M6 6l12 12"/></svg></button>
+      </div>
+      <div class="modal__body">
+        <div class="tabs">
+          <button class="tab active" data-tab="basic">Основне</button>
+          <button class="tab" data-tab="price">Ціни / Залишок</button>
+          <button class="tab" data-tab="image">Фото</button>
+          <button class="tab" data-tab="badges">Статуси</button>
+        </div>
+
+        <div data-tabp="basic">
+          <div class="row">
+            <label class="field">
+              <span class="field__label">Бренд</span>
+              <select id="m-brand">
+                <option value="Stanley" ${p.brand==="Stanley"?"selected":""}>Stanley</option>
+                <option value="Owala" ${p.brand==="Owala"?"selected":""}>Owala</option>
+                <option value="Hydro Flask" ${p.brand==="Hydro Flask"?"selected":""}>Hydro Flask</option>
+                <option value="Custom" ${!["Stanley","Owala","Hydro Flask"].includes(p.brand)?"selected":""}>Інший…</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field__label">ID товару (slug)</span>
+              <input id="m-id" value="${esc(p.id)}" ${isNew?"":"readonly"} placeholder="stanley-quencher-30">
+            </label>
+          </div>
+          <label class="field">
+            <span class="field__label">Коротка назва (для карток)</span>
+            <input id="m-shortName" value="${esc(p.shortName_uk || "")}" placeholder="Quencher 30oz">
+          </label>
+          <label class="field">
+            <span class="field__label">Повна назва</span>
+            <input id="m-name" value="${esc(p.name_uk || "")}" placeholder="Stanley Quencher H2.0 FlowState 30oz">
+          </label>
+          <div class="row3">
+            <label class="field">
+              <span class="field__label">Обʼєм</span>
+              <input id="m-volume" value="${esc(p.volume || "")}" placeholder="30oz">
+            </label>
+            <label class="field">
+              <span class="field__label">Обʼєм у мл</span>
+              <input id="m-volumeMl" type="number" min="0" value="${p.volumeMl || 0}">
+            </label>
+            <label class="field">
+              <span class="field__label">Кількість кольорів</span>
+              <input id="m-colors" type="number" min="1" value="${p.colors || 1}">
+            </label>
+          </div>
+          <label class="field">
+            <span class="field__label">Опис (UA, основне для всіх мов)</span>
+            <textarea id="m-desc">${esc(p.desc_uk || "")}</textarea>
+          </label>
+        </div>
+
+        <div data-tabp="price" hidden>
+          <div class="row">
+            <label class="field">
+              <span class="field__label">Ціна, ₴</span>
+              <input id="m-price" type="number" min="0" step="1" value="${p.price || 0}">
+            </label>
+            <label class="field">
+              <span class="field__label">Стара ціна (для перекреслення), ₴</span>
+              <input id="m-compareAt" type="number" min="0" step="1" value="${p.compareAt || ""}" placeholder="залишити порожнім якщо без знижки">
+            </label>
+          </div>
+          <div class="row">
+            <label class="field">
+              <span class="field__label">Залишок на складі (шт.)</span>
+              <input id="m-stock" type="number" min="0" value="${p.stock || 0}">
+            </label>
+            <label class="field">
+              <span class="field__label">Середній рейтинг (1-5)</span>
+              <input id="m-rating" type="number" min="0" max="5" step="0.1" value="${p.rating || 5.0}">
+            </label>
+          </div>
+          <label class="field">
+            <span class="field__label">Кількість відгуків (відображається на картці)</span>
+            <input id="m-reviews" type="number" min="0" value="${p.reviews || 0}">
+          </label>
+          <p class="muted">Знижка автоматично рахується з різниці звичайної і старої ціни.</p>
+        </div>
+
+        <div data-tabp="image" hidden>
+          <label class="field">
+            <span class="field__label">Шлях до головного фото</span>
+            <input id="m-primaryImg" value="${esc(p.primaryImg || "")}" placeholder="img/q40-cream-front.webp або повний URL">
+          </label>
+          <p class="muted">Завантажуй фото у розділі <strong>Медіатека</strong> та копіюй імʼя сюди. Для існуючих товарів використовуй шляхи з папки <code class="kbd">img/</code>.</p>
+          ${p.primaryImg ? `<img src="${esc(resolveImg(p.primaryImg))}" style="max-width:200px;margin-top:12px;border-radius:var(--r-md);background:var(--surface-2)" onerror="this.style.display='none'">` : ""}
+        </div>
+
+        <div data-tabp="badges" hidden>
+          <label style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface-2);border-radius:var(--r-md);margin-bottom:8px">
+            <input type="checkbox" id="m-bestseller" ${p.bestseller?"checked":""}>
+            <div><strong>Бестселер</strong> <span class="muted">— показує бейдж «ХІТ» на картці</span></div>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface-2);border-radius:var(--r-md);margin-bottom:8px">
+            <input type="checkbox" id="m-isNew" ${p.isNew?"checked":""}>
+            <div><strong>Новинка</strong> <span class="muted">— показує бейдж «НОВИНКА»</span></div>
+          </label>
+          ${!isNew ? `
+          <label style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--danger-soft);border-radius:var(--r-md);margin-top:16px">
+            <input type="checkbox" id="m-disabled" ${p._disabled?"checked":""}>
+            <div><strong style="color:var(--danger)">Вимкнути товар</strong> <span class="muted">— приховати з каталогу (не видаляє)</span></div>
+          </label>
+          ` : ""}
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn-secondary" data-act="close">Скасувати</button>
+        <button class="btn btn-primary" data-act="save">${isNew ? "Створити товар" : "Зберегти зміни"}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Tab switching
+  modal.querySelectorAll(".tab").forEach(t => {
+    t.addEventListener("click", () => {
+      modal.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+      t.classList.add("active");
+      modal.querySelectorAll("[data-tabp]").forEach(x => x.hidden = x.dataset.tabp !== t.dataset.tab);
+    });
+  });
+  modal.querySelectorAll('[data-act="close"]').forEach(b => b.addEventListener("click", () => modal.remove()));
+  modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
+  modal.querySelector('[data-act="save"]').addEventListener("click", () => {
+    const newP = {
+      id: $("#m-id").value.trim(),
+      brand: $("#m-brand").value,
+      shortName_uk: $("#m-shortName").value.trim(),
+      name_uk: $("#m-name").value.trim(),
+      volume: $("#m-volume").value.trim(),
+      volumeMl: parseInt($("#m-volumeMl").value) || 0,
+      colors: parseInt($("#m-colors").value) || 1,
+      desc_uk: $("#m-desc").value.trim(),
+      price: parseInt($("#m-price").value) || 0,
+      compareAt: $("#m-compareAt").value ? parseInt($("#m-compareAt").value) : null,
+      stock: parseInt($("#m-stock").value) || 0,
+      rating: parseFloat($("#m-rating").value) || 5.0,
+      reviews: parseInt($("#m-reviews").value) || 0,
+      primaryImg: $("#m-primaryImg").value.trim() || null,
+      bestseller: $("#m-bestseller").checked,
+      isNew: $("#m-isNew").checked,
+    };
+    if (!newP.id) { toast("ID товару обов'язковий", "error"); return; }
+    if (!newP.shortName_uk && !newP.name_uk) { toast("Назва обов'язкова", "error"); return; }
+    if (newP.price <= 0) { toast("Ціна має бути > 0", "error"); return; }
+
+    if (isNew) {
+      // Add new
+      STATE.overrides.add = STATE.overrides.add || [];
+      if (STATE.overrides.add.find(x => x.id === newP.id) || BASE_PRODUCTS.find(x => x.id === newP.id)) {
+        toast("ID '" + newP.id + "' вже існує", "error"); return;
+      }
+      STATE.overrides.add.push(newP);
+    } else {
+      // Edit existing — diff against base
+      const base = BASE_PRODUCTS.find(x => x.id === newP.id) || (STATE.overrides.add || []).find(x => x.id === newP.id);
+      if (base) {
+        // For added products, just update them in 'add'
+        const inAdd = (STATE.overrides.add || []).find(x => x.id === newP.id);
+        if (inAdd) {
+          Object.assign(inAdd, newP);
+        } else {
+          // Edit base — store partial
+          setProductEdit(newP.id, newP);
+        }
+      }
+      // Disabled toggle from this modal
+      const dchk = $("#m-disabled");
+      if (dchk) {
+        const want = dchk.checked;
+        const has = (STATE.overrides.disabled || []).includes(newP.id);
+        if (want !== has) toggleDisabled(newP.id);
+      }
+    }
+    saveOverrides();
+    modal.remove();
+    renderApp();
+    toast(isNew ? "Товар створено" : "Зміни збережено");
+  });
+}
+
+/* =========================================================
+   ORDERS
+   ========================================================= */
+let ORDER_STATUS_FILTER = "";
+
+function renderOrders() {
+  let orders = lsGet(KEYS.ORDERS, []);
+  if (ORDER_STATUS_FILTER) orders = orders.filter(o => (o.status || "new") === ORDER_STATUS_FILTER);
+
+  return `
+    <div class="toolbar">
+      <select id="orderStatus">
+        <option value="">Усі статуси</option>
+        <option value="new" ${ORDER_STATUS_FILTER==="new"?"selected":""}>Нові</option>
+        <option value="paid" ${ORDER_STATUS_FILTER==="paid"?"selected":""}>Оплачені</option>
+        <option value="shipped" ${ORDER_STATUS_FILTER==="shipped"?"selected":""}>Відправлені</option>
+        <option value="done" ${ORDER_STATUS_FILTER==="done"?"selected":""}>Завершені</option>
+        <option value="cancel" ${ORDER_STATUS_FILTER==="cancel"?"selected":""}>Скасовані</option>
+      </select>
+      <div class="muted">${orders.length} замовлень</div>
+    </div>
+
+    ${orders.length === 0
+      ? '<div class="card"><div class="empty"><div class="empty__title">Замовлень за цим фільтром немає</div><p class="muted">Замовлення з\'являться тут після оформлення на сайті. Текст замовлення також автоматично відкривається в Telegram.</p></div></div>'
+      : orders.map(o => renderOrderFull(o)).join("")
+    }
+  `;
+}
+
+function renderOrderFull(o) {
+  const status = o.status || "new";
+  const sLabels = { new: "Нове", paid: "Оплачено", shipped: "Відправлено", done: "Завершено", cancel: "Скасовано" };
+  const items = (o.items || []).map(i => {
+    const p = STATE.products.find(x => x.id === i.id);
+    return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px"><span>${esc(p ? p.shortName_uk : i.id)} ${i.color ? '· '+esc(i.color) : ''} ×${i.qty}</span><span style="color:var(--text-muted)">${p ? fmtUAH(p.price * i.qty) : "?"}</span></div>`;
+  }).join("");
+  const ship = o.shipping || {}, contact = o.contact || {};
+  const shipNames = { "np-branch": "НП відділення", "np-locker": "НП поштомат", "np-courier": "НП курʼєр", "ukrposhta": "Укрпошта" };
+  const payNames = { "privat24": "Privat24", "mono": "Mono Pay", "liqpay": "LiqPay", "apple": "Apple Pay", "google": "Google Pay", "cod": "Накладений платіж" };
+  return `<div class="card" data-order="${esc(o.id)}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:8px">
+      <div>
+        <div class="order-card__id">${esc(o.id)}</div>
+        <div class="order-card__meta">${fmtDate(o.createdAt)}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-weight:700;font-size:18px">${fmtUAH(o.total || 0)}</div>
+        <div style="margin-top:4px"><span class="status-pill s-${status}">${sLabels[status]}</span></div>
+      </div>
+    </div>
+
+    <div class="row" style="font-size:12px;margin-top:6px">
+      <div>
+        <div class="muted" style="font-weight:600;margin-bottom:4px">Контакт</div>
+        <div>${esc(ship.firstName || "")} ${esc(ship.lastName || "")}</div>
+        <div style="color:var(--text-muted)">📞 ${esc(contact.phone || "—")}</div>
+        <div style="color:var(--text-muted)">✉️ ${esc(contact.email || "—")}</div>
+      </div>
+      <div>
+        <div class="muted" style="font-weight:600;margin-bottom:4px">Доставка</div>
+        <div>${esc(shipNames[ship.method] || ship.method || "—")}</div>
+        <div style="color:var(--text-muted)">${esc(ship.city || "—")}, ${esc(ship.locker || "—")}</div>
+        <div style="color:var(--text-muted)">Оплата: ${esc(payNames[o.payment] || o.payment || "—")}</div>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div>${items}</div>
+    <div style="display:flex;justify-content:space-between;font-weight:600;font-size:13px;margin-top:6px;padding-top:6px;border-top:1px solid var(--line)">
+      <span>Разом</span><span>${fmtUAH(o.total || 0)}</span>
+    </div>
+
+    <div class="hr"></div>
+
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <select data-status="${esc(o.id)}" style="padding:6px 10px;border:1px solid var(--line-strong);border-radius:6px;font-size:12px">
+        ${Object.entries(sLabels).map(([k,v]) => `<option value="${k}" ${status===k?"selected":""}>${v}</option>`).join("")}
+      </select>
+      <button class="btn btn-secondary btn-sm" data-tg="${esc(o.id)}">📤 Telegram повтор</button>
+      <button class="btn btn-secondary btn-sm" data-print="${esc(o.id)}">🖨 Друк</button>
+      <button class="btn btn-ghost btn-sm" data-delorder="${esc(o.id)}" style="color:var(--danger);margin-left:auto">Видалити</button>
+    </div>
+  </div>`;
+}
+
+function bindOrders() {
+  $("#orderStatus")?.addEventListener("change", e => { ORDER_STATUS_FILTER = e.target.value; renderApp(); });
+  $$("[data-status]").forEach(s => s.addEventListener("change", e => {
+    const orders = lsGet(KEYS.ORDERS, []);
+    const o = orders.find(x => x.id === s.dataset.status);
+    if (o) { o.status = e.target.value; lsSet(KEYS.ORDERS, orders); toast("Статус оновлено"); renderApp(); }
+  }));
+  $$("[data-delorder]").forEach(b => b.addEventListener("click", async () => {
+    if (!await confirmDialog("Видалити це замовлення з історії? Це не можна відмінити.")) return;
+    const orders = lsGet(KEYS.ORDERS, []).filter(x => x.id !== b.dataset.delorder);
+    lsSet(KEYS.ORDERS, orders);
+    renderApp();
+    toast("Замовлення видалено");
+  }));
+  $$("[data-tg]").forEach(b => b.addEventListener("click", () => {
+    const o = lsGet(KEYS.ORDERS, []).find(x => x.id === b.dataset.tg);
+    if (!o) return;
+    const tgUser = (STATE.brand.telegram || BASE_BRAND.telegram).replace(/^@/, "");
+    let text = "📋 Замовлення " + o.id + "\n";
+    (o.items||[]).forEach(it => { const p = STATE.products.find(p=>p.id===it.id); text += "• " + (p?p.shortName_uk:it.id) + " ×" + it.qty + "\n"; });
+    text += "\nРазом: " + fmtUAH(o.total) + "\n" + (o.shipping?.firstName||"") + " " + (o.shipping?.lastName||"") + "\n" + (o.contact?.phone||"");
+    window.open("https://t.me/" + tgUser + "?text=" + encodeURIComponent(text), "_blank");
+  }));
+  $$("[data-print]").forEach(b => b.addEventListener("click", () => {
+    const o = lsGet(KEYS.ORDERS, []).find(x => x.id === b.dataset.print);
+    if (!o) return;
+    const w = window.open("", "_blank");
+    w.document.write(`<html><head><title>${o.id}</title><style>body{font-family:sans-serif;padding:20px;max-width:600px;margin:auto}h1{font-size:18px}table{width:100%;border-collapse:collapse;margin-top:10px}td,th{border-bottom:1px solid #ccc;padding:6px;text-align:left}</style></head><body>
+      <h1>Замовлення ${o.id}</h1>
+      <p>${fmtDate(o.createdAt)}</p>
+      <h2>Контакт</h2>
+      <p>${esc((o.shipping||{}).firstName||"")} ${esc((o.shipping||{}).lastName||"")}<br>${esc((o.contact||{}).phone||"")}<br>${esc((o.contact||{}).email||"")}</p>
+      <h2>Доставка</h2>
+      <p>${esc((o.shipping||{}).city||"")}<br>${esc((o.shipping||{}).locker||"")}</p>
+      <h2>Товари</h2>
+      <table><thead><tr><th>Товар</th><th>К-сть</th><th>Сума</th></tr></thead><tbody>
+        ${(o.items||[]).map(i => { const p = STATE.products.find(p=>p.id===i.id); return `<tr><td>${esc(p?p.shortName_uk:i.id)}</td><td>${i.qty}</td><td>${p?fmtUAH(p.price*i.qty):"?"}</td></tr>`; }).join("")}
+      </tbody></table>
+      <h2 style="text-align:right;margin-top:20px">РАЗОМ: ${fmtUAH(o.total)}</h2>
+      <script>window.print()<\/script>
+    </body></html>`);
+    w.document.close();
+  }));
+}
+
+/* =========================================================
+   REVIEWS — Модерація користувацьких відгуків
+   ========================================================= */
+function getReviewsRaw() {
+  try {
+    const raw = JSON.parse(localStorage.getItem("dua_reviews") || "[]");
+    return Array.isArray(raw) ? raw : [];
+  } catch (e) { return []; }
+}
+function saveReviewsRaw(list) {
+  try { localStorage.setItem("dua_reviews", JSON.stringify(list)); } catch (e) {}
+}
+function approveReview(id) {
+  const list = getReviewsRaw();
+  const idx = list.findIndex(r => r && r.id === id);
+  if (idx < 0) return;
+  list[idx].status = "approved";
+  saveReviewsRaw(list);
+  toast("Відгук опубліковано");
+  renderApp();
+}
+function rejectReview(id) {
+  const list = getReviewsRaw();
+  const idx = list.findIndex(r => r && r.id === id);
+  if (idx < 0) return;
+  list[idx].status = "rejected";
+  saveReviewsRaw(list);
+  toast("Відгук відхилено");
+  renderApp();
+}
+function deleteReview(id) {
+  if (!confirm("Видалити відгук назавжди?")) return;
+  const list = getReviewsRaw().filter(r => !r || r.id !== id);
+  saveReviewsRaw(list);
+  toast("Відгук видалено");
+  renderApp();
+}
+function renderReviewStars(rating) {
+  let html = '<span style="color:#F5B400; letter-spacing:1px;">';
+  for (let i = 1; i <= 5; i++) html += i <= rating ? "★" : "☆";
+  html += "</span>";
+  return html;
+}
+function renderReviews() {
+  const all = getReviewsRaw();
+  const pending = all.filter(r => !r.status || r.status === "pending");
+  const approved = all.filter(r => r.status === "approved");
+  const rejected = all.filter(r => r.status === "rejected");
+
+  const renderCard = (r, withActions) => {
+    const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleString("uk-UA", { dateStyle: "short", timeStyle: "short" }) : "—";
+    const statusBadge = r.status === "approved"
+      ? '<span style="background:var(--success-soft); color:var(--success); padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">Опубліковано</span>'
+      : r.status === "rejected"
+      ? '<span style="background:var(--danger-soft); color:var(--danger); padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">Відхилено</span>'
+      : '<span style="background:#FEF3C7; color:#92400E; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">Очікує</span>';
+    const actions = withActions ? `
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        ${r.status !== "approved" ? `<button type="button" class="btn btn-primary btn-sm" data-rev-approve="${esc(r.id)}">✓ Опублікувати</button>` : ""}
+        ${r.status !== "rejected" ? `<button type="button" class="btn btn-secondary btn-sm" data-rev-reject="${esc(r.id)}">Відхилити</button>` : ""}
+        <button type="button" class="btn btn-danger btn-sm" data-rev-delete="${esc(r.id)}" style="margin-left:auto;">🗑 Видалити</button>
+      </div>` : `<div style="margin-top:12px;"><button type="button" class="btn btn-danger btn-sm" data-rev-delete="${esc(r.id)}">🗑 Видалити</button></div>`;
+    return `
+      <div class="card" style="padding: 16px; margin-bottom: 12px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:8px;">
+          <div>
+            <div style="font-weight:600; font-size:15px;">${esc(r.name || "(без імені)")}</div>
+            <div style="font-size:12px; color:var(--text-muted);">${esc(r.email || "")} · ${esc(dateStr)} · ${esc((r.lang || "uk").toUpperCase())}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:18px;">${renderReviewStars(Number(r.rating) || 5)}</div>
+            <div style="margin-top:6px;">${statusBadge}</div>
+          </div>
+        </div>
+        <p style="margin: 8px 0 0; font-size:14px; line-height:1.55; white-space:pre-wrap;">${esc(r.text || "")}</p>
+        ${actions}
+      </div>`;
+  };
+
+  const summary = `
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:18px;">
+      <div class="card" style="padding:14px;">
+        <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Очікують модерації</div>
+        <div style="font-size:28px; font-weight:700; margin-top:4px;">${pending.length}</div>
+      </div>
+      <div class="card" style="padding:14px;">
+        <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Опубліковано</div>
+        <div style="font-size:28px; font-weight:700; margin-top:4px; color:var(--success);">${approved.length}</div>
+      </div>
+      <div class="card" style="padding:14px;">
+        <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Відхилено</div>
+        <div style="font-size:28px; font-weight:700; margin-top:4px; color:var(--text-muted);">${rejected.length}</div>
+      </div>
+    </div>`;
+
+  const pendingHtml = pending.length === 0
+    ? `<div style="padding: 24px; background: var(--surface-2); border-radius: var(--r-md); text-align: center; color: var(--text-muted);">Нових відгуків на модерацію немає.</div>`
+    : pending.map(r => renderCard(r, true)).join("");
+
+  const approvedHtml = approved.length === 0
+    ? `<div style="padding: 16px; color: var(--text-muted); font-size: 13px;">Ще немає опублікованих відгуків.</div>`
+    : approved.map(r => renderCard(r, true)).join("");
+
+  const rejectedHtml = rejected.length === 0
+    ? `<div style="padding: 16px; color: var(--text-muted); font-size: 13px;">Немає відхилених відгуків.</div>`
+    : rejected.map(r => renderCard(r, true)).join("");
+
+  return `
+    <div class="card" style="background: linear-gradient(135deg, var(--accent-soft), transparent); border:1px solid var(--accent-soft);">
+      <h2 class="card__title">Модерація відгуків</h2>
+      <p class="card__sub">Відгуки, які залишають клієнти на сайті через форму «Залишити відгук». Опубліковані відгуки автоматично з'являються в секції «Що кажуть клієнти» на головній сторінці.</p>
+    </div>
+
+    ${summary}
+
+    <h3 style="margin: 24px 0 12px; font-size:16px;">Очікують модерації (${pending.length})</h3>
+    ${pendingHtml}
+
+    <h3 style="margin: 32px 0 12px; font-size:16px;">Опубліковані (${approved.length})</h3>
+    ${approvedHtml}
+
+    <h3 style="margin: 32px 0 12px; font-size:16px;">Відхилені (${rejected.length})</h3>
+    ${rejectedHtml}
+  `;
+}
+
+function bindReviews() {
+  $$("[data-rev-approve]").forEach(b => b.addEventListener("click", () => approveReview(b.dataset.revApprove)));
+  $$("[data-rev-reject]").forEach(b => b.addEventListener("click", () => rejectReview(b.dataset.revReject)));
+  $$("[data-rev-delete]").forEach(b => b.addEventListener("click", () => deleteReview(b.dataset.revDelete)));
+}
+
+/* =========================================================
+   BANNERS
+   ========================================================= */
+function renderBanners() {
+  const b = STATE.banner;
+  return `
+    <div class="card">
+      <h2 class="card__title">Верхній банер сайту (announce bar)</h2>
+      <p class="card__sub">Видно у самому верху на всіх сторінках. Залиш порожнім — буде показано стандартний текст про доставку.</p>
+
+      <label style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface-2);border-radius:var(--r-md);margin-bottom:14px">
+        <input type="checkbox" id="b-disabled" ${b.disabled?"checked":""}>
+        <div><strong>Вимкнути банер повністю</strong> <span class="muted">— приховає верхню стрічку</span></div>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Текст для UA (можна HTML, наприклад &lt;strong&gt;)</span>
+        <input id="b-uk" value="${esc(b.text_uk||"")}" placeholder="🚚 Безкоштовна доставка від 1 500 ₴">
+      </label>
+      <label class="field">
+        <span class="field__label">Текст для PL</span>
+        <input id="b-pl" value="${esc(b.text_pl||"")}" placeholder="Залишити порожнім — буде використано UA">
+      </label>
+      <label class="field">
+        <span class="field__label">Текст для EN</span>
+        <input id="b-en" value="${esc(b.text_en||"")}" placeholder="Залишити порожнім — буде використано UA">
+      </label>
+
+      <div id="b-preview" class="banner-preview">${b.text_uk || "🚚 Безкоштовна доставка від <strong>1 500 ₴</strong>"}</div>
+
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <button class="btn btn-primary" id="b-save">Зберегти банер</button>
+        <button class="btn btn-secondary" id="b-reset">Скинути до стандартного</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">Featured Collections (на головній)</h2>
+      <p class="card__sub">3 банери-картки з посиланнями на колекції. Зараз керуються через файл <code class="kbd">index.html</code> (i18n).</p>
+      <div class="muted">Поточно встановлено: <strong>LoveShackFancy Holiday</strong>, <strong>ProTour Flip Straw</strong>, <strong>Quencher 40oz · 2.0</strong>. Щоб змінити — відредагуй блок <code class="kbd">coll_*</code> в i18n у файлі <code class="kbd">index.html</code>.</p>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">Знижки та промокоди</h2>
+      <p class="card__sub">Зараз працює автоматична <strong>bundle-знижка −10%</strong> при покупці 2+ товарів і <strong>безкоштовна доставка від 1 500 ₴</strong>. Це налаштовується у розділі <strong>Brand → Налаштування продажів</strong>. Промокодів поки що немає — додамо в наступній версії.</p>
+    </div>
+  `;
+}
+function bindBanners() {
+  const upd = () => {
+    const txt = $("#b-uk").value || "🚚 Безкоштовна доставка від <strong>1 500 ₴</strong>";
+    $("#b-preview").innerHTML = txt;
+  };
+  $("#b-uk")?.addEventListener("input", upd);
+  $("#b-save")?.addEventListener("click", () => {
+    STATE.banner = {
+      disabled: $("#b-disabled").checked,
+      text_uk: $("#b-uk").value.trim(),
+      text_pl: $("#b-pl").value.trim(),
+      text_en: $("#b-en").value.trim(),
+    };
+    lsSet(KEYS.BANNER, STATE.banner);
+    toast("Банер збережено");
+  });
+  $("#b-reset")?.addEventListener("click", async () => {
+    if (!await confirmDialog("Скинути банер до стандартних значень?", "Скинути")) return;
+    localStorage.removeItem(KEYS.BANNER);
+    loadState();
+    renderApp();
+    toast("Банер скинуто");
+  });
+}
+
+/* =========================================================
+   BRAND / CONTACTS / SHOP SETTINGS
+   ========================================================= */
+function renderBrand() {
+  const b = { ...BASE_BRAND, ...STATE.brand };
+  return `
+    <div class="card">
+      <h2 class="card__title">Контакти магазину</h2>
+      <div class="row">
+        <label class="field"><span class="field__label">Назва магазину</span><input id="br-name" value="${esc(b.name)}"></label>
+        <label class="field"><span class="field__label">E-mail</span><input id="br-email" type="email" value="${esc(b.email)}"></label>
+      </div>
+      <div class="row">
+        <label class="field"><span class="field__label">Телефон</span><input id="br-phone" value="${esc(b.phone)}"></label>
+        <label class="field"><span class="field__label">Telegram (без @)</span><input id="br-telegram" value="${esc(b.telegram)}" placeholder="dailyua"></label>
+      </div>
+      <div class="row">
+        <label class="field"><span class="field__label">WhatsApp (тільки цифри)</span><input id="br-whatsapp" value="${esc(b.whatsapp)}" placeholder="380443332211"></label>
+        <label class="field"><span class="field__label">Viber (тільки цифри)</span><input id="br-viber" value="${esc(b.viber)}"></label>
+      </div>
+      <label class="field">
+        <span class="field__label">Юридична особа (для футера)</span>
+        <input id="br-legal" value="${esc(b.legalEntity)}">
+      </label>
+
+      <div style="margin-top:14px;background:var(--accent-soft);padding:12px;border-radius:var(--r-md);font-size:12px">
+        <strong>📤 Куди приходять замовлення:</strong> Telegram <code class="kbd">@${esc(b.telegram)}</code><br>
+        <span class="muted">Коли клієнт натискає «Оформити замовлення» — у нього автоматично відкривається Telegram з готовим повідомленням до тебе.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">Налаштування продажів</h2>
+      <div class="row3">
+        <label class="field">
+          <span class="field__label">Безкоштовна доставка від (₴)</span>
+          <input id="br-freeFrom" type="number" min="0" value="${b.freeShippingFrom || 1500}">
+        </label>
+        <label class="field">
+          <span class="field__label">Bundle знижка (%)</span>
+          <input id="br-bundle" type="number" min="0" max="50" step="1" value="${Math.round((b.bundleDiscount||0.1)*100)}">
+        </label>
+        <label class="field">
+          <span class="field__label">Bundle мін. товарів</span>
+          <input id="br-bundleMin" type="number" min="2" value="${b.bundleMinItems||2}">
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">Безпека · Зміна пароля</h2>
+      <div class="row">
+        <label class="field">
+          <span class="field__label">Поточний пароль</span>
+          <input type="password" id="pw-old">
+        </label>
+        <label class="field">
+          <span class="field__label">Новий пароль (мін. 6 символів)</span>
+          <input type="password" id="pw-new">
+        </label>
+      </div>
+      <button class="btn btn-primary btn-sm" id="pw-save">Змінити пароль</button>
+      <p class="muted" style="margin-top:8px">⚠️ Пароль зберігається лише у цьому браузері (захешований SHA-256). Якщо очистиш дані браузера — повернеться значення за замовчуванням.</p>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">📧 EmailJS · Інтеграція пошти + Telegram</h2>
+      <p class="muted" style="margin:0 0 14px;font-size:13px">
+        Безкоштовна інтеграція (200 листів/міс). Реєстрація на <a href="https://www.emailjs.com/" target="_blank" rel="noopener" style="color:var(--accent)">emailjs.com</a> — далі сюди введи ключі. Без них email/Telegram не працюватимуть.
+      </p>
+      <div class="row">
+        <label class="field">
+          <span class="field__label">Public Key</span>
+          <input id="ej-publicKey" placeholder="abc123XYZ" value="${esc((STATE.email && STATE.email.publicKey) || '')}">
+        </label>
+        <label class="field">
+          <span class="field__label">Service ID</span>
+          <input id="ej-serviceId" placeholder="service_xxxxxxx" value="${esc((STATE.email && STATE.email.serviceId) || '')}">
+        </label>
+      </div>
+      <div class="row">
+        <label class="field">
+          <span class="field__label">Template: Замовлення (в Telegram)</span>
+          <input id="ej-templateOrder" placeholder="template_order_xxx" value="${esc((STATE.email && STATE.email.templateOrder) || '')}">
+        </label>
+        <label class="field">
+          <span class="field__label">Template: Welcome (клієнту після 1-ої покупки)</span>
+          <input id="ej-templateWelcome" placeholder="template_welcome_xxx" value="${esc((STATE.email && STATE.email.templateWelcome) || '')}">
+        </label>
+      </div>
+      <div class="row">
+        <label class="field">
+          <span class="field__label">Template: Скидання пароля</span>
+          <input id="ej-templateReset" placeholder="template_reset_xxx" value="${esc((STATE.email && STATE.email.templateReset) || '')}">
+        </label>
+        <label class="field">
+          <span class="field__label">Template: Кешбек реферу</span>
+          <input id="ej-templateCashback" placeholder="template_cashback_xxx" value="${esc((STATE.email && STATE.email.templateCashback) || '')}">
+        </label>
+      </div>
+
+      <details style="margin-top:14px;background:var(--surface);padding:12px;border-radius:var(--r-md)">
+        <summary style="cursor:pointer;font-weight:600">📋 Як налаштувати (5 хв)</summary>
+        <ol style="margin:10px 0 0;padding-left:20px;font-size:13px;line-height:1.6">
+          <li>Зареєструйся на <a href="https://www.emailjs.com/" target="_blank" rel="noopener">emailjs.com</a> (безкоштовно)</li>
+          <li>Додай Email Service → обери Gmail/Outlook → авторизуйся</li>
+          <li>Скопіюй <strong>Public Key</strong> (Account → API Keys) сюди ↑</li>
+          <li>Скопіюй <strong>Service ID</strong> (Email Services) сюди ↑</li>
+          <li>Створи 4 Templates:
+            <ul style="margin-top:4px">
+              <li><strong>Order</strong> (з полями: {{order_id}}, {{customer_email}}, {{customer_phone}}, {{customer_name}}, {{shipping_method}}, {{payment_method}}, {{items_summary}}, {{order_total}}, {{order_date}}) → "To Email" постав свій бізнес-email</li>
+              <li><strong>Welcome</strong> ({{to_email}}, {{first_name}}, {{welcome_code}})</li>
+              <li><strong>Reset Password</strong> ({{to_email}}, {{first_name}}, {{temp_password}})</li>
+              <li><strong>Cashback</strong> ({{to_email}}, {{friend_email}}, {{cashback_amount}}, {{balance}})</li>
+            </ul>
+          </li>
+          <li>Скопіюй кожен Template ID у відповідне поле ↑</li>
+          <li>Натисни <strong>Зберегти</strong></li>
+        </ol>
+        <div style="margin-top:10px;padding:10px;background:#FFF8E1;border-radius:8px;font-size:12px">
+          <strong>💡 Підказка:</strong> щоб замовлення приходило в <strong>Telegram-групу</strong> — налаштуй пересилку з твого email у Telegram через
+          <a href="https://make.com" target="_blank" rel="noopener">Make.com</a> (безкоштовно) або <a href="https://zapier.com" target="_blank" rel="noopener">Zapier</a>.
+          Або просто читай email на телефоні.
+        </div>
+      </details>
+
+      <div style="margin-top:12px;padding:10px;background:${(STATE.email && STATE.email.publicKey) ? '#E8F5E9' : '#FFEBEE'};border-radius:8px;font-size:13px;font-weight:600">
+        ${(STATE.email && STATE.email.publicKey) ? '✓ EmailJS налаштовано — пошта працює' : '✗ EmailJS не налаштовано — email функції недоступні'}
+      </div>
+
+      <div style="margin-top:14px">
+        <button class="btn btn-primary btn-sm" id="ej-save">💾 Зберегти EmailJS</button>
+        <button class="btn btn-ghost btn-sm" id="ej-test" style="margin-left:8px">📨 Надіслати тестовий лист</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">🤖 Telegram Bot · Сповіщення про замовлення</h2>
+      <p class="muted" style="margin:0 0 14px;font-size:13px">
+        Замовлення приходитимуть у Telegram-чат через твого бота. <strong>Працює без EmailJS і без сервера.</strong>
+        Можеш використати разом з EmailJS — тоді лист піде і на пошту і в Telegram.
+      </p>
+      <div class="row">
+        <label class="field">
+          <span class="field__label">Bot Token (з @BotFather)</span>
+          <input id="tg-token" type="password" placeholder="8621763731:AAE..." value="${esc((STATE.email && STATE.email.telegramBotToken) || '')}" autocomplete="off">
+        </label>
+        <label class="field">
+          <span class="field__label">Chat ID (твій або групи)</span>
+          <input id="tg-chatId" placeholder="-1001234567890 або 123456789" value="${esc((STATE.email && STATE.email.telegramChatId) || '')}">
+        </label>
+      </div>
+
+      <details style="margin-top:14px;background:var(--surface);padding:12px;border-radius:var(--r-md)">
+        <summary style="cursor:pointer;font-weight:600">📋 Як отримати Bot Token та Chat ID</summary>
+        <ol style="margin:10px 0 0;padding-left:20px;font-size:13px;line-height:1.6">
+          <li><strong>Bot Token:</strong>
+            <ul>
+              <li>Відкрий @BotFather в Telegram → <code>/newbot</code> (або <code>/mybots</code> якщо вже є)</li>
+              <li>Скопіюй токен (формат <code>8621763731:AAE...</code>) сюди ↑</li>
+            </ul>
+          </li>
+          <li><strong>Chat ID:</strong>
+            <ul>
+              <li>Напиши боту <code>/start</code> (хоча б одне повідомлення)</li>
+              <li>Відкрий: <a href="https://api.telegram.org/bot[твій_токен]/getUpdates" target="_blank" rel="noopener">api.telegram.org/bot[твій_токен]/getUpdates</a> — заміни [твій_токен]</li>
+              <li>У відповіді знайди <code>"chat":{"id":123456789}</code> — це твій Chat ID</li>
+              <li>Для <strong>групи</strong>: додай бота в групу, напиши там, повтори ↑ — Chat ID групи від'ємний (<code>-100...</code>)</li>
+            </ul>
+          </li>
+          <li>Натисни <strong>Зберегти Telegram</strong></li>
+          <li>Натисни <strong>📨 Тест Telegram</strong> для перевірки</li>
+        </ol>
+        <div style="margin-top:10px;padding:10px;background:#FFF8E1;border-radius:8px;font-size:12px">
+          <strong>⚠️ Безпека:</strong> Bot Token зберігається у твоєму браузері (localStorage адмінки). Не зберігається в коді сайту,
+          тому клієнти не побачать. <strong>Не діли цей пароль адмінки з іншими</strong> — токен може використати тільки той, хто має доступ до адмінки.
+        </div>
+      </details>
+
+      <div style="margin-top:12px;padding:10px;background:${(STATE.email && STATE.email.telegramBotToken && STATE.email.telegramChatId) ? '#E8F5E9' : '#FFEBEE'};border-radius:8px;font-size:13px;font-weight:600">
+        ${(STATE.email && STATE.email.telegramBotToken && STATE.email.telegramChatId) ? '✓ Telegram налаштовано — замовлення йтимуть у чат' : '✗ Telegram не налаштовано — замовлення тільки в EmailJS (якщо налаштовано)'}
+      </div>
+
+      <div style="margin-top:14px">
+        <button class="btn btn-primary btn-sm" id="tg-save">💾 Зберегти Telegram</button>
+        <button class="btn btn-ghost btn-sm" id="tg-test" style="margin-left:8px">📨 Тест Telegram</button>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;text-align:right">
+      <button class="btn btn-primary" id="br-save">💾 Зберегти все</button>
+    </div>
+  `;
+}
+function bindBrand() {
+  $("#br-save")?.addEventListener("click", () => {
+    STATE.brand = {
+      name: $("#br-name").value.trim() || BASE_BRAND.name,
+      email: $("#br-email").value.trim(),
+      phone: $("#br-phone").value.trim(),
+      telegram: $("#br-telegram").value.trim().replace(/^@/, ""),
+      whatsapp: $("#br-whatsapp").value.replace(/\D/g, ""),
+      viber: $("#br-viber").value.replace(/\D/g, ""),
+      legalEntity: $("#br-legal").value.trim(),
+      freeShippingFrom: parseInt($("#br-freeFrom").value) || 1500,
+      bundleDiscount: (parseInt($("#br-bundle").value) || 10) / 100,
+      bundleMinItems: parseInt($("#br-bundleMin").value) || 2,
+    };
+    lsSet(KEYS.BRAND, STATE.brand);
+    toast("Налаштування збережено");
+  });
+  $("#pw-save")?.addEventListener("click", async () => {
+    const old = $("#pw-old").value, n = $("#pw-new").value;
+    if (n.length < 6) { toast("Пароль має бути мін. 6 символів", "error"); return; }
+    const stored = localStorage.getItem(KEYS.PASSWORD);
+    const oldHash = await pwHash(old);
+    if (oldHash !== stored) { toast("Невірний поточний пароль", "error"); return; }
+    const newHash = await pwHash(n);
+    localStorage.setItem(KEYS.PASSWORD, newHash);
+    $("#pw-old").value = ""; $("#pw-new").value = "";
+    toast("Пароль змінено");
+  });
+
+  // ===== EmailJS Save =====
+  $("#ej-save")?.addEventListener("click", () => {
+    STATE.email = {
+      publicKey: $("#ej-publicKey").value.trim(),
+      serviceId: $("#ej-serviceId").value.trim(),
+      templateOrder: $("#ej-templateOrder").value.trim(),
+      templateWelcome: $("#ej-templateWelcome").value.trim(),
+      templateReset: $("#ej-templateReset").value.trim(),
+      templateCashback: $("#ej-templateCashback").value.trim(),
+    };
+    lsSet(KEYS.EMAIL, STATE.email);
+    toast(STATE.email.publicKey ? "EmailJS збережено ✓" : "EmailJS очищено");
+    setTimeout(() => location.reload(), 500);
+  });
+
+  // ===== EmailJS Test =====
+  $("#ej-test")?.addEventListener("click", async () => {
+    const cfg = STATE.email || {};
+    if (!cfg.publicKey || !cfg.serviceId) {
+      toast("Спершу заповни Public Key + Service ID", "error");
+      return;
+    }
+    const templateId = cfg.templateOrder || cfg.templateWelcome || cfg.templateReset;
+    if (!templateId) {
+      toast("Заповни хоча б один Template ID", "error");
+      return;
+    }
+    try {
+      toast("Завантажуємо SDK...");
+      if (!window.emailjs) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js";
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+      window.emailjs.init({ publicKey: cfg.publicKey });
+      await window.emailjs.send(cfg.serviceId, templateId, {
+        order_id: "TEST-001",
+        customer_email: STATE.brand.email || "test@example.com",
+        customer_name: "Тестовий клієнт",
+        customer_phone: "+380671234567",
+        shipping_method: "Нова Пошта · відділення",
+        payment_method: "Тестова оплата",
+        items_summary: "Quencher 40oz · Lilac ×1\nQuencher 40oz · Peri ×1",
+        order_total: 5000,
+        order_date: new Date().toLocaleString("uk-UA"),
+        to_email: STATE.brand.email || "test@example.com",
+        first_name: "Тест",
+        welcome_code: "WELCOME50",
+        temp_password: "TempPass123",
+        friend_email: "friend@example.com",
+        cashback_amount: 1000,
+        balance: 1500,
+        invited_count: 1
+      });
+      toast("Тестовий лист надіслано! Перевір пошту 📨");
+    } catch (err) {
+      toast("Помилка: " + (err.text || err.message || err), "error");
+      console.error(err);
+    }
+  });
+
+  // ===== Telegram Save =====
+  $("#tg-save")?.addEventListener("click", () => {
+    if (!STATE.email) STATE.email = {};
+    STATE.email.telegramBotToken = $("#tg-token").value.trim();
+    STATE.email.telegramChatId = $("#tg-chatId").value.trim();
+    lsSet(KEYS.EMAIL, STATE.email);
+    toast("Telegram збережено ✓");
+    setTimeout(() => location.reload(), 500);
+  });
+
+  // ===== Telegram Test =====
+  $("#tg-test")?.addEventListener("click", async () => {
+    const token = ($("#tg-token").value || "").trim();
+    const chatId = ($("#tg-chatId").value || "").trim();
+    if (!token || !chatId) {
+      toast("Заповни Bot Token + Chat ID", "error");
+      return;
+    }
+    try {
+      const url = `https://api.telegram.org/bot${token}/sendMessage`;
+      const message =
+        `🛍 *Тестове замовлення*\n\n` +
+        `Це тест від адмінки твого магазину.\n` +
+        `Якщо ти бачиш це повідомлення — Telegram працює!\n\n` +
+        `*Магазин:* ${STATE.brand.name || 'Stanley Brand UA'}\n` +
+        `*Час:* ${new Date().toLocaleString('uk-UA')}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message,
+          parse_mode: "Markdown"
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        toast("Тест надіслано в Telegram ✓");
+      } else {
+        toast("Помилка: " + (data.description || data.error_code), "error");
+      }
+    } catch (err) {
+      toast("Помилка: " + err.message, "error");
+    }
+  });
+}
+
+/* =========================================================
+   SEO
+   ========================================================= */
+function renderSeo() {
+  return `
+    <div class="card">
+      <h2 class="card__title">SEO налаштування</h2>
+      <p class="card__sub">Зараз SEO-теги (title, description, og:image) задаються у файлі <code class="kbd">index.html</code> у блоці <code class="kbd">&lt;head&gt;</code>. Адмінка генерує URL-и для sitemap.xml, але інші мета-теги — у HTML.</p>
+
+      <h3 style="font-size:14px;margin-top:16px;margin-bottom:6px">Поточні значення (read-only)</h3>
+      <div style="font-family:ui-monospace,monospace;font-size:11px;background:var(--surface-2);padding:10px;border-radius:var(--r-md);line-height:1.6">
+        <div><strong>title:</strong> DailyUA — Stanley Quencher і premium drinkware зі США · Україна</div>
+        <div><strong>description:</strong> Оригінальні термокружки Stanley Quencher, Owala, Hydro Flask. Доставка Новою Поштою…</div>
+        <div><strong>og:image:</strong> /og-image.png (1200×630)</div>
+        <div><strong>canonical:</strong> https://dailyua.com.ua/</div>
+        <div><strong>sitemap.xml:</strong> ✅ присутній (23 URL × 4 lang)</div>
+        <div><strong>robots.txt:</strong> ✅ присутній</div>
+        <div><strong>JSON-LD:</strong> OnlineStore schema у head</div>
+      </div>
+
+      <h3 style="font-size:14px;margin-top:18px;margin-bottom:6px">Як змінити SEO</h3>
+      <ol style="font-size:13px;line-height:1.6;padding-left:20px;color:var(--text-soft)">
+        <li>Відкрий <code class="kbd">index.html</code> у редакторі (VS Code, Sublime тощо)</li>
+        <li>Знайди блок між <code class="kbd">&lt;title&gt;</code> та <code class="kbd">&lt;/script&gt;</code> (приблизно перші 100 рядків)</li>
+        <li>Заміни значення відповідних мета-тегів</li>
+        <li>Збережи файл і завантаж на хостинг</li>
+      </ol>
+
+      <h3 style="font-size:14px;margin-top:16px;margin-bottom:6px">Регенерувати sitemap.xml</h3>
+      <p class="muted" style="margin-bottom:8px">Регенеруй sitemap після додавання нових товарів. URL збираються автоматично з твого каталогу.</p>
+      <button class="btn btn-primary btn-sm" id="seo-sitemap">Згенерувати новий sitemap.xml</button>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">Мови сайту</h2>
+      <p class="card__sub">Сайт перекладено на 3 мови. Browser-detect обирає мову автоматично.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <span class="pill">🇺🇦 Українська (за замовчуванням)</span>
+        <span class="pill">🇵🇱 Polski</span>
+        <span class="pill">🇬🇧 English</span>
+      </div>
+      <p class="muted" style="margin-top:10px">Назви та описи нових товарів, доданих через адмінку, поки що зберігаються лише українською. Переклади додаються при експорті у файл <code class="kbd">index.html</code> вручну.</p>
+    </div>
+  `;
+}
+
+function bindSeo() {
+  $("#seo-sitemap")?.addEventListener("click", () => {
+    const today = new Date().toISOString().slice(0,10);
+    const base = "https://dailyua.com.ua";
+    const pages = [
+      ["/", "1.0", "daily"],
+      ["/#shop", "0.9", "daily"],
+      ...[..."Stanley/Owala/Hydro Flask".split("/")].map(b => [`/#shop?brand=${encodeURIComponent(b)}`, "0.7", "weekly"]),
+      ["/#shipping", "0.5", "monthly"],
+      ["/#returns", "0.5", "monthly"],
+      ["/#warranty", "0.5", "monthly"],
+      ["/#contact", "0.5", "monthly"],
+      ["/#privacy", "0.3", "yearly"],
+      ["/#terms", "0.3", "yearly"],
+    ];
+    STATE.products.filter(p => !p._disabled).forEach(p => pages.push([`/#product?id=${p.id}`, "0.85", "weekly"]));
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n        xmlns:xhtml="http://www.w3.org/1999/xhtml">\n`;
+    pages.forEach(([path, prio, freq]) => {
+      xml += `  <url>\n    <loc>${base}${path}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${freq}</changefreq>\n    <priority>${prio}</priority>\n`;
+      ["uk", "pl", "en"].forEach(loc => {
+        const prefix = loc === "uk" ? "" : "/" + loc;
+        xml += `    <xhtml:link rel="alternate" hreflang="${loc}" href="${base}${prefix}${path}"/>\n`;
+      });
+      xml += `    <xhtml:link rel="alternate" hreflang="x-default" href="${base}${path}"/>\n  </url>\n`;
+    });
+    xml += "</urlset>\n";
+    const blob = new Blob([xml], { type: "application/xml" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "sitemap.xml";
+    a.click();
+    toast("sitemap.xml завантажено");
+  });
+}
+
+/* =========================================================
+   IMAGES (Media Library)
+   ========================================================= */
+function renderImages() {
+  const imgs = listImages();
+  const totalKB = imgs.reduce((s, i) => s + (i.data.length / 1024), 0);
+  return `
+    <div class="card">
+      <h2 class="card__title">Завантаження фото</h2>
+      <p class="card__sub">Перетягни фото сюди або натисни. Розмір автоматично зменшується до 1024px і конвертується у WebP. Зберігається у браузері (localStorage).</p>
+      <div class="dropzone" id="dropzone">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 5v12"/></svg>
+        <div>Перетягни фото або клікни</div>
+        <div class="dropzone__hint">JPG, PNG, WebP — до 10 файлів за раз</div>
+        <input type="file" id="fileInp" multiple accept="image/*" style="display:none">
+      </div>
+      <p class="muted" style="margin-top:10px">Завантажено: <strong>${imgs.length} фото</strong> · Загалом: ${(totalKB/1024).toFixed(1)} МБ ${totalKB > 4000 ? '<span class="warn">⚠️ Близько до ліміту localStorage (5 МБ)</span>' : ''}</p>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">Бібліотека (${imgs.length})</h2>
+      ${imgs.length === 0 ? '<div class="empty"><div class="empty__title">Бібліотека порожня</div><p class="muted">Завантаж фото вище.</p></div>' : `
+        <div class="img-grid">
+          ${imgs.sort((a,b) => b.addedAt - a.addedAt).map(i => `
+            <div class="img-card" data-imgname="${esc(i.name)}" title="${esc(i.name)}">
+              <img src="${esc(i.data)}" alt="">
+              <button class="img-card__del" data-delimg="${esc(i.name)}">×</button>
+              <div class="img-card__name">${esc(i.name)}</div>
+            </div>
+          `).join("")}
+        </div>
+      `}
+      <p class="muted" style="margin-top:14px">Щоб використати фото у товарі: натисни на нього, скопіюй імʼя, потім встав у поле «Шлях до головного фото» в редакторі товару.</p>
+    </div>
+  `;
+}
+function bindImages() {
+  const dz = $("#dropzone"), fi = $("#fileInp");
+  if (!dz) return;
+  dz.addEventListener("click", () => fi.click());
+  dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("drag"); });
+  dz.addEventListener("dragleave", () => dz.classList.remove("drag"));
+  dz.addEventListener("drop", e => { e.preventDefault(); dz.classList.remove("drag"); handleFiles(e.dataTransfer.files); });
+  fi.addEventListener("change", e => handleFiles(e.target.files));
+
+  $$("[data-imgname]").forEach(el => el.addEventListener("click", e => {
+    if (e.target.closest("[data-delimg]")) return;
+    const name = el.dataset.imgname;
+    navigator.clipboard?.writeText(name).then(() => toast("Імʼя «" + name + "» скопійовано"));
+  }));
+  $$("[data-delimg]").forEach(b => b.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    if (!await confirmDialog("Видалити фото " + b.dataset.delimg + "?")) return;
+    deleteImage(b.dataset.delimg);
+    renderApp();
+    toast("Фото видалено");
+  }));
+}
+
+async function handleFiles(files) {
+  if (!files || files.length === 0) return;
+  const arr = Array.from(files).slice(0, 10);
+  let ok = 0, fail = 0;
+  for (const f of arr) {
+    try {
+      const { dataUrl, width, height, size } = await optimizeImage(f);
+      // Generate name from original
+      let name = f.name.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      if (!name) name = "img-" + Date.now();
+      name += ".webp";
+      // Check uniqueness
+      const all = imgStore();
+      let final = name, i = 2;
+      while (all[final]) { final = name.replace(".webp", "-" + i + ".webp"); i++; }
+      if (saveImage(final, dataUrl)) ok++; else fail++;
+    } catch(e) { fail++; console.error(e); }
+  }
+  toast(ok + " завантажено" + (fail > 0 ? " · " + fail + " з помилкою" : ""));
+  renderApp();
+}
+
+/* =========================================================
+   ANALYTICS
+   ========================================================= */
+function renderAnalytics() {
+  const orders = lsGet(KEYS.ORDERS, []);
+  const totalRev = orders.reduce((s, o) => s + (o.total || 0), 0);
+  const avg = orders.length ? totalRev / orders.length : 0;
+  // Top products
+  const counts = {};
+  orders.forEach(o => (o.items || []).forEach(it => { counts[it.id] = (counts[it.id] || 0) + it.qty; }));
+  const top = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+  // Status breakdown
+  const byStatus = {};
+  orders.forEach(o => { const s = o.status || "new"; byStatus[s] = (byStatus[s] || 0) + 1; });
+
+  return `
+    <div class="stats">
+      <div class="stat"><div class="stat__label">Замовлень всього</div><div class="stat__value">${orders.length}</div></div>
+      <div class="stat"><div class="stat__label">Виторг</div><div class="stat__value">${fmtUAH(totalRev).replace(" ₴","")}<small style="font-size:14px;font-weight:400;color:var(--text-muted)"> ₴</small></div></div>
+      <div class="stat"><div class="stat__label">Середній чек</div><div class="stat__value">${fmtUAH(Math.round(avg)).replace(" ₴","")}<small style="font-size:14px;font-weight:400;color:var(--text-muted)"> ₴</small></div></div>
+      <div class="stat"><div class="stat__label">Конверсія</div><div class="stat__value">—</div><div class="stat__sub">потребує GA4 / Plausible</div></div>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">Топ товарів</h2>
+      ${top.length === 0 ? '<div class="muted">Поки немає продажів</div>' : top.map(([id, qty]) => {
+        const p = STATE.products.find(x => x.id === id);
+        return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>${esc(p?p.shortName_uk:id)}</span><strong>${qty} шт.</strong></div>`;
+      }).join("")}
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">Замовлення по статусах</h2>
+      ${Object.keys(byStatus).length === 0 ? '<div class="muted">Немає даних</div>' : Object.entries(byStatus).map(([s, n]) => {
+        const labels = { new: "Нові", paid: "Оплачені", shipped: "Відправлені", done: "Завершені", cancel: "Скасовані" };
+        return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>${labels[s] || s}</span><strong>${n}</strong></div>`;
+      }).join("")}
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">Розширена аналітика</h2>
+      <p class="muted">Ця вкладка показує лише дані замовлень з твоєї адмінки. Для детальної аналітики (трафік, конверсія, поведінка користувачів) встанови:</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+        <span class="pill">📊 Google Analytics 4 (безкоштовно)</span>
+        <span class="pill">📈 Plausible (privacy-friendly, $9/міс)</span>
+        <span class="pill">🎯 Meta Pixel (для реклами FB/Instagram)</span>
+        <span class="pill">🔥 Hotjar (heatmaps, $32/міс)</span>
+      </div>
+      <p class="muted" style="margin-top:10px">Скрипти інтегруються у <code class="kbd">&lt;head&gt;</code> файлу <code class="kbd">index.html</code>.</p>
+    </div>
+  `;
+}
+
+/* =========================================================
+   EXPORT — generate JS code for index.html
+   ========================================================= */
+function renderExport() {
+  const ovProducts = STATE.overrides;
+  const ovColors = lsGet(KEYS.COLORS, {});
+  const ovBrand = STATE.brand;
+  const ovBanner = STATE.banner;
+
+  const hasChanges = (ovProducts.edits?.length || ovProducts.add?.length || ovProducts.remove?.length || ovProducts.disabled?.length || Object.keys(ovColors).length || Object.keys(ovBrand).length || ovBanner.text_uk);
+
+  return `
+    <div class="card">
+      <h2 class="card__title">Експорт змін у код</h2>
+      <p class="card__sub">Адмінка зберігає зміни у localStorage браузера — їх бачиш тільки ти. Щоб клієнти теж побачили зміни, треба експортувати їх у файл <code class="kbd">index.html</code> та завантажити на хостинг.</p>
+
+      ${!hasChanges ? '<p class="muted">Поки немає змін для експорту.</p>' : ''}
+
+      <h3 style="font-size:14px;margin-top:16px">📋 Що змінилось:</h3>
+      <ul style="font-size:13px;line-height:1.7;padding-left:20px">
+        ${ovProducts.edits?.length > 0 ? `<li>Відредаговано товарів: <strong>${ovProducts.edits.length}</strong> (${ovProducts.edits.map(e=>e.id).join(", ")})</li>` : ""}
+        ${ovProducts.add?.length > 0 ? `<li>Додано нових товарів: <strong>${ovProducts.add.length}</strong> (${ovProducts.add.map(p=>p.id).join(", ")})</li>` : ""}
+        ${ovProducts.remove?.length > 0 ? `<li>Видалено: <strong>${ovProducts.remove.length}</strong></li>` : ""}
+        ${ovProducts.disabled?.length > 0 ? `<li>Вимкнено: <strong>${ovProducts.disabled.length}</strong> (${ovProducts.disabled.join(", ")})</li>` : ""}
+        ${Object.keys(ovBrand).length > 0 ? `<li>Brand contacts (${Object.keys(ovBrand).length} полів)</li>` : ""}
+        ${ovBanner.text_uk ? `<li>Текст банеру</li>` : ""}
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3 class="card__title">Спосіб 1: Швидко (через localStorage snapshot)</h3>
+      <p class="card__sub">Скопіюй цей JS-код і встав у консоль браузера на сторінці магазину. Зміни одразу застосуються (працює тільки на твоєму пристрої).</p>
+      <pre class="export-pre" id="snippet">${esc(generateBootstrapSnippet())}</pre>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" id="cp-snippet">📋 Скопіювати</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card__title">Спосіб 2: Постійно (правимо index.html)</h3>
+      <p class="card__sub">Це робить зміни видимими для всіх клієнтів. Потрібен текстовий редактор (VS Code, Sublime).</p>
+      <ol style="font-size:13px;line-height:1.7;padding-left:20px;color:var(--text-soft)">
+        <li>Натисни <strong>«Завантажити patch.js»</strong> нижче — це згенерує файл-патч</li>
+        <li>Відкрий <code class="kbd">index.html</code> у редакторі</li>
+        <li>Знайди рядок <code class="kbd">const PRODUCTS = [</code></li>
+        <li>Виділи весь блок <code class="kbd">const PRODUCTS = [...]</code> до <code class="kbd">];</code></li>
+        <li>Заміни його на блок <code class="kbd">PRODUCTS_v2</code> з patch.js</li>
+        <li>Збережи файл і завантаж на хостинг</li>
+      </ol>
+      <button class="btn btn-primary btn-sm" id="dl-patch">⬇ Завантажити patch.js</button>
+    </div>
+
+    <div class="card">
+      <h3 class="card__title">Спосіб 3: Консерватор (все вручну)</h3>
+      <p class="card__sub">Дивись повний JSON всіх змін. Зручно для перевірки.</p>
+      <pre class="export-pre">${esc(JSON.stringify({ products: ovProducts, brand: ovBrand, banner: ovBanner, colors: ovColors }, null, 2))}</pre>
+    </div>
+  `;
+}
+
+function generateBootstrapSnippet() {
+  const ov = {
+    products: STATE.overrides,
+    brand: STATE.brand,
+    banner: STATE.banner,
+    colors: lsGet(KEYS.COLORS, {}),
+  };
+  return `// Запустити на сторінці dailyua.com.ua у консолі браузера
+(function(){
+  const o = ${JSON.stringify(ov)};
+  if (o.products) localStorage.setItem("dua_admin_products", JSON.stringify(o.products));
+  if (o.brand) localStorage.setItem("dua_admin_brand", JSON.stringify(o.brand));
+  if (o.banner) localStorage.setItem("dua_admin_banner", JSON.stringify(o.banner));
+  if (o.colors) localStorage.setItem("dua_admin_colors", JSON.stringify(o.colors));
+  location.reload();
+})();`;
+}
+
+function bindExport() {
+  $("#cp-snippet")?.addEventListener("click", () => {
+    navigator.clipboard?.writeText(generateBootstrapSnippet()).then(() => toast("Скопійовано"));
+  });
+  $("#dl-patch")?.addEventListener("click", () => {
+    // Generate complete merged catalog
+    const merged = STATE.products.filter(p => !STATE.overrides.disabled?.includes(p.id));
+    const code = `// patch.js — згенеровано адмінкою ${new Date().toISOString()}
+// Інструкція: відкрий index.html, знайди "const PRODUCTS = [", замінь увесь блок на цей.
+
+const PRODUCTS_v2 = ${JSON.stringify(merged, null, 2)};
+
+// Якщо змінено BRAND — заміни в index.html блок "const BRAND = Object.freeze({" на:
+const BRAND_v2 = ${JSON.stringify({ ...BASE_BRAND, ...STATE.brand }, null, 2)};
+
+// Banner override (необов'язково — можна керувати через i18n):
+const BANNER_v2 = ${JSON.stringify(STATE.banner, null, 2)};
+`;
+    const blob = new Blob([code], { type: "text/javascript" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "patch-" + new Date().toISOString().slice(0,10) + ".js";
+    a.click();
+    toast("patch.js завантажено");
+  });
+}
+
+/* =========================================================
+   BACKUP / RESTORE
+   ========================================================= */
+function renderBackup() {
+  const orders = lsGet(KEYS.ORDERS, []);
+  const imgs = listImages();
+  const totalKB = (imgs.reduce((s,i) => s + i.data.length, 0) / 1024).toFixed(1);
+
+  return `
+    <div class="card">
+      <h2 class="card__title">Бекап усіх даних</h2>
+      <p class="card__sub">Завантажує JSON-файл з усіма змінами адмінки, замовленнями і фото. Збережи його у безпечному місці.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" id="bak-full">⬇ Завантажити повний бекап</button>
+        <button class="btn btn-secondary" id="bak-noimg">⬇ Бекап без фото</button>
+      </div>
+      <p class="muted" style="margin-top:10px">Зараз у системі:</p>
+      <ul class="muted" style="font-size:12px;line-height:1.6">
+        <li>${(STATE.overrides.edits?.length||0) + (STATE.overrides.add?.length||0) + (STATE.overrides.disabled?.length||0)} змін у каталозі</li>
+        <li>${orders.length} замовлень</li>
+        <li>${imgs.length} фото (${totalKB} КБ)</li>
+        <li>${Object.keys(STATE.brand).length} brand-полів</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">Відновлення з бекапу</h2>
+      <p class="card__sub">Завантажує JSON-файл і відновлює стан адмінки. <span class="warn">Замінить поточні дані!</span></p>
+      <input type="file" accept=".json" id="restore-file" style="display:none">
+      <button class="btn btn-secondary" id="bak-restore">📂 Вибрати файл бекапу</button>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title" style="color:var(--danger)">⚠️ Скинути все</h2>
+      <p class="card__sub">Видалити всі зміни адмінки і повернути базовий каталог. Замовлення і фото <strong>збережуться</strong>.</p>
+      <button class="btn btn-danger btn-sm" id="bak-reset-overrides">Скинути зміни каталогу</button>
+      <div class="hr"></div>
+      <p class="card__sub" style="color:var(--danger)">Видалити взагалі ВСЕ — каталог, замовлення, фото, налаштування:</p>
+      <button class="btn btn-danger btn-sm" id="bak-reset-all">💣 Видалити все</button>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title">Як перенести магазин на інший сервер</h2>
+      <ol style="font-size:13px;line-height:1.7;padding-left:20px;color:var(--text-soft)">
+        <li>Завантаж усі файли з папки магазину (<code class="kbd">index.html</code>, <code class="kbd">admin.html</code>, <code class="kbd">og-image.png</code>, <code class="kbd">robots.txt</code>, <code class="kbd">sitemap.xml</code>, папку <code class="kbd">img/</code>) на новий сервер</li>
+        <li>На новому сервері відкрий <code class="kbd">/admin.html</code> — побачиш дефолтну адмінку без змін</li>
+        <li>Завантаж туди свій бекап (Спосіб «Відновлення з бекапу» вище) — всі товари, налаштування, фото повернуться</li>
+        <li>Оновлення сайту: щоразу редагуй у адмінці → експортуй у код → перезавантажуй <code class="kbd">index.html</code> на сервер</li>
+      </ol>
+    </div>
+  `;
+}
+
+function bindBackup() {
+  $("#bak-full")?.addEventListener("click", () => {
+    const dump = {
+      v: 1,
+      ts: new Date().toISOString(),
+      products: lsGet(KEYS.PRODUCTS, {}),
+      colors: lsGet(KEYS.COLORS, {}),
+      brand: lsGet(KEYS.BRAND, {}),
+      banner: lsGet(KEYS.BANNER, {}),
+      orders: lsGet(KEYS.ORDERS, []),
+      images: lsGet(KEYS.IMAGES, {}),
+    };
+    downloadJson(dump, "dailyua-backup-" + new Date().toISOString().slice(0,16).replace(/[:T]/g,"-") + ".json");
+  });
+  $("#bak-noimg")?.addEventListener("click", () => {
+    const dump = {
+      v: 1, ts: new Date().toISOString(),
+      products: lsGet(KEYS.PRODUCTS, {}),
+      colors: lsGet(KEYS.COLORS, {}),
+      brand: lsGet(KEYS.BRAND, {}),
+      banner: lsGet(KEYS.BANNER, {}),
+      orders: lsGet(KEYS.ORDERS, []),
+    };
+    downloadJson(dump, "dailyua-backup-noimg-" + new Date().toISOString().slice(0,10) + ".json");
+  });
+  $("#bak-restore")?.addEventListener("click", () => $("#restore-file").click());
+  $("#restore-file")?.addEventListener("change", async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (!await confirmDialog("Відновлення замінить поточні дані. Продовжити?", "Відновити")) return;
+    const fr = new FileReader();
+    fr.onload = () => {
+      try {
+        const d = JSON.parse(fr.result);
+        if (d.products) lsSet(KEYS.PRODUCTS, d.products);
+        if (d.colors) lsSet(KEYS.COLORS, d.colors);
+        if (d.brand) lsSet(KEYS.BRAND, d.brand);
+        if (d.banner) lsSet(KEYS.BANNER, d.banner);
+        if (d.orders) lsSet(KEYS.ORDERS, d.orders);
+        if (d.images) lsSet(KEYS.IMAGES, d.images);
+        toast("Бекап відновлено");
+        loadState();
+        renderApp();
+      } catch(err) {
+        toast("Помилка читання файлу: " + err.message, "error");
+      }
+    };
+    fr.readAsText(f);
+  });
+  $("#bak-reset-overrides")?.addEventListener("click", async () => {
+    if (!await confirmDialog("Скинути всі зміни каталогу до базового стану?", "Скинути")) return;
+    localStorage.removeItem(KEYS.PRODUCTS);
+    loadState();
+    renderApp();
+    toast("Каталог скинуто");
+  });
+  $("#bak-reset-all")?.addEventListener("click", async () => {
+    if (!await confirmDialog("ВИДАЛИТИ ВСІ ДАНІ адмінки безповоротно? Замовлення, товари, фото — все буде стерто.", "Видалити все")) return;
+    if (!await confirmDialog("Точно? Це не можна відмінити.", "Так, видалити")) return;
+    Object.values(KEYS).forEach(k => localStorage.removeItem(k));
+    sessionStorage.removeItem(KEYS.AUTH);
+    location.reload();
+  });
+}
+
+function downloadJson(obj, name) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  toast("Завантажено: " + name);
+}
+
+/* =========================================================
+   BOOTSTRAP
+   ========================================================= */
+window.addEventListener("DOMContentLoaded", () => {
+  const r = location.hash.slice(1);
+  if (ROUTES[r]) CURRENT_ROUTE = r;
+  renderApp();
+});
+</script>
+
+<!-- Admin Premium Patch v1 — charts, status pills, theme toggle -->
+<script>
+/* Expose COLORS to admin-premium.js so top-colors widget can use brand palette.
+   Falls back gracefully if not exposed. */
+try {
+  if (typeof COLORS_DATA !== "undefined") window.COLORS_DATA = COLORS_DATA;
+  else if (typeof COLORS !== "undefined") window.COLORS_DATA = COLORS;
+} catch (e) {}
+</script>
+<script src="admin-premium.js"></script>
+
+</body>
+</html>

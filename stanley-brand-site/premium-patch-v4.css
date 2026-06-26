@@ -1,0 +1,795 @@
+/* ============================================================================
+   Stanley · Premium Patch v4
+   Checkout & Success page — Apple/Stripe/Shopify Plus level polish.
+
+   Scope:
+     1) Checkout layout (max-width, sticky summary, responsive grid)
+     2) Input fields (height, focus state, premium feel)
+     3) Choice cards (shipping/payment) with check icon on active
+     4) CTA polish (lift on hover, scale on press, processing state)
+     5) Trust strip below CTA
+     6) Mini-footer on #checkout / #confirmation only
+     7) Success page — animated tick, hero, summary grid, actions
+
+   Pure-additive overrides. No business logic changed.
+   ============================================================================ */
+
+/* ============================================================================
+   1. CHECKOUT LAYOUT — centered, max-width 1080px, generous spacing
+   ============================================================================ */
+body[data-route="checkout"] .container,
+body[data-route="confirmation"] .container {
+  max-width: 1080px !important;
+  padding-inline: 24px;
+}
+
+/* Hide heavyweight footer on checkout/confirmation — keeps focus on action */
+body[data-route="checkout"] .footer,
+body[data-route="confirmation"] .footer {
+  display: none;
+}
+body[data-route="checkout"] .announce,
+body[data-route="checkout"] #announce-host,
+body[data-route="confirmation"] .announce,
+body[data-route="confirmation"] #announce-host {
+  /* keep announce bar — it's part of trust */
+}
+
+/* Insert a minimal footer (built by v4.js) */
+.mini-footer {
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 20px 24px 32px;
+  margin-top: 40px;
+  max-width: 1080px;
+  margin-inline: auto;
+}
+.mini-footer__row {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-soft, #6b6b6b);
+}
+.mini-footer__row a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+.mini-footer__row a:hover { color: var(--text, #1f1f1f); }
+.mini-footer__legal {
+  display: flex; gap: 16px; flex-wrap: wrap;
+}
+.mini-footer__brand {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-soft, #6b6b6b);
+}
+
+/* Checkout grid — tighter on desktop, single column on mobile */
+.checkout-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 32px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .checkout-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+/* Sticky order summary on desktop */
+@media (min-width: 901px) {
+  .checkout-grid > aside {
+    position: sticky;
+    top: 24px;
+  }
+}
+
+/* Each step card */
+.cs {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 14px;
+  transition: box-shadow 200ms ease;
+}
+.cs:hover { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); }
+.cs h2 {
+  font-size: 16px !important;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px !important;
+}
+.cs h2 .num {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent, #1C3A2E);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ============================================================================
+   2. INPUT FIELDS — premium feel
+   ============================================================================ */
+.checkout-grid .input,
+.cs .input {
+  height: 52px !important;
+  padding: 0 16px !important;
+  border: 1px solid rgba(0, 0, 0, 0.10) !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  font-size: 15px !important;
+  font-weight: 500;
+  color: var(--text, #1f1f1f);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+@media (max-width: 768px) {
+  .checkout-grid .input,
+  .cs .input { font-size: 16px !important; /* anti-iOS-zoom */ }
+}
+.checkout-grid .input::placeholder,
+.cs .input::placeholder { color: rgba(0, 0, 0, 0.32); font-weight: 400; }
+.checkout-grid .input:hover,
+.cs .input:hover { border-color: rgba(0, 0, 0, 0.18) !important; }
+.checkout-grid .input:focus,
+.cs .input:focus,
+.checkout-grid .input:focus-visible,
+.cs .input:focus-visible {
+  outline: none !important;
+  border-color: var(--accent, #1C3A2E) !important;
+  box-shadow: 0 0 0 4px rgba(28, 58, 46, 0.08) !important;
+  background: #fff !important;
+}
+
+/* Field labels — softer */
+.checkout-grid .field-label,
+.cs .field-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-soft, #6b6b6b);
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+}
+.cs .field { margin-bottom: 0; }
+.cs .grid-2 { gap: 14px; }
+
+/* Field errors — inline, subtle */
+.checkout-grid .field-error,
+.cs .field-error {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--danger, #c92626);
+}
+.checkout-grid .field-error.is-visible,
+.cs .field-error.is-visible { display: inline-flex; }
+.checkout-grid .field.is-invalid .input,
+.cs .field.is-invalid .input {
+  border-color: var(--danger, #c92626) !important;
+  box-shadow: 0 0 0 4px rgba(201, 38, 38, 0.06) !important;
+}
+
+/* ============================================================================
+   3. CHOICE CARDS — shipping/payment options
+   ============================================================================ */
+.cs .choice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 14px !important;
+  background: #fff;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 180ms ease;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+.cs .choice:hover {
+  border-color: rgba(0, 0, 0, 0.20) !important;
+  background: rgba(0, 0, 0, 0.015);
+}
+.cs .choice.checked {
+  border-color: var(--accent, #1C3A2E) !important;
+  background: rgba(28, 58, 46, 0.025);
+  box-shadow: 0 0 0 4px rgba(28, 58, 46, 0.06);
+}
+.cs .choice.checked::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent, #1C3A2E);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E");
+  background-size: 12px 12px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.cs .choice.checked .choice__radio { opacity: 0; }
+
+/* Hide old radio dot — we use the check pill instead */
+.cs .choice__radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.20);
+  background: #fff;
+  flex-shrink: 0;
+  position: relative;
+}
+.cs .choice__main { flex: 1; min-width: 0; padding-right: 30px; }
+.cs .choice__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text, #1f1f1f);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cs .choice__sub {
+  font-size: 12px;
+  color: var(--text-soft, #6b6b6b);
+  margin-top: 4px;
+}
+.cs .choice__price {
+  font-weight: 700;
+  color: var(--text, #1f1f1f);
+  margin-right: 36px;
+  font-size: 14px;
+}
+
+/* ============================================================================
+   4. CTA — premium press feedback + processing state + double-click guard
+   ============================================================================ */
+#placeOrder {
+  height: 56px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em;
+  border-radius: 14px !important;
+  background: var(--accent, #1C3A2E) !important;
+  color: #fff !important;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 140ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 200ms ease;
+  will-change: transform;
+}
+#placeOrder:hover:not(:disabled) {
+  background: #234A3B !important;
+  box-shadow: 0 8px 24px -8px rgba(28, 58, 46, 0.4);
+  transform: translateY(-1px);
+}
+#placeOrder:active:not(:disabled) {
+  transform: scale(0.98);
+  box-shadow: 0 2px 6px rgba(28, 58, 46, 0.2);
+}
+#placeOrder:disabled,
+#placeOrder.is-processing {
+  cursor: not-allowed;
+  opacity: 0.85;
+  background: #2C4D40 !important;
+}
+#placeOrder.is-processing::before {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 10px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  animation: cta-spin 0.7s linear infinite;
+  vertical-align: -3px;
+}
+@keyframes cta-spin { to { transform: rotate(360deg); } }
+
+/* ============================================================================
+   5. TRUST STRIP — under CTA
+   ============================================================================ */
+.checkout-trust {
+  margin-top: 14px;
+  padding: 14px 18px;
+  background: rgba(0, 0, 0, 0.025);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--text-soft, #6b6b6b);
+}
+.checkout-trust__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.checkout-trust__brands {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.checkout-trust__brand {
+  height: 18px;
+  width: auto;
+  opacity: 0.7;
+  filter: grayscale(0.3);
+}
+
+/* ============================================================================
+   6. ORDER SUMMARY — premium sticky card
+   ============================================================================ */
+.order-summary {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 24px;
+}
+.order-summary h2 {
+  font-size: 14px !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-soft, #6b6b6b);
+  margin-bottom: 4px !important;
+}
+.order-line {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+.order-line:last-child { border-bottom: none; }
+.order-line__img {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #FAFAF7, #EFECE5);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 4px;
+}
+.order-line__img img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+}
+.order-line__qty {
+  position: absolute;
+  top: -4px; right: -4px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--accent, #1C3A2E);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: grid; place-items: center;
+  border: 2px solid #fff;
+}
+.order-line__name { font-size: 13px; font-weight: 600; color: var(--text, #1f1f1f); }
+.order-line__variant { font-size: 11px; color: var(--text-soft, #6b6b6b); margin-top: 2px; }
+.order-line__price { font-weight: 600; font-size: 13px; }
+
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--text-soft, #6b6b6b);
+}
+.summary-line strong { font-weight: 600; color: var(--text, #1f1f1f); }
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 14px;
+  margin-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 16px;
+  font-weight: 700;
+}
+.summary-total > span:last-child { font-size: 18px; }
+
+/* ============================================================================
+   7. SUCCESS PAGE — Apple/Stripe receipt style
+   ============================================================================ */
+.success-page {
+  min-height: 100dvh;
+  padding: 48px 24px 32px;
+  background: linear-gradient(180deg, #fafaf8 0%, #fff 30%);
+}
+.success-page__inner {
+  max-width: 720px;
+  margin-inline: auto;
+}
+
+/* Animated tick */
+.success-hero { text-align: center; }
+.success-tick {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+  background: var(--accent, #1C3A2E);
+  display: grid;
+  place-items: center;
+  position: relative;
+  animation: tick-pop 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.success-tick svg {
+  width: 36px;
+  height: 36px;
+}
+.success-tick__circle {
+  stroke: rgba(255, 255, 255, 0.25);
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: tick-circle 700ms cubic-bezier(0.65, 0, 0.45, 1) 200ms forwards;
+}
+.success-tick__check {
+  stroke: #fff;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: tick-check 400ms cubic-bezier(0.65, 0, 0.45, 1) 700ms forwards;
+}
+@keyframes tick-pop {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes tick-circle { to { stroke-dashoffset: 0; } }
+@keyframes tick-check  { to { stroke-dashoffset: 0; } }
+
+.success-hero__title {
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0 0 8px;
+}
+@media (max-width: 600px) {
+  .success-hero__title { font-size: 26px; }
+}
+.success-hero__sub {
+  color: var(--text-soft, #6b6b6b);
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 46ch;
+  margin: 0 auto;
+}
+
+.success-hero__id {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  padding: 8px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 12px;
+}
+.success-hero__id-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-soft, #6b6b6b);
+  font-weight: 600;
+}
+.success-hero__id-code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-weight: 700;
+  color: var(--text, #1f1f1f);
+  letter-spacing: 0.02em;
+}
+.success-hero__copy {
+  appearance: none;
+  border: none;
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-soft, #6b6b6b);
+  padding: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.success-hero__copy:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text, #1f1f1f);
+}
+.success-hero__copy.is-copied {
+  background: var(--accent, #1C3A2E);
+  color: #fff;
+}
+
+/* Two-card grid */
+.success-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 32px;
+}
+@media (max-width: 640px) {
+  .success-grid { grid-template-columns: 1fr; }
+}
+.success-card {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 20px;
+  animation: card-rise 500ms cubic-bezier(0.16, 1, 0.3, 1) 600ms both;
+}
+.success-card:nth-child(2) { animation-delay: 700ms; }
+@keyframes card-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.success-card__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  color: var(--text-soft, #6b6b6b);
+}
+.success-card__head h2 {
+  font-size: 12px !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 !important;
+  color: var(--text-soft, #6b6b6b);
+}
+
+/* Definition list — left/right rows */
+.success-dl > div {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 12px;
+  padding: 7px 0;
+  font-size: 13px;
+}
+.success-dl dt {
+  color: var(--text-soft, #6b6b6b);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.success-dl dd {
+  margin: 0;
+  color: var(--text, #1f1f1f);
+  font-weight: 500;
+  text-align: right;
+}
+
+/* Lines */
+.success-lines { margin: 0; }
+.success-lines .order-line {
+  grid-template-columns: 44px 1fr auto;
+  gap: 10px;
+  padding: 8px 0;
+}
+.success-lines .order-line__img { width: 44px; height: 44px; }
+
+/* Totals */
+.success-totals {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+.success-totals__row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 13px;
+  color: var(--text-soft, #6b6b6b);
+}
+.success-totals__row--discount { color: var(--success, #2A8050); }
+.success-totals__row--total {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text, #1f1f1f);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  margin-top: 6px;
+  padding-top: 10px;
+}
+
+/* What next */
+.success-next {
+  margin-top: 32px;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 16px;
+  animation: card-rise 500ms cubic-bezier(0.16, 1, 0.3, 1) 900ms both;
+}
+.success-next h3 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-soft, #6b6b6b);
+  margin: 0 0 16px;
+}
+.success-next__list {
+  list-style: none;
+  margin: 0; padding: 0;
+}
+.success-next__list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--text, #1f1f1f);
+  line-height: 1.55;
+}
+.success-next__num {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--accent, #1C3A2E);
+  border: 1px solid rgba(28, 58, 46, 0.2);
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 1px;
+}
+
+/* Action buttons */
+.success-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 32px;
+  flex-wrap: wrap;
+  animation: card-rise 500ms cubic-bezier(0.16, 1, 0.3, 1) 1000ms both;
+}
+.success-actions__primary {
+  height: 52px !important;
+  padding: 0 28px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  border-radius: 999px !important;
+  background: var(--accent, #1C3A2E) !important;
+  color: #fff !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 140ms ease, box-shadow 220ms ease, background 180ms ease;
+}
+.success-actions__primary:hover {
+  background: #234A3B !important;
+  box-shadow: 0 8px 24px -8px rgba(28, 58, 46, 0.4);
+  transform: translateY(-1px);
+}
+.success-actions__primary:active { transform: scale(0.98); }
+.success-actions__secondary {
+  height: 52px !important;
+  padding: 0 24px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: var(--text, #1f1f1f) !important;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+.success-actions__secondary:hover {
+  border-color: rgba(0, 0, 0, 0.24) !important;
+  background: rgba(0, 0, 0, 0.02) !important;
+}
+.success-actions__support {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-soft, #6b6b6b);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  transition: color 150ms ease, background 150ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.success-actions__support:hover {
+  color: var(--text, #1f1f1f);
+  background: rgba(0, 0, 0, 0.04);
+}
+.success-actions__support svg { color: #229ED9; /* Telegram brand blue */ }
+
+/* Trust footer */
+.success-trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 24px;
+  font-size: 12px;
+  color: var(--text-soft, #6b6b6b);
+  animation: card-rise 500ms cubic-bezier(0.16, 1, 0.3, 1) 1100ms both;
+}
+.success-trust svg { color: var(--text-soft, #6b6b6b); }
+
+/* ============================================================================
+   8. MOBILE — checkout polish
+   ============================================================================ */
+@media (max-width: 768px) {
+  body[data-route="checkout"] .container,
+  body[data-route="confirmation"] .container {
+    padding-inline: 16px;
+  }
+  .cs { padding: 18px; border-radius: 14px; }
+  .cs .choice { padding: 14px 16px !important; }
+  .cs .choice__main { padding-right: 36px; }
+  .success-page { padding: 32px 16px 24px; }
+  .success-tick { width: 64px; height: 64px; }
+  .success-hero__title { font-size: 24px; }
+  .success-actions { flex-direction: column; align-items: stretch; }
+  .success-actions__primary,
+  .success-actions__secondary { width: 100%; justify-content: center; }
+  .success-actions__support { justify-content: center; }
+  .success-dl > div { grid-template-columns: 1fr 1fr; }
+  .summary-total > span:last-child { font-size: 18px; }
+  /* Subtle bottom padding so iOS keyboard doesn't hide the CTA last-line */
+  body[data-route="checkout"] {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Reduced motion — disable tick animation */
+@media (prefers-reduced-motion: reduce) {
+  .success-tick,
+  .success-tick__circle,
+  .success-tick__check,
+  .success-card,
+  .success-next,
+  .success-actions,
+  .success-trust { animation: none !important; }
+  .success-tick__circle { stroke-dashoffset: 0; }
+  .success-tick__check { stroke-dashoffset: 0; }
+}
