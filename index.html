@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>DUA — Stanley та преміум-дрінквер в Україні</title>
 <meta name="description" content="Оригінальні Stanley, Quencher, аксесуари. Доставка 1–2 дні, гарантія оригіналу, подарункова упаковка." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%2313251B'/%3E%3Ctext x='16' y='22' font-family='sans-serif' font-size='18' font-weight='800' fill='%23F6F3EB' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E" />
 <style>
 /* ============================================================
    DESIGN SYSTEM — tokens (single source of truth)
@@ -239,6 +240,11 @@ footer a:hover{color:var(--cream)}
 .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
 .reveal.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+
+/* IG/UGC */ .ig{padding:var(--s7) 0}.ig .head{text-align:center;margin-bottom:var(--s5)}.ig .head h2{font-size:clamp(1.8rem,4vw,var(--f-2xl));letter-spacing:-.03em;font-weight:800}.ig .head a{color:var(--clay);font-weight:650}
+.iggrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}.iggrid a{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;display:block}.iggrid img{width:100%;height:100%;object-fit:cover;transition:transform .5s var(--ease)}.iggrid a::after{content:"❤";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:24px;background:rgba(15,28,21,0);opacity:0;transition:.3s}.iggrid a:hover img{transform:scale(1.08)}.iggrid a:hover::after{background:rgba(15,28,21,.32);opacity:1}@media(max-width:860px){.iggrid{grid-template-columns:repeat(3,1fr)}}
+/* mobile buy bar */ .mbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:none;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(246,243,235,.93);backdrop-filter:blur(14px);border-top:1px solid var(--line);box-shadow:0 -10px 30px -12px rgba(19,37,27,.25);transform:translateY(120%);transition:transform .35s var(--ease)}.mbar.show{transform:none}.mbar .pi{display:flex;flex-direction:column;line-height:1.15}.mbar .pi small{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}.mbar .pi b{font-size:var(--f-md)}.mbar .btn{flex:1;justify-content:center;max-width:58%}@media(max-width:860px){.mbar{display:flex}}
+/* scroll cue */ .scrollcue{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);font-size:10px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.75}.scrollcue .ln{width:1.5px;height:32px;background:linear-gradient(var(--ink),transparent);transform-origin:top;animation:cue 1.8s var(--ease) infinite}@keyframes cue{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}@media(max-width:860px){.scrollcue{display:none}}
 </style>
 </head>
 <body>
@@ -292,7 +298,9 @@ footer a:hover{color:var(--cream)}
     <img id="heroImg" src="img/q40-cream-front.webp" alt="Stanley Quencher H2.0 40oz" />
     <div class="price-chip"><small>від</small><b>1 799 ₴</b></div>
   </div>
-</div></section>
+</div>
+<div class="scrollcue" aria-hidden="true"><span>Гортай</span><span class="ln"></span></div>
+</section>
 
 <!-- BRANDS -->
 <div class="brands" aria-hidden="true"><div class="track">
@@ -316,7 +324,7 @@ footer a:hover{color:var(--cream)}
   </div>
   <div class="cards">
     <article class="card reveal">
-      <div class="ph"><span class="badge clay">Хіт</span><img src="img/q40-cream-front.webp" alt="Quencher Cream">
+      <div class="ph"><span class="badge clay">Хіт</span><img loading="lazy" decoding="async" src="img/q40-cream-front.webp" alt="Quencher Cream">
         <a class="btn btn-dark add" href="shop.html">Додати в кошик</a></div>
       <div class="meta"><div class="nm">Quencher H2.0 40oz</div><div class="dz">Об'єм 1.18 л · нержавіюча сталь</div>
         <div class="pr"><b>1 799 ₴</b><s>2 100 ₴</s></div>
@@ -324,7 +332,7 @@ footer a:hover{color:var(--cream)}
       </div>
     </article>
     <article class="card reveal">
-      <div class="ph"><span class="badge">Новинка</span><img src="img/pt30-chili-front.webp" alt="ProTour Chili">
+      <div class="ph"><span class="badge">Новинка</span><img loading="lazy" decoding="async" src="img/pt30-chili-front.webp" alt="ProTour Chili">
         <a class="btn btn-dark add" href="shop.html">Додати в кошик</a></div>
       <div class="meta"><div class="nm">ProTour Flip Straw 30oz</div><div class="dz">Об'єм 0.88 л · кнопка-фіксатор</div>
         <div class="pr"><b>1 599 ₴</b></div>
@@ -332,7 +340,7 @@ footer a:hover{color:var(--cream)}
       </div>
     </article>
     <article class="card reveal">
-      <div class="ph"><span class="badge gold">Лімітка</span><img src="img/pt30-seaglass-front.webp" alt="ProTour Seaglass">
+      <div class="ph"><span class="badge gold">Лімітка</span><img loading="lazy" decoding="async" src="img/pt30-seaglass-front.webp" alt="ProTour Seaglass">
         <a class="btn btn-dark add" href="shop.html">Додати в кошик</a></div>
       <div class="meta"><div class="nm">ProTour 30oz · Seaglass</div><div class="dz">Об'єм 0.88 л · лімітований колір</div>
         <div class="pr"><b>1 699 ₴</b></div>
@@ -340,7 +348,7 @@ footer a:hover{color:var(--cream)}
       </div>
     </article>
     <article class="card reveal">
-      <div class="ph"><span class="badge">Топ ціна</span><img src="img/pt20-frost-front.webp" alt="ProTour Frost">
+      <div class="ph"><span class="badge">Топ ціна</span><img loading="lazy" decoding="async" src="img/pt20-frost-front.webp" alt="ProTour Frost">
         <a class="btn btn-dark add" href="shop.html">Додати в кошик</a></div>
       <div class="meta"><div class="nm">ProTour 20oz · Frost</div><div class="dz">Об'єм 0.59 л · компактний</div>
         <div class="pr"><b>1 399 ₴</b><s>1 600 ₴</s></div>
@@ -354,10 +362,10 @@ footer a:hover{color:var(--cream)}
 <section class="section wrap" id="vibe" style="padding-top:0">
   <div class="shead reveal"><div><span class="eyebrow">Підбірки</span><h2 style="margin-top:10px">Купуй за <em>настроєм</em></h2></div></div>
   <div class="bento">
-    <a class="tile big reveal" href="shop.html"><img src="img/lsf-pink-front.webp" alt=""><div class="t"><div class="k">Найпопулярніше</div><h3>Для неї 💗</h3></div></a>
-    <a class="tile wide reveal" href="shop.html"><img src="img/q40-black-front.webp" alt=""><div class="t"><div class="k">Тримає 11 годин</div><h3>В авто 🚗</h3></div></a>
-    <a class="tile reveal" href="shop.html"><img src="img/q40-ash-front.webp" alt=""><div class="t"><div class="k">Спорт</div><h3>У зал 🏋️</h3></div></a>
-    <a class="tile reveal" href="shop.html"><img src="img/acc/carryall-cream-front.webp" alt=""><div class="t"><div class="k">До 2000 ₴</div><h3>Подарунок 🎁</h3></div></a>
+    <a class="tile big reveal" href="shop.html"><img loading="lazy" decoding="async" src="img/lsf-pink-front.webp" alt=""><div class="t"><div class="k">Найпопулярніше</div><h3>Для неї 💗</h3></div></a>
+    <a class="tile wide reveal" href="shop.html"><img loading="lazy" decoding="async" src="img/q40-black-front.webp" alt=""><div class="t"><div class="k">Тримає 11 годин</div><h3>В авто 🚗</h3></div></a>
+    <a class="tile reveal" href="shop.html"><img loading="lazy" decoding="async" src="img/q40-ash-front.webp" alt=""><div class="t"><div class="k">Спорт</div><h3>У зал 🏋️</h3></div></a>
+    <a class="tile reveal" href="shop.html"><img loading="lazy" decoding="async" src="img/acc/carryall-cream-front.webp" alt=""><div class="t"><div class="k">До 2000 ₴</div><h3>Подарунок 🎁</h3></div></a>
   </div>
 </section>
 
@@ -376,7 +384,7 @@ footer a:hover{color:var(--cream)}
       </div>
       <a class="btn btn-primary" href="shop.html">Забрати лімітку <span class="arw">→</span></a>
     </div>
-    <div class="ph"><img src="img/q40-lilac-front.webp" alt="Лімітований колір Lilac"></div>
+    <div class="ph"><img loading="lazy" decoding="async" src="img/q40-lilac-front.webp" alt="Лімітований колір Lilac"></div>
   </div></div>
 </section>
 
@@ -394,6 +402,19 @@ footer a:hover{color:var(--cream)}
     <div class="rev reveal"><div class="stars">★★★★★</div><p>«Замовила в подарунок — приїхало за день у крутій упаковці. Колір як на фото, оригінал 100%. Сервіс топ!»</p><div class="who"><div class="av">К</div><div><b>Катерина</b><small>Київ</small></div></div></div>
     <div class="rev reveal"><div class="stars">★★★★★</div><p>«Брав Quencher у машину — тримає лід цілий день. Відповіли в Insta за 2 хвилини, допомогли з кольором.»</p><div class="who"><div class="av">О</div><div><b>Олег</b><small>Львів</small></div></div></div>
     <div class="rev reveal"><div class="stars">★★★★★</div><p>«Нарешті магазин, де реально оригінал і швидка доставка. Взяла вже третю чашку, тепер збираю кольори 😍»</p><div class="who"><div class="av">М</div><div><b>Марія</b><small>Дніпро</small></div></div></div>
+  </div>
+</section>
+
+<!-- IG/UGC -->
+<section class="ig wrap">
+  <div class="head reveal"><span class="eyebrow">Спільнота</span><h2>#dua у житті</h2><p style="color:var(--muted);margin-top:6px">Відмічай <a href="#">@stanley_brand_ua</a> — і потрап у нашу стрічку.</p></div>
+  <div class="iggrid reveal">
+    <a href="#" aria-label="Instagram"><img loading="lazy" decoding="async" src="img/IMG_2490.webp" alt=""></a>
+    <a href="#" aria-label="Instagram"><img loading="lazy" decoding="async" src="img/IMG_2491.webp" alt=""></a>
+    <a href="#" aria-label="Instagram"><img loading="lazy" decoding="async" src="img/IMG_2492.webp" alt=""></a>
+    <a href="#" aria-label="Instagram"><img loading="lazy" decoding="async" src="img/IMG_2493.webp" alt=""></a>
+    <a href="#" aria-label="Instagram"><img loading="lazy" decoding="async" src="img/IMG_2494.webp" alt=""></a>
+    <a href="#" aria-label="Instagram"><img loading="lazy" decoding="async" src="img/IMG_2495.webp" alt=""></a>
   </div>
 </section>
 
@@ -458,6 +479,9 @@ const c=document.getElementById('count'); let tot=2*86400+11*3600+45*60+30;
 setInterval(()=>{tot=tot>0?tot-1:0;const d=tot/86400|0,h=tot%86400/3600|0,m=tot%3600/60|0,s=tot%60;
   const set=(u,v)=>c.querySelector(`[data-u=${u}]`).textContent=String(v).padStart(2,'0');
   set('d',d);set('h',h);set('m',m);set('s',s);},1000);
+
+addEventListener('scroll',()=>{var m=document.getElementById('mbar');if(m)m.classList.toggle('show',scrollY>620);},{passive:true});
 </script>
+<a class="mbar" id="mbar" href="shop.html" aria-label="До магазину"><span class="pi"><small>Quencher H2.0</small><b>від 1 799 ₴</b></span><span class="btn btn-primary">Обрати свою →</span></a>
 </body>
 </html>
