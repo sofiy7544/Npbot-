@@ -126,7 +126,7 @@
           orderId: order.id,
           amount: Math.round(order.total * 100),
           ccy: 980,
-          description: `Замовлення ${order.id} · stanleybrandua.com`,
+          description: `Замовлення ${order.id} · stanleybrand.com.ua`,
           redirectUrl: window.location.origin + window.location.pathname + "#payment-result?orderId=" + encodeURIComponent(order.id),
           webHookUrl: cfg.apiBase + "/api/mono/webhook",
           merchantPaymInfo: { reference: order.id, destination: "Stanley Brand UA · " + order.id },

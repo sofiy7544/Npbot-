@@ -14,7 +14,7 @@
   const cfg = Object.assign({
     /* Where your backend is deployed. Used for Monobank + Telegram bot.
        Leave empty to fall back to the old in-app behaviour (open t.me link). */
-    apiBase: "",          // e.g. "https://api.stanleybrandua.com"
+    apiBase: "",          // e.g. "https://api.stanleybrand.com.ua"
     monoEnabled: true,     // show "Pay with Monobank" in checkout
     /* For dev/preview: if backend is not deployed yet, we still want the order
        to land in Telegram. Set telegramBotToken + telegramChatId to enable
@@ -440,7 +440,7 @@
           orderId: order.id,
           amount: Math.round(order.total * 100), // копійки
           ccy: 980,
-          description: `Замовлення ${order.id} · stanleybrandua.com`,
+          description: `Замовлення ${order.id} · stanleybrand.com.ua`,
           redirectUrl: window.location.origin + window.location.pathname + "#payment-result?orderId=" + encodeURIComponent(order.id),
           webHookUrl: cfg.apiBase + "/api/mono/webhook",
           merchantPaymInfo: {
@@ -580,7 +580,7 @@
     lines.push("🚚 " + (shipMap[sh.method] || sh.method || "—"));
     lines.push("📍 " + (sh.city || "—") + ", " + (sh.locker || "—"));
     lines.push("");
-    lines.push("<i>stanleybrandua.com · " + new Date(order.createdAt || Date.now()).toLocaleString("uk-UA") + "</i>");
+    lines.push("<i>stanleybrand.com.ua · " + new Date(order.createdAt || Date.now()).toLocaleString("uk-UA") + "</i>");
 
     return { text: lines.join("\n"), photos };
   }
