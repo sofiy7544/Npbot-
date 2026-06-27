@@ -1,0 +1,70 @@
+# ============================================================================
+# Netlify HTTP Headers — production-grade security + caching
+# Auto-applied to all responses from this site.
+# Docs: https://docs.netlify.com/routing/headers/
+# ============================================================================
+
+# === SECURITY HEADERS — applied to every response =================
+/*
+  # HSTS: force HTTPS for 1 year, include subdomains
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+  # Stop clickjacking via iframe embedding
+  X-Frame-Options: SAMEORIGIN
+
+  # Block MIME-sniffing attacks
+  X-Content-Type-Options: nosniff
+
+  # Don't leak full URL to cross-origin sites
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # Deny browser features we don't use
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=(), payment=(self)
+
+  # CSP in report-only mode — visible in DevTools console but doesn't break
+  # the existing inline styles/scripts. Switch to enforced once you've moved
+  # the inline JS to external files.
+  Content-Security-Policy-Report-Only: default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:; img-src * data: blob:; media-src 'self' data: blob:; connect-src 'self' https://api.telegram.org https://api.monobank.ua; frame-ancestors 'self'; base-uri 'self'
+
+  # Tell browsers to use modern image formats when offered
+  Accept-CH: DPR, Viewport-Width, Width
+
+# === LONG-LIVED CACHE for fingerprinted-safe assets ==============
+/img/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# === MEDIUM CACHE for hashable assets (manual revision via filename) ====
+/*.webp
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+
+# CSS / JS — shorter because filenames aren't content-hashed
+# (versioned manually via the v1/v2/v3/v4/v5 suffixes — bust by renaming)
+/*.css
+  Cache-Control: public, max-age=2592000
+
+/*.js
+  Cache-Control: public, max-age=2592000
+
+# === SHORT CACHE for HTML — must revalidate so users get latest deploy ====
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# === ADMIN PAGE — extra hardening ======================================
+/admin.html
+  # Prevent indexing
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+  # No caching — always fetch latest
+  Cache-Control: private, no-store, no-cache, must-revalidate
+  # Don't embed admin anywhere
+  X-Frame-Options: DENY
+
+# === SITEMAP / ROBOTS ============================================
+/sitemap.xml
+  Content-Type: application/xml; charset=utf-8
+  Cache-Control: public, max-age=86400
+
+/robots.txt
+  Cache-Control: public, max-age=86400

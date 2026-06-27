@@ -1,0 +1,430 @@
+/* =====================================================================
+   ACCOUNT v3 — Auth, Referral, Cashback, Email integration
+   ===================================================================== */
+
+/* ===== 1. ВИПРАВЛЕННЯ МОВНОГО ДРОВЕРА (фото 1) ===== */
+/* Опції мови виглядали disabled через прозорість/відсутній :hover на mobile */
+.lang-list__item,
+[data-lang-option],
+.lang-drawer__option {
+  opacity: 1 !important;
+  cursor: pointer !important;
+  background: #fff !important;
+  color: var(--text) !important;
+  transition: background .2s ease, transform .12s ease !important;
+}
+.lang-list__item:active,
+[data-lang-option]:active,
+.lang-drawer__option:active {
+  background: var(--surface-2) !important;
+  transform: scale(0.99);
+}
+.lang-list__item[aria-selected="true"],
+[data-lang-option][aria-selected="true"],
+.lang-drawer__option.is-active {
+  background: var(--accent) !important;
+  color: var(--bg) !important;
+}
+.lang-list__item[aria-selected="true"] *,
+[data-lang-option][aria-selected="true"] *,
+.lang-drawer__option.is-active * {
+  color: var(--bg) !important;
+}
+
+/* ===== 2. ПОЛАГОДЖЕНИЙ TERMS CHECKBOX ===== */
+/* Зробимо checkbox чисто-CSS на базі :has() або через JS — нижче спрощений варіант */
+#termsCh {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+}
+#termsCh::before {
+  content: "";
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--text-soft);
+  border-radius: 6px;
+  background: #fff;
+  flex-shrink: 0;
+  transition: all .15s ease;
+  position: relative;
+}
+#termsCh.checked::before,
+#termsCh[aria-checked="true"]::before {
+  background: var(--accent);
+  border-color: var(--accent);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'><path d='m5 12 5 5L20 7'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 14px;
+}
+#termsCh:active::before {
+  transform: scale(0.92);
+}
+/* Прибираємо оригінальні елементи checkbox якщо є */
+#termsCh > .checkbox__mark { display: none !important; }
+#termsCh > input[type="checkbox"] { display: none !important; }
+#termsCh > span:not(.checkbox__mark) {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+  flex: 1;
+}
+#termsCh > span a {
+  color: var(--accent) !important;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ===== 3. ACCOUNT ENHANCED — Referral block + cashback ===== */
+.acc-referral {
+  margin-top: 28px;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2, #2C5341) 100%);
+  border-radius: 18px;
+  color: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+.acc-referral::before {
+  content: "";
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%);
+  pointer-events: none;
+}
+.acc-referral__head {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+}
+.acc-referral__badge {
+  background: rgba(255,255,255,0.18);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.acc-referral__title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.15;
+}
+.acc-referral__sub {
+  font-size: 13px;
+  opacity: 0.85;
+  margin: 6px 0 16px;
+  line-height: 1.45;
+}
+.acc-referral__rules {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 16px;
+}
+.acc-referral__rule {
+  background: rgba(255,255,255,0.14);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.acc-referral__rule svg {
+  width: 12px; height: 12px;
+  flex-shrink: 0;
+}
+.acc-referral__link-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  position: relative;
+  z-index: 1;
+}
+.acc-referral__input {
+  flex: 1;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #fff;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  min-width: 0;
+  font-weight: 500;
+}
+.acc-referral__input:focus {
+  outline: none;
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.3);
+}
+.acc-referral__btn {
+  background: #fff;
+  color: var(--accent);
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform .15s, background .2s;
+  border: 0;
+  white-space: nowrap;
+}
+.acc-referral__btn:hover { background: #f5f5f5; }
+.acc-referral__btn:active { transform: scale(0.95); }
+.acc-referral__btn svg { width: 14px; height: 14px; }
+.acc-referral__btn.is-copied {
+  background: rgba(255,255,255,0.95);
+  color: var(--success, #1F8B5A);
+}
+
+/* Cashback статистика */
+.acc-referral__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+.acc-referral__stat {
+  background: rgba(255,255,255,0.10);
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+.acc-referral__stat-label {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  font-weight: 600;
+}
+.acc-referral__stat-value {
+  font-size: 20px;
+  font-weight: 800;
+  margin-top: 4px;
+  font-feature-settings: "tnum";
+}
+
+@media (max-width: 720px) {
+  .acc-referral { padding: 18px; border-radius: 16px; }
+  .acc-referral__title { font-size: 19px; }
+  .acc-referral__link-row { flex-direction: column; }
+  .acc-referral__btn { width: 100%; justify-content: center; padding: 14px; }
+}
+
+/* Welcome discount block (50% off after 1st purchase) */
+.welcome-discount {
+  margin-top: 24px;
+  padding: 18px;
+  background: linear-gradient(135deg, #FEF3DD, #FAE6BA);
+  border-radius: 16px;
+  border: 1px dashed #C9A96E;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.welcome-discount__icon {
+  width: 48px; height: 48px;
+  background: #fff;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  font-size: 24px;
+}
+.welcome-discount__body { flex: 1; min-width: 0; }
+.welcome-discount__title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.3;
+}
+.welcome-discount__sub {
+  font-size: 12px;
+  color: #7A6638;
+  margin: 4px 0 0;
+}
+.welcome-discount__code {
+  background: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  cursor: pointer;
+  user-select: all;
+  border: 1px dashed #C9A96E;
+}
+
+/* ===== 4. AUTH PAGES — стилі ===== */
+.auth-msg {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  display: none;
+}
+.auth-msg.is-show { display: block; }
+.auth-msg--success {
+  background: #E8F5E9;
+  color: #1F5933;
+  border: 1px solid #A5D6A7;
+}
+.auth-msg--error {
+  background: #FFEBEE;
+  color: #931B22;
+  border: 1px solid #FFCDD2;
+}
+.auth-msg--info {
+  background: #E8F4FD;
+  color: #0D4F76;
+  border: 1px solid #BBDEFB;
+}
+
+/* Password strength meter */
+.pwd-strength {
+  margin-top: 8px;
+  height: 4px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.pwd-strength__bar {
+  height: 100%;
+  width: 0;
+  background: #ddd;
+  transition: width .25s ease, background-color .25s ease;
+}
+.pwd-strength__bar.is-weak   { width: 33%; background: #E57373; }
+.pwd-strength__bar.is-medium { width: 66%; background: #FFB74D; }
+.pwd-strength__bar.is-strong { width: 100%; background: #66BB6A; }
+.pwd-strength__hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ===== 5. CHECKOUT — нові варіанти оплати ===== */
+/* Підказка про передоплату на накладку */
+.cod-prepay-notice {
+  margin-top: 12px;
+  padding: 14px;
+  background: #FFF8E1;
+  border-left: 3px solid #FFB300;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #6B5300;
+  display: none;
+}
+.cod-prepay-notice.is-show { display: block; }
+.cod-prepay-notice strong { color: #4A3700; }
+.cod-prepay-notice__sub {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #8B6B14;
+}
+
+/* Sub-payment picker (показується тільки коли COD обрано) */
+.cod-prepay-methods {
+  margin-top: 10px;
+  display: none;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cod-prepay-methods.is-show { display: flex; }
+.cod-prepay-method {
+  flex: 1 1 calc(50% - 4px);
+  padding: 10px 12px;
+  background: #fff;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: all .15s ease;
+}
+.cod-prepay-method:hover { border-color: var(--accent); }
+.cod-prepay-method.is-active {
+  background: var(--accent-soft, #E8F0EB);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.cod-prepay-method__logo {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.cod-prepay-method__logo--p24 { background: #00B83F; color: #fff; }
+.cod-prepay-method__logo--mono { background: #000; color: #fff; }
+.cod-prepay-method__logo--liq { background: #009BDB; color: #fff; }
+
+/* Сховати Apple/Google коли вибрана накладка */
+[data-payment-hidden] { display: none !important; }
+
+@media (max-width: 720px) {
+  .cod-prepay-method { flex: 1 1 100%; }
+}
+
+/* ===== 6. ORDER SUMMARY — додаємо рядок передоплати ===== */
+.summary-line--prepay {
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+.summary-line--prepay strong {
+  color: var(--accent);
+}
+
+/* ===== 7. EMAIL CONFIG BANNER (адмінка) ===== */
+.email-config-banner {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 9999;
+  background: #FFF3CD;
+  color: #856404;
+  border-left: 4px solid #FFC107;
+  padding: 12px 16px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  max-width: 320px;
+  font-size: 12.5px;
+  display: none;
+}
+.email-config-banner.is-show { display: block; }
+.email-config-banner strong { display: block; margin-bottom: 4px; }
+.email-config-banner a {
+  color: #856404;
+  text-decoration: underline;
+  font-weight: 600;
+}
+.email-config-banner__close {
+  position: absolute;
+  top: 4px; right: 8px;
+  background: transparent;
+  border: 0;
+  font-size: 18px;
+  cursor: pointer;
+  color: #856404;
+}

@@ -1,0 +1,17 @@
+# ============================================================================
+# Netlify _redirects
+# https://docs.netlify.com/routing/redirects/
+# ============================================================================
+
+# SPA fallback — hash routing already works without this, but if anyone
+# ever visits /shop or /product directly (not via hash) we send them to
+# the root so the SPA can pick it up.
+/shop       /#shop       200
+/product/*  /#product    200
+/cart       /#cart       200
+/checkout   /#checkout   200
+/account    /#account    200
+/login      /#login      200
+/register   /#register   200
+
+# Robots / sitemap stay as-is
