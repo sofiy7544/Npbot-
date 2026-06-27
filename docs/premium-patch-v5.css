@@ -1,0 +1,150 @@
+/* ============================================================================
+   Stanley · Premium Patch v5 (CSS)
+   Account isolation + premium UX additions.
+
+   Layered on top of v1-v4 — additive only.
+   ============================================================================ */
+
+/* ============================================================================
+   1. ACCOUNT — premium empty state
+   ============================================================================ */
+.acc-empty {
+  margin: 32px 0;
+  padding: 48px 24px;
+  background: linear-gradient(180deg, #FAFAF7 0%, #F3F1EC 100%);
+  border-radius: 20px;
+  text-align: center;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+.acc-empty__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  margin-bottom: 18px;
+  color: var(--text-soft, #6b6b6b);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 8px 24px -16px rgba(0, 0, 0, 0.1);
+}
+.acc-empty__title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 6px;
+  color: var(--text, #1f1f1f);
+}
+.acc-empty__sub {
+  color: var(--text-soft, #6b6b6b);
+  font-size: 14px;
+  max-width: 44ch;
+  margin: 0 auto 22px;
+  line-height: 1.55;
+}
+.acc-empty__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 140ms ease, box-shadow 200ms ease;
+}
+.acc-empty__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px -8px rgba(28, 58, 46, 0.4);
+}
+.acc-empty__cta:active { transform: scale(0.98); }
+
+/* ============================================================================
+   2. AUTH FORMS — premium polish (login / register)
+   ============================================================================ */
+.auth-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 40px 16px;
+  background: linear-gradient(180deg, #fafaf8 0%, #fff 40%);
+}
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  padding: 36px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 24px 48px -32px rgba(0, 0, 0, 0.12);
+}
+@media (max-width: 480px) {
+  .auth-card { padding: 28px 22px; border-radius: 18px; }
+}
+.auth-card h1 {
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.auth-card .input {
+  height: 52px !important;
+  padding: 0 16px !important;
+  border-radius: 12px !important;
+  font-size: 15px !important;
+  border: 1px solid rgba(0, 0, 0, 0.10) !important;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+@media (max-width: 768px) {
+  .auth-card .input { font-size: 16px !important; }
+}
+.auth-card .input:focus,
+.auth-card .input:focus-visible {
+  outline: none !important;
+  border-color: var(--accent, #1C3A2E) !important;
+  box-shadow: 0 0 0 4px rgba(28, 58, 46, 0.08) !important;
+}
+.auth-card .btn-primary {
+  height: 52px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  transition: transform 140ms ease, box-shadow 220ms ease, background 180ms ease;
+}
+.auth-card .btn-primary:hover { box-shadow: 0 8px 24px -8px rgba(28, 58, 46, 0.4); transform: translateY(-1px); }
+.auth-card .btn-primary:active { transform: scale(0.98); }
+.auth-card .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+/* ============================================================================
+   3. STAT TILES — only used when has-orders, but make them feel premium
+   ============================================================================ */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 20px 0 0;
+}
+@media (max-width: 600px) {
+  .stat-row { grid-template-columns: 1fr; gap: 8px; }
+}
+.stat-tile {
+  background: linear-gradient(180deg, #FAFAF7 0%, #F3F1EC 100%);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+.stat-tile__label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-soft, #6b6b6b);
+  font-weight: 600;
+}
+.stat-tile__value {
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  font-size: 26px;
+  font-weight: 700;
+  margin-top: 6px;
+  color: var(--text, #1f1f1f);
+  letter-spacing: -0.02em;
+}

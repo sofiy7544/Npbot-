@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# Avoid indexing query-routed pages with cart/checkout state
+Disallow: /*#cart
+Disallow: /*#checkout
+Disallow: /*#confirmation
+Disallow: /*#account
+Disallow: /*#login
+Disallow: /*#register
+
+Sitemap: https://stanleybrandua.com/sitemap.xml
