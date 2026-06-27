@@ -11,3 +11,5 @@ Disallow: /*#login
 Disallow: /*#register
 
 Sitemap: https://stanleybrandua.com/sitemap.xml
+
+# pages rebuild trigger
