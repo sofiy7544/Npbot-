@@ -43,6 +43,11 @@
 - Батч 3D-каталог ✅: `assets/catalog-3d.js` — pointer-tilt 3D + парал-зсув фото
   на картках каталогу. Тільки fine-pointer, reduced-motion → no-op; на leave
   чистить inline-transform (базовий hover повертається). Йде ПІСЛЯ swatch.
-- Далі: сторінка товару нового рівня — ВІДКРИТЕ ПИТАННЯ архітектури
-  (нова standalone product.html vs покращити SPA-картку в shop.html — НЕ ламати чекаут).
+- Батч product-page ✅ (обрано варіант 1 — нова standalone `product.html`):
+  data-driven з `catalog-data.json` за `?id=`. 3D-tilt галерея, свотчі кольорів
+  (зміна фото/назви/ціни/URL без перезавантаження), thumbs, характеристики,
+  переваги-чіпи, FAQ (details), схожі товари, sticky buy-bar, динамічний
+  SEO (title/desc/canonical/og) + JSON-LD Product. shop.html НЕ чіпали.
+  Фолбеки: reduced-motion / touch → без tilt; невідомий id → перший товар / меседж.
+- Далі: лінкування каталог→product.html (наступний мікробатч); потім 3D-hover у каталозі вже є.
 - Продовжувати в НОВОМУ чаті за цим логом + PROJECT_HANDOVER.md.
