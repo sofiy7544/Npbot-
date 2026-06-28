@@ -18,7 +18,7 @@
 1. ✅ 3D-герой: процедурна чашка (Three.js) поверх фото, авто-обертання + parallax, фолбек. Файл `assets/hero3d.js`, canvas у `.stage`.
 2. ⬜ Smooth scroll (Lenis) + покращені reveal/parallax (GSAP або CSS).
 3. ⬜ Секція «термос у розрізі» (cutaway, шари + підписи).
-4. 🔶 Каталог: swatch-зміна кольору ✅ (Батч C, `assets/catalog-swatch.js`); 3D/preview hover — ще.
+4. ✅ Каталог: swatch-зміна кольору (Батч C, `assets/catalog-swatch.js`) + 3D hover-preview (`assets/catalog-3d.js`).
 5. ⬜ Сторінка товару нового рівня (3D-preview, sticky-buy, специфікації).
 
 ## Як перевірити
@@ -40,5 +40,9 @@
   (CSS + inline IO) до плавних СТАГЕР-ревілів через GSAP+ScrollTrigger з CDN.
   Безпечно: reduced-motion / CDN-блок → нічого не робить, лишається CSS-ревіл;
   бере лише ще-не-показані елементи (без миготіння above-the-fold). Підключено в index.html.
-- Далі: сторінка товару (3D-preview, sticky-buy, специфікації); 3D у каталозі (hover-preview).
+- Батч 3D-каталог ✅: `assets/catalog-3d.js` — pointer-tilt 3D + парал-зсув фото
+  на картках каталогу. Тільки fine-pointer, reduced-motion → no-op; на leave
+  чистить inline-transform (базовий hover повертається). Йде ПІСЛЯ swatch.
+- Далі: сторінка товару нового рівня — ВІДКРИТЕ ПИТАННЯ архітектури
+  (нова standalone product.html vs покращити SPA-картку в shop.html — НЕ ламати чекаут).
 - Продовжувати в НОВОМУ чаті за цим логом + PROJECT_HANDOVER.md.
