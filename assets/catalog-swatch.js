@@ -1,10 +1,14 @@
-/* Catalog colour swatches — progressive enhancement (Batch C).
+/* Catalog colour swatches + product links — progressive enhancement (Batch C / linking).
    The catalog lists every colour of a product as its own near-identical card.
    This collapses same-product colour variants into ONE card with a row of
-   clickable swatches that swap the photo, name, colour label and price dot.
+   clickable swatches that swap the photo, name, colour label and price dot, and
+   links each card's photo + name to the standalone product page (product.html?id=).
 
-   Pure DOM enhancement: if it can't run, the original cards stay untouched. */
-(function () {
+   Pure DOM enhancement: if it can't run, the original cards stay untouched. The
+   collapse happens synchronously (no flash); the product-link layer is best-effort
+   — it needs catalog-data.json (same dir) to map image paths to ids and is applied
+   once that fetch resolves. If the fetch fails, swatches still work, links are skipped. */
+(async function () {
   const grids = document.querySelectorAll('.cat .grid');
   if (!grids.length) return;
 
@@ -20,6 +24,9 @@
   .swn{font-size:11px;color:var(--muted);font-weight:600;margin-left:2px}
   .card .ph img{transition:transform .5s var(--ease),opacity .25s var(--ease)}
   .card.swapping .ph img{opacity:.25}
+  .phlink{display:contents}
+  a.nmlink{color:inherit;text-decoration:none}
+  a.nmlink:hover{color:var(--clay)}
   @media(prefers-reduced-motion:reduce){.sw,.card .ph img{transition:none}}`;
   const st = document.createElement('style');
   st.textContent = css;
@@ -28,9 +35,46 @@
   const txt = el => (el ? el.textContent.trim() : '');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // image-path -> product id (filled after fetch; mutated in place so closures see it)
+  const bySrc = {};
+  const linked = []; // { update(src), getSrc() } for refreshing hrefs post-fetch
+
+  // turn a card's photo + name into links to product.html; returns an updater(src)
+  const wireLink = card => {
+    const img = card.querySelector('.ph img');
+    const nmEl = card.querySelector('.nm');
+    if (!img) return null;
+
+    // wrap the image in a display:contents anchor (keeps grid layout intact)
+    let a = card.querySelector('a.phlink');
+    if (!a) {
+      a = document.createElement('a');
+      a.className = 'phlink';
+      img.parentNode.insertBefore(a, img);
+      a.appendChild(img);
+    }
+    // wrap the name text in a link too (crawlable, accessible)
+    let nmA = null;
+    if (nmEl) {
+      nmA = document.createElement('a');
+      nmA.className = 'nmlink';
+      nmA.textContent = nmEl.textContent;
+      nmEl.textContent = '';
+      nmEl.appendChild(nmA);
+    }
+    const update = src => {
+      const id = bySrc[src];
+      if (!id) { a.removeAttribute('href'); if (nmA) nmA.removeAttribute('href'); return; }
+      const href = 'product.html?id=' + encodeURIComponent(id);
+      a.setAttribute('href', href);
+      if (nmA) nmA.setAttribute('href', href);
+    };
+    return { update, nmA };
+  };
+
+  // ── synchronous pass: collapse colour variants + build swatches + wire links ──
   grids.forEach(grid => {
     const cards = Array.from(grid.querySelectorAll('.card'));
-    // group consecutive cards that share the same base name (name minus " · Colour")
     const groups = new Map();
     cards.forEach(card => {
       const nmEl = card.querySelector('.nm');
@@ -58,13 +102,17 @@
       if (variants.length < 2) return; // nothing to collapse
       const host = variants[0].card;
       const img = host.querySelector('.ph img');
-      const nmEl = host.querySelector('.nm');
       const dzEl = host.querySelector('.dz');
       const dot = host.querySelector('.pr i');
       const meta = host.querySelector('.meta');
 
       // remove sibling variant cards (keep the first as host)
       variants.slice(1).forEach(v => v.card.remove());
+
+      // wire links first so the swatch handler can refresh the href (nm text moves into the link)
+      const link = wireLink(host);
+      host.dataset.linked = '1';
+      const nmTarget = link && link.nmA ? link.nmA : host.querySelector('.nm');
 
       // build swatch row
       const row = document.createElement('div');
@@ -78,9 +126,10 @@
         const apply = () => {
           img.src = v.src;
           img.alt = v.alt;
-          if (nmEl) nmEl.textContent = v.full;
+          if (nmTarget) nmTarget.textContent = v.full;
           if (dzEl) dzEl.textContent = v.dz;
           if (dot && v.dot) dot.setAttribute('style', v.dot);
+          if (link) link.update(v.src);
           host.classList.remove('swapping');
         };
         if (reduce) { apply(); }
@@ -109,10 +158,27 @@
       });
 
       count.textContent = `${variants.length} кольорів · ${variants[0].color}`;
-      // place swatches right after the price line
       const pr = meta.querySelector('.pr');
       if (pr && pr.nextSibling) meta.insertBefore(row, pr.nextSibling);
       else meta.appendChild(row);
+
+      if (link) linked.push({ link, getSrc: () => img.getAttribute('src') });
+    });
+
+    // link any remaining (non-collapsed) cards to their product page
+    grid.querySelectorAll('.card').forEach(card => {
+      if (card.dataset.linked) return;
+      const img = card.querySelector('.ph img');
+      const link = wireLink(card);
+      card.dataset.linked = '1';
+      if (link && img) linked.push({ link, getSrc: () => img.getAttribute('src') });
     });
   });
+
+  // ── async tail: load id map, then activate the product links ──
+  try {
+    const data = await fetch('catalog-data.json').then(r => r.json());
+    (data.products || []).forEach(p => { if (p.img && p.id) bySrc[p.img] = p.id; });
+    linked.forEach(e => e.link.update(e.getSrc()));
+  } catch (_) { /* no data → cards stay un-linked, swatches already work */ }
 })();

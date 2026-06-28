@@ -49,5 +49,11 @@
   переваги-чіпи, FAQ (details), схожі товари, sticky buy-bar, динамічний
   SEO (title/desc/canonical/og) + JSON-LD Product. shop.html НЕ чіпали.
   Фолбеки: reduced-motion / touch → без tilt; невідомий id → перший товар / меседж.
-- Далі: лінкування каталог→product.html (наступний мікробатч); потім 3D-hover у каталозі вже є.
+- Батч лінкування ✅: `catalog-swatch.js` тепер фетчить `catalog-data.json`,
+  будує мапу img→id і робить фото+назву кожної картки лінком на `product.html?id=`.
+  Колапс лишається синхронним (без миготіння), лінки активуються після фетчу;
+  href оновлюється при кліку свотча. Картка без товару в даних (Starbucks ig-09)
+  лишається без лінка. Сумісно з catalog-3d (tilt працює поверх).
+- РОАДМАП ВИКОНАНО: 3D-герой, smooth, cutaway, swatch, GSAP-reveal, 3D-каталог,
+  сторінка товару, лінкування. Далі (опц.): related/3D на product, srcset/AVIF, shop.html преміум.
 - Продовжувати в НОВОМУ чаті за цим логом + PROJECT_HANDOVER.md.
