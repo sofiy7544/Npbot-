@@ -1,0 +1,12 @@
+{
+  "source":"178 Instagram DM threads (2337 messages), shop account = Stanley Україна",
+  "real_prices_uah": {"Quencher_40oz":2200,"ProTour_Flip_sealed":2999,"mid_tier":[2499,1999],"entry":[1799,1499],"accessories":[200,900]},
+  "audience": {
+    "intent_order": ["наявність","ціна","оплата","доставка","колір"],
+    "b2b_signal":"high — ЄДРПОУ mentioned 108x, рахунок (invoice) common => wholesale/опт demand",
+    "payment":"передоплата + рахунок, Нова Пошта",
+    "tone":"formal-polite UA (Доброго дня, Будь ласка, Дякуємо)",
+    "top_demand":["accessories","Quencher","Camp Mug","ProTour","Starbucks"]
+  },
+  "site_actions": ["emphasize В НАЯВНОСТІ badges","add B2B/опт block with рахунок/ЄДРПОУ","clear price+payment+delivery up front","color selection prominent"]
+}
