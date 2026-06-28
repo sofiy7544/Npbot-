@@ -293,6 +293,9 @@ footer a:hover{color:var(--cream)}
 /* social-proof toast */ .toast{position:fixed;left:16px;bottom:96px;z-index:58;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:11px 15px 11px 12px;display:flex;gap:10px;align-items:center;max-width:300px;transform:translateY(140%);opacity:0;transition:transform .5s var(--ease),opacity .5s}
 .toast.show{transform:none;opacity:1}.toast .dotimg{width:34px;height:34px;border-radius:9px;background:var(--cream-2);display:grid;place-items:center;font-size:17px;flex:none}.toast small{display:block;color:var(--muted);font-size:11px}.toast b{font-size:var(--f-sm)}
 @media(max-width:860px){.toast{bottom:78px;left:10px;right:10px;max-width:none}}
+
+/* in-stock + b2b */ .instock{color:#2e7d52;font-size:11px;font-weight:700;margin-top:9px;display:flex;align-items:center;gap:6px;letter-spacing:.02em}.instock::before{content:"";width:7px;height:7px;border-radius:50%;background:#2e7d52;box-shadow:0 0 0 3px rgba(46,125,82,.18)}
+.b2b{background:linear-gradient(135deg,#16271d,#1f3a2a);color:var(--cream);border-radius:var(--r-lg);overflow:hidden;position:relative}.b2b .g{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;align-items:center}.b2b .copy{padding:clamp(28px,5vw,60px)}.b2b .eyebrow{color:var(--gold)}.b2b h2{font-size:clamp(1.9rem,4vw,2.8rem);letter-spacing:-.03em;margin:12px 0 10px;font-weight:800}.b2b h2 em{font-family:var(--serif);font-style:italic;font-weight:500;color:var(--gold)}.b2b p{color:rgba(246,243,235,.78);max-width:42ch;font-size:var(--f-sm)}.b2b ul{list-style:none;display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 26px}.b2b li{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:8px 15px;font-size:var(--f-xs);font-weight:600}.b2b .ph{align-self:stretch;min-height:300px;position:relative;background:radial-gradient(110% 90% at 60% 30%,#2a4633,#16271d)}.b2b .ph img{position:absolute;inset:0;margin:auto;width:80%;height:84%;object-fit:cover;border-radius:0}@media(max-width:860px){.b2b .g{grid-template-columns:1fr}.b2b .ph{min-height:240px;order:-1}}
 </style>
 </head>
 <body>
@@ -376,28 +379,28 @@ footer a:hover{color:var(--cream)}
         <span class="btn btn-dark add">Обрати →</span></div>
       <div class="meta"><div class="nm">Quencher H2.0 · 40oz</div><div class="dz">Об'єм 1.18 л · нержавіюча сталь</div>
         <div class="pr"><b>2 200 ₴</b><s>2 599 ₴</s></div>
-        <div class="mini"><i style="background:#efe9da"></i><i style="background:#cfd9d8"></i><i style="background:#d8a5a0"></i><i style="background:#2b2b2b"></i><i style="background:#c4b6d6"></i></div></div>
+        <div class="mini"><i style="background:#efe9da"></i><i style="background:#cfd9d8"></i><i style="background:#d8a5a0"></i><i style="background:#2b2b2b"></i><i style="background:#c4b6d6"></i></div><div class="instock">В наявності</div></div>
     </a>
     <a class="card reveal" href="shop.html#product?id=stanley-protour-30">
       <div class="ph"><span class="badge ">Новинка</span><img loading="lazy" decoding="async" src="img/pt30-chili-front.webp" alt="ProTour Flip Straw · 30oz">
         <span class="btn btn-dark add">Обрати →</span></div>
       <div class="meta"><div class="nm">ProTour Flip Straw · 30oz</div><div class="dz">Об'єм 0.88 л · кнопка-фіксатор</div>
         <div class="pr"><b>2 999 ₴</b></div>
-        <div class="mini"><i style="background:#b6483a"></i><i style="background:#e9e3d4"></i><i style="background:#7d8f7a"></i><i style="background:#caa6c9"></i></div></div>
+        <div class="mini"><i style="background:#b6483a"></i><i style="background:#e9e3d4"></i><i style="background:#7d8f7a"></i><i style="background:#caa6c9"></i></div><div class="instock">В наявності</div></div>
     </a>
     <a class="card reveal" href="shop.html#product?id=stanley-lsf-holiday">
       <div class="ph"><span class="badge gold">Лімітка</span><img loading="lazy" decoding="async" src="img/lsf-chantilly-front.webp" alt="LoveShackFancy · Holiday">
         <span class="btn btn-dark add">Обрати →</span></div>
       <div class="meta"><div class="nm">LoveShackFancy · Holiday</div><div class="dz">Лімітована колаборація</div>
         <div class="pr"><b>2 499 ₴</b></div>
-        <div class="mini"><i style="background:#e7c9d2"></i><i style="background:#d8a5a0"></i><i style="background:#efe9da"></i></div></div>
+        <div class="mini"><i style="background:#e7c9d2"></i><i style="background:#d8a5a0"></i><i style="background:#efe9da"></i></div><div class="instock">В наявності</div></div>
     </a>
     <a class="card reveal" href="shop.html#product?id=stanley-quencher-30">
       <div class="ph"><span class="badge ">Топ ціна</span><img loading="lazy" decoding="async" src="img/q40-rose-front.webp" alt="Quencher H2.0 · 30oz">
         <span class="btn btn-dark add">Обрати →</span></div>
       <div class="meta"><div class="nm">Quencher H2.0 · 30oz</div><div class="dz">Об'єм 0.88 л · компактний</div>
         <div class="pr"><b>1 999 ₴</b><s>2 299 ₴</s></div>
-        <div class="mini"><i style="background:#d8a5a0"></i><i style="background:#efe9da"></i><i style="background:#cfd9d8"></i><i style="background:#e8b59a"></i></div></div>
+        <div class="mini"><i style="background:#d8a5a0"></i><i style="background:#efe9da"></i><i style="background:#cfd9d8"></i><i style="background:#e8b59a"></i></div><div class="instock">В наявності</div></div>
     </a>
   </div>
 </section>
@@ -493,6 +496,8 @@ footer a:hover{color:var(--cream)}
 <section class="section wrap" id="faq" style="padding-top:0">
   <div class="shead reveal" style="justify-content:center;text-align:center"><div><span class="eyebrow">Питання</span><h2 style="margin-top:10px">Часті <em>запитання</em></h2></div></div>
   <div class="faq reveal">
+    <details class="qa"><summary>Чи є опт і рахунок для ФОП / ТОВ?</summary><p>Так. Працюємо за рахунком з ЄДРПОУ, опт-ціни від 10 шт, робимо корпоративні подарунки та брендування. Напишіть у Telegram — надішлемо опт-прайс.</p></details>
+    <details class="qa"><summary>Чи є товар у наявності?</summary><p>Більшість позицій — у наявності, відправка 1–2 дні. Рідкісні кольори та лімітки бувають під замовлення — уточнюйте наявність у Telegram/Instagram.</p></details>
     <details class="qa" open><summary>Чи це оригінал Stanley?</summary><p>Так, 100% оригінал з гарантією справжності. Працюємо лише з офіційним товаром — жодних реплік.</p></details>
     <details class="qa"><summary>Скільки тримає температуру?</summary><p>Quencher тримає холод до 11 годин і тепло до 7 годин завдяки подвійній вакуумній ізоляції та сталі 18/8.</p></details>
     <details class="qa"><summary>Яка доставка і скільки чекати?</summary><p>Нова Пошта по всій Україні, відправка 1–2 дні. Трек-номер надсилаємо одразу після оплати.</p></details>
@@ -500,6 +505,20 @@ footer a:hover{color:var(--cream)}
     <details class="qa"><summary>Чи можна повернути або обміняти?</summary><p>Так — 14 днів на обмін чи повернення без зайвих питань, якщо товар не був у використанні.</p></details>
     <details class="qa"><summary>Як зробити замовлення?</summary><p>Обери товар на сайті або напиши нам у Telegram/Instagram — допоможемо з кольором і оформимо за хвилину.</p></details>
   </div>
+</section>
+
+<!-- B2B / OPT -->
+<section class="section wrap" id="b2b">
+  <div class="b2b reveal"><div class="g">
+    <div class="copy">
+      <span class="eyebrow">Опт та бізнес</span>
+      <h2>Опт, <em>корпоративні</em> подарунки та брендування</h2>
+      <p>Працюємо з ФОП і ТОВ: рахунок-фактура, оплата за ЄДРПОУ, опт-ціни від 10 шт. Корпоративні набори, гравіювання та брендування під ваш бізнес.</p>
+      <ul><li>📄 Рахунок / ЄДРПОУ</li><li>📦 Опт від 10 шт</li><li>🎁 Корпоративні подарунки</li><li>✍️ Брендування</li></ul>
+      <a class="btn btn-primary" href="https://t.me/stanley_brand_ua" target="_blank" rel="noopener">Отримати опт-прайс <span class="arw">→</span></a>
+    </div>
+    <div class="ph"><img loading="lazy" decoding="async" src="img/ig/ig-08.webp" alt="Опт Stanley для бізнесу"></div>
+  </div></div>
 </section>
 
 <!-- CTA BAND -->
