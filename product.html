@@ -157,9 +157,9 @@ footer{background:var(--ink);color:rgba(246,243,235,.75);padding:40px 0 76px;tex
     var stage=document.getElementById('stage'), hero=document.getElementById('hero');
     var apply=function(){
       hero.src=v.img; hero.alt=v.alt||v.name; stage.classList.remove('swapping');
-      document.getElementById('pname').textContent=v.name;
-      document.getElementById('psub').textContent=[v.volume&&v.volume!=='—'?v.volume:'',v.color&&v.color!=='—'?v.color:''].filter(Boolean).join(' · ');
-      document.getElementById('pprice').textContent=fmt(v.price);
+      var pn=document.getElementById('pname'); if(pn) pn.textContent=v.name;
+      var ps=document.getElementById('psub'); if(ps) ps.textContent=[v.volume&&v.volume!=='—'?v.volume:'',v.color&&v.color!=='—'?v.color:''].filter(Boolean).join(' · ');
+      var pp=document.getElementById('pprice'); if(pp) pp.textContent=fmt(v.price);
       var s=document.getElementById('pcompare'); if(s) s.textContent=fmt(v.compareAt);
       var sv=document.getElementById('psave'); if(sv&&v.compareAt) sv.textContent='−'+Math.round((1-v.price/v.compareAt)*100)+'%';
       var d=document.getElementById('pdesc'); if(d) d.textContent=v.desc||'';
