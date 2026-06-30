@@ -71,5 +71,14 @@
   картки). Тільки fine-pointer; reduced-motion → no-op. НЕ чіпає чекаут/кошик:
   inline-transform на елементі без власного transform (hover-lift і scale цілі).
   shop.html уже мав swatches/reveal/sticky-CTA/premium-patch — додано лише tilt.
-- Далі (опц.): AVIF/srcset на машині з енкодерами (тут немає тулзів/мережі).
+- Батч AVIF (готово до активації) ✅: додано пайплайн без ламання:
+  - `scripts/make-avif.mjs` — генерує `.avif` поряд з кожним `.webp` під `img/`
+    і пише `img/avif-manifest.json` (потрібен sharp: `npm i -D sharp`).
+  - `assets/avif.js` — апгрейдить webp→avif у рантаймі ТІЛЬКИ для шляхів з
+    маніфесту і ТІЛЬКИ якщо браузер підтримує avif. Без маніфесту — no-op (0 запитів),
+    битих картинок не буває (свопаємо src, не <picture>). Підключено на
+    index/catalog/product/shop (+docs).
+  - ЯК АКТИВУВАТИ (на машині з тулзами/мережею): `npm i -D sharp` →
+    `node scripts/make-avif.mjs` → `cp -r img/* docs/img/` → commit (avif + manifest).
+- Далі (опц.): мобільна поліровка; srcset (кілька ширин) якщо знадобиться.
 - Продовжувати в НОВОМУ чаті за цим логом + PROJECT_HANDOVER.md.
