@@ -66,11 +66,21 @@
     "@type": "PostalAddress",
     "addressCountry": "UA"
   },
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "contactType": "customer service",
-    "availableLanguage": ["Ukrainian", "Polish", "English"]
-  },
+  "email": "LokmobeoLTD@mytoy.toys",
+  "contactPoint": [
+    {
+      "@type": "ContactPoint",
+      "contactType": "customer service",
+      "availableLanguage": ["Ukrainian", "Polish", "English"]
+    },
+    {
+      "@type": "ContactPoint",
+      "contactType": "sales",
+      "email": "LokmobeoLTD@mytoy.toys",
+      "areaServed": "UA",
+      "availableLanguage": ["Ukrainian", "Russian"]
+    }
+  ],
   "areaServed": ["UA"],
   "sameAs": [
     "https://www.instagram.com/stanley_brand_ua/",
@@ -5151,6 +5161,7 @@ function renderFooter() {
               '<li><a href="#returns">' + esc(t('doc_returns_title')) + '</a></li>' +
               '<li><a href="#warranty">' + esc(t('doc_warranty_title')) + '</a></li>' +
               '<li><a href="#contact">' + esc(t('doc_contact_title')) + '</a></li>' +
+              '<li><a href="mailto:LokmobeoLTD@mytoy.toys">Опт/B2B: LokmobeoLTD@mytoy.toys</a></li>' +
             '</ul>' +
           '</div>' +
           '<div>' +
