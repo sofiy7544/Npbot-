@@ -142,7 +142,7 @@ footer{background:var(--ink);color:rgba(246,243,235,.75);padding:40px 0 76px;tex
       (rel.length?'<section class="rel"><h2>Схожі товари</h2><div class="relgrid">'+rel.map(function(x){return '<a class="rc" href="product.html?id='+encodeURIComponent(x.id)+'"><div class="ph"><img loading="lazy" src="'+esc(x.img)+'" alt="'+esc(x.alt||x.name)+'"></div><div class="m"><div class="nm">'+esc(x.name)+'</div><div class="pp">'+fmt(x.price)+'</div></div></a>';}).join('')+'</div></section>':'');
 
     buildSwatches(p, variants);
-    buildThumbs(p, variants);
+    buildThumbs(p);
     seo(p);
     tilt(document.getElementById('stage'), document.getElementById('hero'));
     tiltCards('.relgrid .rc');
@@ -168,7 +168,7 @@ footer{background:var(--ink);color:rgba(246,243,235,.75);padding:40px 0 76px;tex
     if(matchMedia('(prefers-reduced-motion: reduce)').matches){ apply(); }
     else{ stage.classList.add('swapping'); hero.addEventListener('load',apply,{once:true}); setTimeout(apply,260); hero.src=v.img; }
     document.querySelectorAll('#sws .sw').forEach(function(b,i){b.setAttribute('aria-pressed', variants[i]===v?'true':'false');});
-    document.querySelectorAll('#thumbs .thumb').forEach(function(t,i){t.setAttribute('aria-current', variants[i]===v?'true':'false');});
+    buildThumbs(v);
     updateSticky(v); seo(v);
     history.replaceState(null,'','product.html?id='+encodeURIComponent(v.id));
   }
@@ -184,16 +184,37 @@ footer{background:var(--ink);color:rgba(246,243,235,.75);padding:40px 0 76px;tex
       wrap.appendChild(b);
     });
   }
-  function buildThumbs(p, variants){
+  // gallery thumbnails = available ANGLES (front/back/lid) of the current colour.
+  // Alternate shots are discovered by probing derived filenames, so the row only
+  // shows angles that actually exist; products with one photo hide the row.
+  function angleSrc(src, suffix){ return src.replace(/-front\.(webp|jpe?g|png)$/i, '-'+suffix+'.$1'); }
+  function probe(src){ return new Promise(function(res){ var im=new Image(); im.onload=function(){res(true);}; im.onerror=function(){res(false);}; im.src=src; }); }
+  function setHero(src, alt){
+    var stage=document.getElementById('stage'), hero=document.getElementById('hero');
+    if(!hero) return;
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){ hero.src=src; if(alt) hero.alt=alt; return; }
+    stage.classList.add('swapping');
+    var done=function(){ stage.classList.remove('swapping'); };
+    hero.addEventListener('load',done,{once:true}); setTimeout(done,260); hero.src=src; if(alt) hero.alt=alt;
+  }
+  function buildThumbs(v){
     var wrap=document.getElementById('thumbs'); if(!wrap) return;
-    var list = variants.length>1 ? variants : [p];
-    if(list.length<2){ wrap.style.display='none'; return; }
-    list.forEach(function(v){
-      var t=document.createElement('button'); t.type='button'; t.className='thumb';
-      t.setAttribute('aria-current', v.id===p.id?'true':'false'); t.title=v.color||v.name;
-      t.innerHTML='<img loading="lazy" src="'+esc(v.img)+'" alt="'+esc(v.color||v.name)+'">';
-      t.addEventListener('click',function(){applyVariant(v,variants);});
-      wrap.appendChild(t);
+    wrap.innerHTML=''; wrap.style.display='';
+    var cands=[{src:v.img,label:'Спереду'},{src:angleSrc(v.img,'back'),label:'Ззаду'},{src:angleSrc(v.img,'lid'),label:'Кришка'}];
+    Promise.all(cands.map(function(c,i){ return i===0||c.src===v.img ? Promise.resolve(i===0) : probe(c.src); })).then(function(oks){
+      var seen={}, avail=cands.filter(function(c,i){ if(!oks[i])return false; if(seen[c.src])return false; seen[c.src]=1; return true; });
+      if(avail.length<2){ wrap.style.display='none'; return; }
+      avail.forEach(function(c,i){
+        var t=document.createElement('button'); t.type='button'; t.className='thumb';
+        t.setAttribute('aria-current', i===0?'true':'false'); t.title=c.label;
+        t.innerHTML='<img loading="lazy" src="'+esc(c.src)+'" alt="'+esc(v.name+' — '+c.label)+'">';
+        t.addEventListener('click',function(){
+          setHero(c.src, v.name+' — '+c.label);
+          wrap.querySelectorAll('.thumb').forEach(function(x){x.setAttribute('aria-current','false');});
+          t.setAttribute('aria-current','true');
+        });
+        wrap.appendChild(t);
+      });
     });
   }
 
