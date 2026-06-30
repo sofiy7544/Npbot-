@@ -66,5 +66,10 @@
 - AVIF/srcset: НЕ зроблено — у цій пісочниці немає енкодерів (avifenc/cwebp/sharp)
   і немає мережі для встановлення. webp вже сучасний і легкий (16–24KB). Робити
   на машині з енкодерами; <picture> з AVIF підключати ЛИШЕ після генерації файлів.
-- Далі (опц.): shop.html преміум; AVIF на машині з тулзами.
+- Батч shop-преміум ✅: `assets/shop-premium.js` — 3D-tilt на `.pcard__media`
+  у магазині, з ре-скануванням на hashchange + MutationObserver (SPA ре-рендерить
+  картки). Тільки fine-pointer; reduced-motion → no-op. НЕ чіпає чекаут/кошик:
+  inline-transform на елементі без власного transform (hover-lift і scale цілі).
+  shop.html уже мав swatches/reveal/sticky-CTA/premium-patch — додано лише tilt.
+- Далі (опц.): AVIF/srcset на машині з енкодерами (тут немає тулзів/мережі).
 - Продовжувати в НОВОМУ чаті за цим логом + PROJECT_HANDOVER.md.
