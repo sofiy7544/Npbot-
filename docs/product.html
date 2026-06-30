@@ -5,6 +5,8 @@
 <link rel="canonical" href="https://stanleybrand.com.ua/product.html">
 <meta property="og:type" content="product"><meta name="theme-color" content="#13251B">
 <meta property="og:title" content="Stanley — dua"><meta property="og:image" content="https://stanleybrand.com.ua/og-image.png">
+<meta property="og:description" content="Оригінальний Stanley — гарантія справжності, доставка 1–2 дні Новою Поштою."><meta property="og:url" content="https://stanleybrand.com.ua/product.html">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Stanley — dua"><meta name="twitter:description" content="Оригінальний Stanley — гарантія справжності, доставка 1–2 дні Новою Поштою."><meta name="twitter:image" content="https://stanleybrand.com.ua/og-image.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%2313251B'/%3E%3Ctext x='16' y='22' font-family='sans-serif' font-size='18' font-weight='800' fill='%23F6F3EB' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
 <style>
 :root{--ink:#13251B;--cream:#F6F3EB;--cream2:#ECE7DA;--paper:#fff;--clay:#C0664A;--gold:#C9A86A;--muted:#6A6557;--line:rgba(19,37,27,.1);--r:18px;--ease:cubic-bezier(.22,.61,.36,1);--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;--serif:"Iowan Old Style",Palatino,Georgia,serif}
@@ -221,12 +223,18 @@ footer{background:var(--ink);color:rgba(246,243,235,.75);padding:40px 0 76px;tex
   function seo(v){
     document.title=v.seoTitle||(v.name+' — купити оригінал | dua');
     var set=function(sel,attr,val){var el=document.querySelector(sel); if(el&&val) el.setAttribute(attr,val);};
-    set('meta[name=description]','content',v.seoDesc||v.desc||'');
+    var d=v.seoDesc||v.desc||'';
+    set('meta[name=description]','content',d);
     set('meta[property="og:title"]','content',v.name);
+    set('meta[property="og:description"]','content',d);
+    set('meta[name="twitter:title"]','content',v.name);
+    set('meta[name="twitter:description"]','content',d);
     var canon='https://stanleybrand.com.ua/product.html?id='+encodeURIComponent(v.id);
     set('link[rel=canonical]','href',canon);
+    set('meta[property="og:url"]','content',canon);
     var img=/^https?:/.test(v.img)?v.img:'https://stanleybrand.com.ua/'+v.img;
     set('meta[property="og:image"]','content',img);
+    set('meta[name="twitter:image"]','content',img);
     // JSON-LD
     var old=document.getElementById('ld'); if(old) old.remove();
     var ld=document.createElement('script'); ld.type='application/ld+json'; ld.id='ld';
@@ -236,7 +244,7 @@ footer{background:var(--ink);color:rgba(246,243,235,.75);padding:40px 0 76px;tex
 
   function setupSticky(p){
     cur=p;
-    sticky.innerHTML='<div class="wrap in"><img id="sk-img" src="'+esc(p.img)+'" alt=""><div><div class="nm" id="sk-nm">'+esc(p.name)+'</div><div class="pp" id="sk-pp">'+fmt(p.price)+'</div></div><a class="btn btn-buy" href="'+TG+'" target="_blank" rel="noopener">Замовити →</a></div>';
+    sticky.innerHTML='<div class="wrap in"><img id="sk-img" src="'+esc(p.img)+'" alt="'+esc(p.name)+'"><div><div class="nm" id="sk-nm">'+esc(p.name)+'</div><div class="pp" id="sk-pp">'+fmt(p.price)+'</div></div><a class="btn btn-buy" href="'+TG+'" target="_blank" rel="noopener">Замовити →</a></div>';
     var onScroll=function(){ sticky.classList.toggle('show', scrollY>520); };
     addEventListener('scroll',onScroll,{passive:true}); onScroll();
   }
