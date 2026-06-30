@@ -638,7 +638,6 @@
               chatId = String(found.message.chat.id);
               try { localStorage.setItem("dua_tg_chat_id", chatId); } catch (e) {}
               cfg.telegramChatId = chatId;
-              console.log("[Stanley] Auto-detected Telegram chat_id:", chatId);
             }
           }
         }

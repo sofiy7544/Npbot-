@@ -7,8 +7,6 @@
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/"/>
   </url>
   <url>
@@ -17,8 +15,6 @@
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
     <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#shop"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#shop"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#shop"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#shop"/>
   </url>
   <url>
@@ -27,8 +23,6 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#shop?brand=Stanley"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#shop?brand=Stanley"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#shop?brand=Stanley"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#shop?brand=Stanley"/>
   </url>
   <url>
@@ -37,8 +31,6 @@
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#shop?brand=Owala"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#shop?brand=Owala"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#shop?brand=Owala"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#shop?brand=Owala"/>
   </url>
   <url>
@@ -47,8 +39,6 @@
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#shop?brand=Hydro Flask"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#shop?brand=Hydro Flask"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#shop?brand=Hydro Flask"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#shop?brand=Hydro Flask"/>
   </url>
   <url>
@@ -57,8 +47,6 @@
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#shipping"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#shipping"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#shipping"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#shipping"/>
   </url>
   <url>
@@ -67,8 +55,6 @@
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#returns"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#returns"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#returns"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#returns"/>
   </url>
   <url>
@@ -77,8 +63,6 @@
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#warranty"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#warranty"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#warranty"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#warranty"/>
   </url>
   <url>
@@ -87,8 +71,6 @@
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#contact"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#contact"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#contact"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#contact"/>
   </url>
   <url>
@@ -97,8 +79,6 @@
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
     <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#privacy"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#privacy"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#privacy"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#privacy"/>
   </url>
   <url>
@@ -107,128 +87,108 @@
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
     <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#terms"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#terms"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#terms"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#terms"/>
   </url>
   <url>
-    <loc>https://stanleybrand.com.ua/#product?id=stanley-quencher-30</loc>
+    <loc>https://stanleybrand.com.ua/product.html?id=stanley-quencher-30</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#product?id=stanley-quencher-30"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#product?id=stanley-quencher-30"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#product?id=stanley-quencher-30"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#product?id=stanley-quencher-30"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/product.html?id=stanley-quencher-30"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/product.html?id=stanley-quencher-30"/>
   </url>
   <url>
-    <loc>https://stanleybrand.com.ua/#product?id=stanley-quencher-40</loc>
+    <loc>https://stanleybrand.com.ua/product.html?id=stanley-quencher-40</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#product?id=stanley-quencher-40"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#product?id=stanley-quencher-40"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#product?id=stanley-quencher-40"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#product?id=stanley-quencher-40"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/product.html?id=stanley-quencher-40"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/product.html?id=stanley-quencher-40"/>
   </url>
   <url>
-    <loc>https://stanleybrand.com.ua/#product?id=stanley-protour-30</loc>
+    <loc>https://stanleybrand.com.ua/product.html?id=stanley-protour-30</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#product?id=stanley-protour-30"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#product?id=stanley-protour-30"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#product?id=stanley-protour-30"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#product?id=stanley-protour-30"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/product.html?id=stanley-protour-30"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/product.html?id=stanley-protour-30"/>
   </url>
   <url>
-    <loc>https://stanleybrand.com.ua/#product?id=stanley-protour-20</loc>
+    <loc>https://stanleybrand.com.ua/product.html?id=stanley-protour-20</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#product?id=stanley-protour-20"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#product?id=stanley-protour-20"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#product?id=stanley-protour-20"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#product?id=stanley-protour-20"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/product.html?id=stanley-protour-20"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/product.html?id=stanley-protour-20"/>
   </url>
   <url>
-    <loc>https://stanleybrand.com.ua/#product?id=stanley-lsf-holiday</loc>
+    <loc>https://stanleybrand.com.ua/product.html?id=stanley-lsf-holiday</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#product?id=stanley-lsf-holiday"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#product?id=stanley-lsf-holiday"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#product?id=stanley-lsf-holiday"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#product?id=stanley-lsf-holiday"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/product.html?id=stanley-lsf-holiday"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/product.html?id=stanley-lsf-holiday"/>
   </url>
   <url>
-    <loc>https://stanleybrand.com.ua/#product?id=stanley-iceflow</loc>
+    <loc>https://stanleybrand.com.ua/product.html?id=stanley-iceflow</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#product?id=stanley-iceflow"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#product?id=stanley-iceflow"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#product?id=stanley-iceflow"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#product?id=stanley-iceflow"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/product.html?id=stanley-iceflow"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/product.html?id=stanley-iceflow"/>
   </url>
   <url>
-    <loc>https://stanleybrand.com.ua/#product?id=stanley-classic</loc>
+    <loc>https://stanleybrand.com.ua/product.html?id=stanley-classic</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#product?id=stanley-classic"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#product?id=stanley-classic"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#product?id=stanley-classic"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#product?id=stanley-classic"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/product.html?id=stanley-classic"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/product.html?id=stanley-classic"/>
   </url>
   <url>
-    <loc>https://stanleybrand.com.ua/#product?id=owala-freesip</loc>
+    <loc>https://stanleybrand.com.ua/product.html?id=owala-freesip</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#product?id=owala-freesip"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#product?id=owala-freesip"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#product?id=owala-freesip"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#product?id=owala-freesip"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/product.html?id=owala-freesip"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/product.html?id=owala-freesip"/>
   </url>
   <url>
-    <loc>https://stanleybrand.com.ua/#product?id=hydroflask-32</loc>
+    <loc>https://stanleybrand.com.ua/product.html?id=hydroflask-32</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#product?id=hydroflask-32"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#product?id=hydroflask-32"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#product?id=hydroflask-32"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#product?id=hydroflask-32"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/product.html?id=hydroflask-32"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/product.html?id=hydroflask-32"/>
   </url>
   <url>
-    <loc>https://stanleybrand.com.ua/#product?id=stanley-aerolight-iceflow</loc>
+    <loc>https://stanleybrand.com.ua/product.html?id=stanley-aerolight-iceflow</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#product?id=stanley-aerolight-iceflow"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#product?id=stanley-aerolight-iceflow"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#product?id=stanley-aerolight-iceflow"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#product?id=stanley-aerolight-iceflow"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/product.html?id=stanley-aerolight-iceflow"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/product.html?id=stanley-aerolight-iceflow"/>
   </url>
   <url>
-    <loc>https://stanleybrand.com.ua/#product?id=stanley-aerolight-transit</loc>
+    <loc>https://stanleybrand.com.ua/product.html?id=stanley-aerolight-transit</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#product?id=stanley-aerolight-transit"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#product?id=stanley-aerolight-transit"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#product?id=stanley-aerolight-transit"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#product?id=stanley-aerolight-transit"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/product.html?id=stanley-aerolight-transit"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/product.html?id=stanley-aerolight-transit"/>
   </url>
   <url>
-    <loc>https://stanleybrand.com.ua/#product?id=stanley-quencher-carrier</loc>
+    <loc>https://stanleybrand.com.ua/product.html?id=stanley-quencher-carrier</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/#product?id=stanley-quencher-carrier"/>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://stanleybrand.com.ua/pl/#product?id=stanley-quencher-carrier"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://stanleybrand.com.ua/en/#product?id=stanley-quencher-carrier"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/#product?id=stanley-quencher-carrier"/>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://stanleybrand.com.ua/product.html?id=stanley-quencher-carrier"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stanleybrand.com.ua/product.html?id=stanley-quencher-carrier"/>
+  </url>
+  <url>
+    <loc>https://stanleybrand.com.ua/catalog.html</loc>
+    <lastmod>2026-06-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
 </urlset>

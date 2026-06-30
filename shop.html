@@ -66,11 +66,23 @@
     "@type": "PostalAddress",
     "addressCountry": "UA"
   },
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "contactType": "customer service",
-    "availableLanguage": ["Ukrainian", "Polish", "English"]
-  },
+  "email": "LokmobeoLTD@mytoy.toys",
+  "telephone": "+380637041617",
+  "contactPoint": [
+    {
+      "@type": "ContactPoint",
+      "contactType": "customer service",
+      "telephone": "+380637041617",
+      "availableLanguage": ["Ukrainian", "Polish", "English"]
+    },
+    {
+      "@type": "ContactPoint",
+      "contactType": "sales",
+      "email": "LokmobeoLTD@mytoy.toys",
+      "areaServed": "UA",
+      "availableLanguage": ["Ukrainian", "Russian"]
+    }
+  ],
   "areaServed": ["UA"],
   "sameAs": [
     "https://www.instagram.com/stanley_brand_ua/",
@@ -163,6 +175,7 @@ body {
   min-height: 100svh;
   -webkit-tap-highlight-color: rgba(28, 58, 46, 0.12);
   touch-action: manipulation;
+  overflow-x: hidden;
 }
 
 /* Stanley 1913 typography: Playfair Display for headings */
@@ -5151,6 +5164,8 @@ function renderFooter() {
               '<li><a href="#returns">' + esc(t('doc_returns_title')) + '</a></li>' +
               '<li><a href="#warranty">' + esc(t('doc_warranty_title')) + '</a></li>' +
               '<li><a href="#contact">' + esc(t('doc_contact_title')) + '</a></li>' +
+              '<li><a href="tel:+380637041617">+38 063 704 16 17</a></li>' +
+              '<li><a href="mailto:LokmobeoLTD@mytoy.toys">Опт/B2B: LokmobeoLTD@mytoy.toys</a></li>' +
             '</ul>' +
           '</div>' +
           '<div>' +
@@ -7785,6 +7800,8 @@ window.STANLEY_CONFIG = {
 <script src="premium-patch-v2.js"></script>
 <script src="premium-patch-v3.js" defer></script>
 <script src="premium-patch-v4.js" defer></script>
+<script type="module" src="assets/shop-premium.js"></script>
+<script type="module" src="assets/avif.js"></script>
 
 </body>
 </html>

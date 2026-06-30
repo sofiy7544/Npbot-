@@ -830,9 +830,9 @@
     // Counter
     glb.querySelector(".glb__counter").textContent = (GLB_STATE.idx + 1) + " / " + GLB_STATE.items.length;
     // Caption
-    glb.querySelector(".glb__caption").innerHTML = item.alt
-      ? '<strong>@stanley_brand_ua</strong> · ' + item.alt
-      : '<strong>@stanley_brand_ua</strong>';
+    var glbCap = glb.querySelector(".glb__caption");
+    glbCap.innerHTML = '<strong>@stanley_brand_ua</strong>';
+    if (item.alt) glbCap.appendChild(document.createTextNode(' · ' + item.alt));
     // Thumbs
     var thumbs = glb.querySelector(".glb__thumbs");
     if (thumbs.children.length !== GLB_STATE.items.length) {
