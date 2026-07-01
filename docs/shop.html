@@ -2691,6 +2691,24 @@ body.scroll-lock { overflow: hidden; }
   .showcase__rail { grid-auto-columns: minmax(240px, 78vw); padding-right: 28px; }
 }
 
+/* ===== Lookbook (editorial photo mosaic) ===== */
+.lookbook { padding: clamp(48px,7vw,96px) 0; }
+.lookbook__head { text-align: center; max-width: 640px; margin: 0 auto clamp(28px,4vw,48px); }
+.lookbook__head .eyebrow { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+.lookbook__head h2 { font-family: var(--font-display); font-size: var(--text-4xl); letter-spacing: -.02em; margin-top: 10px; line-height: 1.1; }
+.lookbook__head h2 em { font-style: italic; color: var(--accent); }
+.lookbook__grid { display: grid; grid-template-columns: repeat(4,1fr); grid-auto-rows: clamp(180px,15vw,240px); gap: clamp(10px,1.2vw,16px); }
+.lb { position: relative; overflow: hidden; border-radius: var(--r); margin: 0; box-shadow: var(--shadow-sm); }
+.lb img { width: 100%; height: 100%; object-fit: cover; transition: transform .9s cubic-bezier(.2,.7,.2,1); will-change: transform; }
+.lb:hover img { transform: scale(1.06); }
+.lb::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(20,30,24,.5), transparent 46%); z-index: 1; }
+.lb figcaption { position: absolute; left: 16px; bottom: 14px; right: 16px; color: #fff; font-weight: 600; font-size: var(--text-sm); text-shadow: 0 2px 14px rgba(0,0,0,.55); z-index: 2; }
+.lb--tall { grid-row: span 2; }
+.lb--wide { grid-column: span 2; }
+@media (max-width: 900px) { .lookbook__grid { grid-template-columns: repeat(2,1fr); } .lb--wide { grid-column: span 2; } .lb--tall { grid-row: span 2; } }
+@media (max-width: 560px) { .lookbook__grid { gap: 8px; grid-auto-rows: 150px; } .lb figcaption { font-size: 12px; left: 12px; bottom: 11px; } }
+@media (prefers-reduced-motion: reduce) { .lb img { transition: none; } .lb:hover img { transform: none; } }
+
 .showcase__empty {
   padding: 48px 16px;
   text-align: center;
@@ -5696,6 +5714,33 @@ function renderShowcaseCard(p, opts) {
   return renderProductCard(p);
 }
 
+/* ===== Lookbook — редакційна фотомозаїка з реальної фотозйомки ===== */
+function renderLookbookSection() {
+  var shots = [
+    { src: 'img/shoot/hero-group.webp',    cap: 'Уся колекція',        cls: 'lb lb--tall', w: 1800, h: 2700 },
+    { src: 'img/shoot/life-lilac.webp',    cap: 'Quencher · Лаванда',  cls: 'lb',          w: 1280, h: 853 },
+    { src: 'img/shoot/protour-rose.webp',  cap: 'ProTour · Троянда',   cls: 'lb',          w: 960,  h: 1280 },
+    { src: 'img/shoot/collection.webp',    cap: 'ProTour 30oz',        cls: 'lb lb--wide', w: 1280, h: 853 },
+    { src: 'img/shoot/life-blackgold.webp',cap: 'Black · Gold',        cls: 'lb',          w: 960,  h: 1280 },
+    { src: 'img/shoot/protour-green.webp', cap: 'ProTour · Шавлія',    cls: 'lb',          w: 960,  h: 1280 }
+  ];
+  var cells = shots.map(function (s) {
+    return '<figure class="' + s.cls + '">' +
+      '<img src="' + s.src + '" alt="' + esc(s.cap) + '" loading="lazy" decoding="async" width="' + s.w + '" height="' + s.h + '">' +
+      '<figcaption>' + esc(s.cap) + '</figcaption>' +
+    '</figure>';
+  }).join('');
+  return '<section class="lookbook reveal" id="lookbook">' +
+    '<div class="container">' +
+      '<div class="lookbook__head">' +
+        '<span class="eyebrow">Lookbook</span>' +
+        '<h2>Знято <em>наживо</em></h2>' +
+      '</div>' +
+      '<div class="lookbook__grid">' + cells + '</div>' +
+    '</div>' +
+  '</section>';
+}
+
 /* ===== Секція "Топ продажу" — авто-сортування за реальними та базовими продажами ===== */
 function renderTopSection() {
   const top = getTopSellers(8);
@@ -6148,6 +6193,9 @@ function viewHome(params) {
         '</div>' +
       '</div>' +
     '</section>';
+
+    // Lookbook — редакційна фотомозаїка (реальна зйомка)
+    html += renderLookbookSection();
 
     // Галерея — статична сітка фото
     html += renderGallerySection();
