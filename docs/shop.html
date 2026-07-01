@@ -1235,6 +1235,33 @@ details.acc ul li { margin-bottom: 4px; }
 }
 .sticky-cta__price { font-size: var(--text-base); font-weight: 800; }
 
+/* ===== Premium PDP polish (Part 5) ===== */
+.pdp__media::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(28,58,46,0);
+  transition: box-shadow .35s ease;
+}
+.pdp__media:hover::after { box-shadow: inset 0 0 0 1px rgba(28,58,46,0.08); }
+.pdp__thumb {
+  transition: border-color .2s ease, transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease;
+}
+.pdp__thumb:hover { transform: translateY(-2px) scale(1.04); }
+.pdp__thumb.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(28,58,46,0.12);
+  transform: translateY(-1px);
+}
+.pdp__thumb:active { transform: scale(.96); }
+.sticky-cta {
+  background: rgba(255,255,255,0.82);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  backdrop-filter: saturate(180%) blur(22px);
+  border-top: 1px solid rgba(28,58,46,0.08);
+  box-shadow: 0 -10px 30px -12px rgba(28,58,46,0.16);
+}
+.sticky-cta__price { font-size: var(--text-lg); }
+@media (prefers-reduced-motion: reduce) { .pdp__thumb, .pdp__media::after { transition: none; } }
+
 /* ========== Testimonials (home page social proof) ========== */
 .testimonials {
   padding: clamp(48px, 8vw, 80px) 0;
