@@ -1549,6 +1549,27 @@ details.acc ul li { margin-bottom: 4px; }
 }
 .shipping-progress__fill.ok { background: var(--accent-2); }
 
+/* ===== Premium cart polish (Part 6) ===== */
+.shipping-progress {
+  background: linear-gradient(135deg, var(--surface-2), rgba(28,58,46,0.05));
+  border: 1px solid rgba(28,58,46,0.06);
+}
+.shipping-progress__bar { height: 8px; }
+.shipping-progress__fill {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  position: relative;
+  box-shadow: 0 0 10px -2px rgba(28,58,46,0.5);
+}
+.shipping-progress__fill::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,.45) 50%, transparent 80%);
+  background-size: 200% 100%;
+  animation: shipsheen 2.2s linear infinite;
+}
+@keyframes shipsheen { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.drawer-panel { box-shadow: -24px 0 60px -20px rgba(28,58,46,0.35); }
+@media (prefers-reduced-motion: reduce) { .shipping-progress__fill::after { display: none; } }
+
 /* Bundle / cross-sell */
 .bundle-card {
   background: linear-gradient(135deg, var(--accent-soft), transparent);
