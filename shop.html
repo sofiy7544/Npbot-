@@ -900,6 +900,32 @@ body.has-sticky-cta .fab-contact { bottom: calc(var(--sticky-cta-h) + 16px); }
   font-size: var(--text-xs); color: var(--text-muted);
   text-decoration: line-through; margin-left: 6px; font-weight: 400;
 }
+
+/* ===== Premium product cards (Part 3) ===== */
+.pcard:hover { transform: translateY(-6px); }
+.pcard__media { box-shadow: 0 6px 18px -12px rgba(28,58,46,0.14); }
+.pcard:hover .pcard__media {
+  background: var(--surface-2);
+  box-shadow: 0 30px 60px -26px rgba(28,58,46,0.30), 0 8px 20px -12px rgba(0,0,0,0.10);
+}
+.pcard__media::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(28,58,46,0);
+  transition: box-shadow .35s ease;
+}
+.pcard:hover .pcard__media::after { box-shadow: inset 0 0 0 1px rgba(28,58,46,0.10); }
+.pcard:hover .pcard__media img { transform: scale(1.07); }
+.pcard__fav {
+  transition: color var(--t-fast), transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
+}
+.pcard__fav:hover { transform: scale(1.12); box-shadow: 0 6px 16px -6px rgba(0,0,0,0.22); }
+.pcard__fav:active { transform: scale(0.9); }
+.pcard__fav.is-fav { animation: favpop .34s cubic-bezier(.34,1.56,.64,1); }
+@keyframes favpop { 0% { transform: scale(1); } 45% { transform: scale(1.32); } 100% { transform: scale(1); } }
+.pcard__badges { gap: 5px; }
+@media (prefers-reduced-motion: reduce) {
+  .pcard, .pcard__media, .pcard__media img, .pcard__media::after, .pcard__fav { transition: none; animation: none; }
+}
 .pcard__swatches { display: flex; gap: 6px; align-items: center; }
 .pcard__swatch {
   width: 14px; height: 14px;
