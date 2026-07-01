@@ -2127,6 +2127,56 @@ details.acc ul li { margin-bottom: 4px; }
   max-width: 50ch;
 }
 
+/* ===== Premium footer (Part 1 redesign) ===== */
+.site-footer{
+  margin-top: var(--s-16);
+  padding: clamp(56px,7vw,96px) 0 36px;
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgba(255,255,255,.06), transparent 60%),
+    linear-gradient(180deg,#204231 0%, var(--accent) 55%,#15281c 100%);
+  color: var(--bg);
+  position: relative;
+}
+.site-footer::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(245,240,232,.28),transparent)}
+.footer-news{
+  display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  padding:clamp(22px,3vw,34px);border-radius:22px;margin-bottom:clamp(40px,5vw,64px);
+  background:linear-gradient(135deg,rgba(245,240,232,.10),rgba(245,240,232,.035));
+  border:1px solid rgba(245,240,232,.14);backdrop-filter:blur(8px);
+}
+.footer-news h3{font-family:var(--font-display);font-size:clamp(1.4rem,2.4vw,2rem);font-weight:600;letter-spacing:-.01em;text-transform:none;color:var(--bg);margin:0 0 4px}
+.footer-news p{color:rgba(245,240,232,.72);font-size:var(--text-sm);margin:0}
+.footer-news form{display:flex;gap:10px;flex:1;min-width:260px;max-width:460px}
+.footer-news input{flex:1;border:1px solid rgba(245,240,232,.26);background:rgba(245,240,232,.06);color:var(--bg);border-radius:999px;padding:14px 18px;font-size:var(--text-sm)}
+.footer-news input::placeholder{color:rgba(245,240,232,.5)}
+.footer-news input:focus-visible{outline:2px solid rgba(245,240,232,.55);outline-offset:2px}
+.footer-news button{border:0;border-radius:999px;padding:14px 26px;font-weight:650;font-size:var(--text-sm);background:var(--bg);color:var(--accent);cursor:pointer;white-space:nowrap;transition:transform .16s cubic-bezier(.22,.61,.36,1),box-shadow .2s}
+.footer-news button:hover{transform:translateY(-2px);box-shadow:0 12px 26px -10px rgba(0,0,0,.45)}
+.footer-news button:active{transform:translateY(0) scale(.98)}
+.footer-grid{display:grid;gap:clamp(32px,4vw,56px);grid-template-columns:1.6fr repeat(3,1fr)}
+.footer-wordmark{font-family:var(--font-display);font-size:1.7rem;font-weight:600;letter-spacing:-.01em;display:flex;align-items:center;gap:11px}
+.footer-wordmark .lion{width:36px;height:36px;border-radius:11px;background:var(--bg);color:var(--accent);display:grid;place-items:center;font-weight:800;font-family:var(--font-sans);font-size:1.05rem}
+.footer-brand-text{color:rgba(245,240,232,.72);font-size:var(--text-sm);margin-top:15px;max-width:34ch;line-height:1.65}
+.f-social{display:flex;gap:10px;margin-top:22px}
+.f-social a{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:rgba(245,240,232,.08);border:1px solid rgba(245,240,232,.14);transition:transform .18s cubic-bezier(.22,.61,.36,1),background .2s,border-color .2s}
+.f-social a:hover{transform:translateY(-3px);background:rgba(245,240,232,.16);border-color:rgba(245,240,232,.32)}
+.f-social svg{width:20px;height:20px}
+.site-footer h3{font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,240,232,.55);margin-bottom:18px}
+.site-footer ul{list-style:none;padding:0;display:flex;flex-direction:column;gap:13px}
+.site-footer a{font-family:var(--font-sans);font-size:var(--text-sm);color:rgba(245,240,232,.82);transition:color .18s ease,padding-left .2s ease;text-decoration:none}
+.site-footer li>a:hover{color:var(--bg)}
+.f-col-links li>a{display:inline-block}
+.f-col-links li>a:hover{padding-left:4px}
+.payments-strip{margin-top:clamp(40px,5vw,64px);padding-top:32px;border-top:1px solid rgba(245,240,232,.14);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.payments-strip .lbl{font-size:11px;color:rgba(245,240,232,.5);font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-right:6px}
+.pay-badge,.pay-badge--visa,.pay-badge--np,.pay-badge--ukr,.pay-badge--privat,.pay-badge--mono,.pay-badge--liqpay,.pay-badge--mc{display:inline-flex;align-items:center;height:32px;padding:0 13px;border-radius:9px;font-family:var(--font-sans);font-size:11px;font-weight:600;letter-spacing:.04em;background:rgba(245,240,232,.94);color:#2a2a2a;border:0;box-shadow:0 1px 2px rgba(0,0,0,.16)}
+.footer-legal{margin-top:clamp(28px,4vw,44px);padding-top:22px;border-top:1px solid rgba(245,240,232,.14);display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center;font-size:var(--text-xs);color:rgba(245,240,232,.55)}
+.footer-legal a{color:rgba(245,240,232,.72)}.footer-legal a:hover{color:var(--bg)}
+.footer-legal__legal{font-size:12px;line-height:1.6;max-width:52ch}
+@media (max-width:900px){.footer-grid{grid-template-columns:1fr 1fr;gap:36px 24px}.footer-col-brand{grid-column:1 / -1}}
+@media (max-width:560px){.footer-news{flex-direction:column;align-items:flex-start}.footer-news form{width:100%;max-width:none}}
+
 /* Auth pages */
 .auth-page {
   min-height: calc(100vh - var(--header-h) - var(--announce-h));
@@ -5136,66 +5186,78 @@ function renderHeader() {
 }
 
 function renderFooter() {
+  var ig = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>';
+  var tg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 3 11.5c-.9.4-.9 1.6.1 1.9l4.6 1.4 1.8 5.5c.3.8 1.2 1 1.8.4l2.5-2.4 4.6 3.4c.7.5 1.7.1 1.9-.7l3.1-14.6c.2-1-.7-1.9-1.6-1.5z"/></svg>';
+  var ph = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L20 13l1 4v3a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg>';
+  var ml = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
   $("#footer-host").innerHTML =
     '<footer class="site-footer">' +
       '<div class="container">' +
+        '<div class="footer-news">' +
+          '<div><h3>Приєднуйтесь до dua</h3><p>−10% на перше замовлення та першими про дропи лімітованих кольорів.</p></div>' +
+          '<form onsubmit="this.querySelector(\'input\').value=\'Дякуємо!\';this.querySelector(\'button\').disabled=true;return false;">' +
+            '<input type="email" placeholder="ваш email" aria-label="email" required>' +
+            '<button type="submit">Підписатися</button>' +
+          '</form>' +
+        '</div>' +
         '<div class="footer-grid">' +
           '<div class="footer-col-brand">' +
-            '<div class="brand-mark">' +
-              '<span class="brand-mark__logo">S</span>' +
-              '<span>' + esc(BRAND.name) + '</span>' +
+            '<div class="footer-wordmark"><span class="lion">S</span>' + esc(BRAND.name) + '</div>' +
+            '<p class="footer-brand-text">' + esc(t('footer_company_text')) + '</p>' +
+            '<div class="f-social">' +
+              '<a href="https://www.instagram.com/stanley_brand_ua/" target="_blank" rel="noopener" aria-label="Instagram">' + ig + '</a>' +
+              '<a href="https://t.me/stanley_brand_ua" target="_blank" rel="noopener" aria-label="Telegram">' + tg + '</a>' +
+              '<a href="tel:+380637041617" aria-label="Телефон">' + ph + '</a>' +
+              '<a href="mailto:LokmobeoLTD@mytoy.toys" aria-label="Email">' + ml + '</a>' +
             '</div>' +
-            '<p style="color: var(--text-soft); font-size: var(--text-sm); margin-top: 12px; max-width: 36ch; line-height: 1.5;">' + esc(t('footer_company_text')) + '</p>' +
-            '<p style="color: var(--text-muted); font-size: var(--text-xs); margin-top: 12px;">' + esc(t('footer_legal_short')) + '</p>' +
           '</div>' +
-          '<div>' +
+          '<div class="f-col-links">' +
             '<h3>' + esc(t('catalog')) + '</h3>' +
             '<ul>' +
               '<li><a href="#home?to=top-sellers">' + esc(t('nav_top')) + '</a></li>' +
               '<li><a href="#shop?cat=accessories">' + esc(t('nav_accessories')) + '</a></li>' +
               '<li><a href="#shop?cat=sale">' + esc(t('nav_sale')) + '</a></li>' +
-              '<li><a href="#shop?brand=Stanley">Stanley</a></li>' +
               '<li><a href="#shop?vol=30oz">Quencher 30oz</a></li>' +
               '<li><a href="#shop?vol=40oz">Quencher 40oz</a></li>' +
             '</ul>' +
           '</div>' +
-          '<div>' +
+          '<div class="f-col-links">' +
             '<h3>' + esc(t('footer_help')) + '</h3>' +
             '<ul>' +
               '<li><a href="#shipping">' + esc(t('doc_shipping_title')) + '</a></li>' +
               '<li><a href="#returns">' + esc(t('doc_returns_title')) + '</a></li>' +
               '<li><a href="#warranty">' + esc(t('doc_warranty_title')) + '</a></li>' +
-              '<li><a href="#contact">' + esc(t('doc_contact_title')) + '</a></li>' +
-              '<li><a href="tel:+380637041617">+38 063 704 16 17</a></li>' +
-              '<li><a href="mailto:LokmobeoLTD@mytoy.toys">Опт/B2B: LokmobeoLTD@mytoy.toys</a></li>' +
+              '<li><a href="#account">' + esc(t('footer_my_orders')) + '</a></li>' +
             '</ul>' +
           '</div>' +
-          '<div>' +
-            '<h3>' + esc(t('footer_account')) + '</h3>' +
+          '<div class="f-col-links">' +
+            '<h3>Контакти</h3>' +
             '<ul>' +
-              '<li><a href="#account">' + esc(t('footer_my_orders')) + '</a></li>' +
-              '<li><a href="#login">' + esc(t('login')) + '</a></li>' +
-              '<li><a href="#register">' + esc(t('register')) + '</a></li>' +
+              '<li><a href="tel:+380637041617">+38 063 704 16 17</a></li>' +
+              '<li><a href="mailto:LokmobeoLTD@mytoy.toys">LokmobeoLTD@mytoy.toys</a></li>' +
+              '<li><a href="https://t.me/stanley_brand_ua" target="_blank" rel="noopener">Telegram</a></li>' +
+              '<li><a href="https://www.instagram.com/stanley_brand_ua/" target="_blank" rel="noopener">Instagram</a></li>' +
             '</ul>' +
           '</div>' +
         '</div>' +
         '<div class="payments-strip">' +
-          '<span style="font-size: 11px; color: var(--text-muted); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-right: 4px;">' + esc(t('footer_pay_label')) + '</span>' +
-          '<span class="pay-badge pay-badge--privat">Privat24</span>' +
-          '<span class="pay-badge pay-badge--mono">mono</span>' +
-          '<span class="pay-badge pay-badge--liqpay">LiqPay</span>' +
-          '<span class="pay-badge pay-badge--visa">VISA</span>' +
-          '<span class="pay-badge pay-badge--mc">MC</span>' +
-          '<span class="pay-badge"> Pay</span>' +
-          '<span class="pay-badge">G Pay</span>' +
-          '<span style="font-size: 11px; color: var(--text-muted); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 4px 0 12px;">' + esc(t('footer_ship_label')) + '</span>' +
-          '<span class="pay-badge pay-badge--np">Нова Пошта</span>' +
+          '<span class="lbl">' + esc(t('footer_pay_label')) + '</span>' +
+          '<span class="pay-badge">Privat24</span>' +
+          '<span class="pay-badge">mono</span>' +
+          '<span class="pay-badge">LiqPay</span>' +
+          '<span class="pay-badge">VISA</span>' +
+          '<span class="pay-badge">Mastercard</span>' +
+          '<span class="pay-badge">Apple Pay</span>' +
+          '<span class="pay-badge">Google Pay</span>' +
+          '<span class="lbl" style="margin-left:8px">' + esc(t('footer_ship_label')) + '</span>' +
+          '<span class="pay-badge">Нова Пошта</span>' +
         '</div>' +
         '<div class="footer-legal">' +
           '<span class="footer-legal__legal">' + esc(t('rights')) + ' · ' + esc(BRAND.legalEntity) + '</span>' +
-          '<span style="display: flex; gap: 16px; flex-wrap: wrap;">' +
+          '<span style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;">' +
             '<a href="#privacy">' + esc(t('footer_privacy')) + '</a>' +
             '<a href="#terms">' + esc(t('footer_terms')) + '</a>' +
+            '<span>Зроблено в Україні 🇺🇦</span>' +
           '</span>' +
         '</div>' +
       '</div>' +
