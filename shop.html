@@ -3019,8 +3019,30 @@ body.scroll-lock { overflow: hidden; }
       lilac: { name_uk: "Лавандовий", name_pl: "Liliowy", name_en: "Lilac", hex: "#C9A4D4" },
       peri:  { name_uk: "Перивінкл",  name_pl: "Peri",    name_en: "Peri",  hex: "#9DA8E3" }
     };
-    // Зберігаємо
-    localStorage.setItem("dua_admin_products", JSON.stringify(overrides));
+    // Зберігаємо — МЕРДЖ із існуючими адмін-оверрайдами, а не перетирання.
+    // Раніше цей seed перезаписував dua_admin_products при кожному завантаженні,
+    // через що будь-які зміни з адмін-панелі (ціни, нові товари, приховування)
+    // мовчки зникали. Тепер seed (Lilac/Peri + прибрані SKU) зливається з тим,
+    // що зберегла адмінка: edits/disabled лишаються, remove об'єднується,
+    // add дедуплікується за id (пріоритет — за адмінкою).
+    var existingProd = {};
+    try { existingProd = JSON.parse(localStorage.getItem("dua_admin_products") || "{}") || {}; } catch(e) { existingProd = {}; }
+    var adminAdd = Array.isArray(existingProd.add) ? existingProd.add : [];
+    var adminAddIds = adminAdd.map(function(p){ return p && p.id; });
+    var mergedAdd = adminAdd.concat(
+      overrides.add.filter(function(p){ return p && p.id && adminAddIds.indexOf(p.id) === -1; })
+    );
+    var mergedRemove = overrides.remove.slice();
+    (Array.isArray(existingProd.remove) ? existingProd.remove : []).forEach(function(id){
+      if (mergedRemove.indexOf(id) === -1) mergedRemove.push(id);
+    });
+    var mergedProd = {
+      edits: Array.isArray(existingProd.edits) ? existingProd.edits : [],
+      add: mergedAdd,
+      remove: mergedRemove,
+      disabled: Array.isArray(existingProd.disabled) ? existingProd.disabled : []
+    };
+    localStorage.setItem("dua_admin_products", JSON.stringify(mergedProd));
     // Об'єднуємо з існуючими color overrides
     var existingColors = {};
     try { existingColors = JSON.parse(localStorage.getItem("dua_admin_colors") || "{}"); } catch(e) {}
@@ -4806,16 +4828,52 @@ function getOnSale() {
 /* ===== Apply admin overrides from localStorage ===== */
 (function applyAdminOverrides() {
   try {
-    // Product overrides — partial merge by id, new products appended
+    // Product overrides — partial merge by id, new products appended.
+    // Нормалізуємо «пласку» схему адмінки (name_uk/shortName_uk/desc_uk, colors=число)
+    // у схему вітрини (name:{uk,pl,en}, colors:[...]). Без цього renderProductCard
+    // падає на (p.colors||[]).slice() і товари з адмінки не рендеряться / ламають каталог.
+    function normalizeAdminProduct(src) {
+      if (!src || typeof src !== "object") return src;
+      const o = Object.assign({}, src);
+      const toI18n = base => {
+        if (o[base] && typeof o[base] === "object") return o[base];
+        const uk = o[base + "_uk"], pl = o[base + "_pl"], en = o[base + "_en"];
+        if (uk != null || pl != null || en != null) {
+          const u = uk || pl || en || "";
+          return { uk: u, pl: pl || u, en: en || u };
+        }
+        return undefined;
+      };
+      const nm = toI18n("name"); if (nm) o.name = nm;
+      const sn = toI18n("shortName"); if (sn) o.shortName = sn;
+      const ds = toI18n("desc"); if (ds) o.desc = ds;
+      if (!Array.isArray(o.colors)) {
+        o.colors = (o.images && typeof o.images === "object") ? Object.keys(o.images) : [];
+      }
+      // Вітрина ховає товари без images-мапи (isVisible). Адмінка дає лише primaryImg —
+      // будуємо з нього мапу, щоб доданий товар був видимим.
+      if ((!o.images || typeof o.images !== "object" || Object.keys(o.images).length === 0) && o.primaryImg) {
+        const key = (Array.isArray(o.colors) && o.colors[0]) || "default";
+        o.images = {}; o.images[key] = o.primaryImg;
+        if (!Array.isArray(o.colors) || o.colors.length === 0) o.colors = [key];
+      }
+      return o;
+    }
     const overrides = JSON.parse(localStorage.getItem("dua_admin_products") || "null");
     if (overrides && Array.isArray(overrides.edits)) {
       overrides.edits.forEach(edit => {
         const i = PRODUCTS.findIndex(p => p.id === edit.id);
-        if (i >= 0) Object.assign(PRODUCTS[i], edit);
+        if (i < 0) return;
+        const e = normalizeAdminProduct(edit);
+        // Редагування: застосовуємо скалярні/текстові зміни (ціна, назва, залишок…),
+        // але НЕ чіпаємо кольори/зображення існуючого товару — адмінка не має rich-схеми
+        // (colors=число, лише primaryImg), тож перезапис зіпсував би каталожні дані.
+        delete e.colors; delete e.images; delete e.primaryImg;
+        Object.assign(PRODUCTS[i], e);
       });
     }
     if (overrides && Array.isArray(overrides.add)) {
-      overrides.add.forEach(p => { if (p && p.id && !PRODUCTS.find(x => x.id === p.id)) PRODUCTS.push(p); });
+      overrides.add.forEach(p => { if (p && p.id && !PRODUCTS.find(x => x.id === p.id)) PRODUCTS.push(normalizeAdminProduct(p)); });
     }
     if (overrides && Array.isArray(overrides.remove)) {
       overrides.remove.forEach(id => {
