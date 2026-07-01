@@ -635,7 +635,9 @@ a { color: inherit; text-decoration: none; }
 .fab-contact:hover { transform: scale(1.06); box-shadow: 0 14px 32px rgba(193,53,132,0.5), 0 4px 12px rgba(131,58,180,0.35); }
 .fab-contact svg { width: 28px; height: 28px; }
 @media (max-width: 640px) {
-  .fab-contact { bottom: calc(16px + env(safe-area-inset-bottom)); width: 52px; height: 52px; border-radius: 16px; }
+  /* Hidden on mobile: the fixed bottom nav + PDP CTAs already cover this,
+     and a floating button here collided with "Додати в кошик"/Telegram. */
+  .fab-contact { display: none !important; }
 }
 /* push fab up when sticky cta visible */
 body.has-sticky-cta .fab-contact { bottom: calc(var(--sticky-cta-h) + 16px); }
