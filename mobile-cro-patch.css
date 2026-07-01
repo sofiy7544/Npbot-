@@ -373,6 +373,38 @@ body.has-sticky-cta-rich .fab-contact {
   box-shadow: 0 0 0 2px #fff;
 }
 body.has-sticky-cta-rich .bottom-nav { display: none; }
+
+/* ===== Premium tab bar (Part 2) ===== */
+.bottom-nav{
+  background: rgba(255,255,255,0.86);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  backdrop-filter: saturate(180%) blur(22px);
+  border-top: 1px solid rgba(28,58,46,0.07);
+  box-shadow: 0 -8px 28px -8px rgba(28,58,46,0.12);
+  padding: 9px 8px calc(9px + env(safe-area-inset-bottom));
+}
+.bottom-nav__inner{ gap: 4px; }
+.bottom-nav__item{
+  gap: 4px; padding: 8px 2px 7px; border-radius: 14px;
+  transition: color .2s ease, transform .18s cubic-bezier(.34,1.56,.64,1);
+  isolation: isolate;
+}
+.bottom-nav__item svg{ transition: transform .28s cubic-bezier(.34,1.56,.64,1); position: relative; z-index: 1; }
+.bottom-nav__label{ position: relative; z-index: 1; transition: font-weight .15s ease; letter-spacing: .01em; }
+.bottom-nav__item:active{ transform: scale(.93); background: transparent; }
+.bottom-nav__item[aria-current="page"]{ color: var(--accent); }
+.bottom-nav__item[aria-current="page"] svg{ transform: translateY(-1px) scale(1.1); }
+.bottom-nav__item[aria-current="page"] .bottom-nav__label{ font-weight: 700; }
+/* soft accent pill behind the active tab (replaces the thin top bar) */
+.bottom-nav__item[aria-current="page"]::before{
+  content:""; position:absolute; inset:3px 6px; top:3px; bottom:5px;
+  background: rgba(28,58,46,0.09); border-radius: 13px; z-index:0;
+  animation: tabpop .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes tabpop{ 0%{ transform:scale(.6); opacity:0 } 100%{ transform:scale(1); opacity:1 } }
+@media (prefers-reduced-motion: reduce){
+  .bottom-nav__item, .bottom-nav__item svg, .bottom-nav__item[aria-current="page"]::before{ transition:none; animation:none }
+}
 @media (max-width: 900px) {
   body { padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
   body.has-sticky-cta-rich { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
