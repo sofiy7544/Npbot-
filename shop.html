@@ -247,6 +247,43 @@ a { color: inherit; text-decoration: none; }
 .btn-success { background: var(--accent); color: var(--bg); }
 .btn-success:hover { background: var(--accent-2); }
 .btn[disabled], .btn[aria-busy="true"] { opacity: 0.7; cursor: wait; pointer-events: none; }
+
+/* ===== Premium buttons (Part 4): unified states + micro-interactions ===== */
+.btn {
+  position: relative; overflow: hidden;
+  transition: background-color var(--t) var(--ease), color var(--t) var(--ease),
+    border-color var(--t) var(--ease), box-shadow .25s var(--ease),
+    transform .16s cubic-bezier(.34,1.56,.64,1);
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0) scale(.975); }
+.btn-primary, .btn-dark, .btn-success { box-shadow: 0 6px 16px -10px rgba(28,58,46,.5); }
+.btn-primary:hover, .btn-dark:hover, .btn-success:hover { box-shadow: 0 12px 26px -12px rgba(28,58,46,.55); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.btn-primary:focus-visible, .btn-dark:focus-visible, .btn-success:focus-visible { outline-color: var(--text); }
+.btn:disabled:not([aria-busy="true"]), .btn.is-disabled {
+  opacity: .45; cursor: not-allowed; box-shadow: none; transform: none;
+}
+.btn[aria-busy="true"] { color: transparent !important; cursor: progress; opacity: 1; }
+.btn[aria-busy="true"]::after {
+  content: ""; position: absolute; top: 50%; left: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px;
+  border-radius: 50%; border: 2px solid var(--bg); border-top-color: transparent;
+  animation: btnspin .7s linear infinite;
+}
+.btn-secondary[aria-busy="true"]::after, .btn-ghost[aria-busy="true"]::after { border-color: var(--accent); border-top-color: transparent; }
+@keyframes btnspin { to { transform: rotate(360deg); } }
+.btn.is-success { background: var(--accent) !important; color: var(--bg) !important; }
+.btn.is-success::before { content: "✓"; margin-right: 6px; font-weight: 700; }
+.btn .ripple {
+  position: absolute; border-radius: 50%; transform: scale(0); pointer-events: none;
+  background: currentColor; opacity: .26; animation: btnripple .55s ease-out;
+}
+.btn-primary .ripple, .btn-dark .ripple, .btn-success .ripple { background: #fff; opacity: .3; }
+@keyframes btnripple { to { transform: scale(2.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .btn:hover, .btn:active { transform: none; }
+  .btn .ripple { display: none; }
+}
 .spinner {
   width: 18px; height: 18px;
   border: 2.5px solid rgba(245,240,232,0.3);
@@ -7897,6 +7934,26 @@ window.STANLEY_CONFIG = {
 <script src="premium-patch-v4.js" defer></script>
 <script type="module" src="assets/shop-premium.js"></script>
 <script type="module" src="assets/avif.js"></script>
+<script>
+/* Premium buttons Part 4: cosmetic ripple on .btn (defensive, non-blocking) */
+(function () {
+  try {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest && e.target.closest('.btn');
+      if (!btn || btn.disabled || btn.getAttribute('aria-busy') === 'true') return;
+      var r = btn.getBoundingClientRect(), size = Math.max(r.width, r.height);
+      var s = document.createElement('span');
+      s.className = 'ripple';
+      s.style.width = s.style.height = size + 'px';
+      s.style.left = (e.clientX - r.left - size / 2) + 'px';
+      s.style.top = (e.clientY - r.top - size / 2) + 'px';
+      btn.appendChild(s);
+      setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 600);
+    }, true);
+  } catch (_) {}
+})();
+</script>
 
 </body>
 </html>
