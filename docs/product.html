@@ -133,7 +133,7 @@ footer{background:var(--ink);color:rgba(246,243,235,.75);padding:40px 0 76px;tex
           '<h1 id="pname">'+esc(p.name)+'</h1>'+
           '<div class="subv" id="psub">'+esc([p.volume&&p.volume!=='—'?p.volume:'',p.color&&p.color!=='—'?p.color:''].filter(Boolean).join(' · '))+'</div>'+
           '<div class="prices"><b id="pprice">'+fmt(p.price)+'</b>'+(hasSave?'<s id="pcompare">'+fmt(p.compareAt)+'</s><span class="save" id="psave">−'+Math.round((1-p.price/p.compareAt)*100)+'%</span>':'')+'</div>'+
-          '<div class="instock">В наявності · готово до відправки</div>'+
+          (p.inStock===false?'<div class="preorder" style="color:#8a7f6a;font-size:13px;font-weight:700;margin-top:10px">Під замовлення · ~14 днів</div>':'<div class="instock">В наявності · готово до відправки</div>')+
           (variants.length>1?'<div class="swsec"><div class="swlbl">Колір: <b id="swname">'+esc(p.color)+'</b></div><div class="sws" id="sws"></div></div>':'')+
           '<p class="desc" id="pdesc">'+esc(p.desc||'')+'</p>'+
           '<div class="cta"><a class="btn btn-buy" href="'+TG+'" target="_blank" rel="noopener">Замовити в Telegram →</a><a class="btn btn-ghost" href="catalog.html">Весь каталог</a></div>'+
