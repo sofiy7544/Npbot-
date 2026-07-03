@@ -5196,10 +5196,47 @@ function attachReveals(scope) {
 }
 
 function parseRoute() {
+  // Prefer real URL query (?v=view&...) so shop views have shareable, refresh-safe
+  // URLs. Fall back to legacy #hash so old links / new-tab opens keep working.
+  const sp = new URLSearchParams(location.search);
+  if (sp.has("v")) {
+    const name = sp.get("v") || "home";
+    sp.delete("v");
+    return { name, params: sp };
+  }
   const h = location.hash.replace(/^#/, "") || "home";
   const [name, qs=""] = h.split("?");
   return { name, params: new URLSearchParams(qs) };
 }
+
+// Build a real, shareable URL from a route string like "product?id=x" or "shop".
+function routeToUrl(routeStr) {
+  const parts = String(routeStr).split("?");
+  const sp = new URLSearchParams(parts[1] || "");
+  sp.set("v", parts[0] || "home");
+  return "shop.html?" + sp.toString();
+}
+
+// Navigate via History API with a real URL. SPA engine (cart/checkout) untouched.
+function go(routeStr) {
+  history.pushState({}, "", routeToUrl(routeStr));
+  render();
+  window.scrollTo(0, 0);
+}
+window.__go = go;
+
+// Upgrade legacy in-page #view links to real URLs; leave true anchors (#main, #reviews) alone.
+const ROUTE_VIEWS = new Set(["home","shop","product","cart","checkout","account","login","register","forgot","wishlist","confirmation","shipping","returns","warranty","contact","privacy","terms"]);
+document.addEventListener("click", (e) => {
+  const a = e.target.closest && e.target.closest('a[href^="#"]');
+  if (!a) return;
+  const r = a.getAttribute("href").slice(1);
+  if (!ROUTE_VIEWS.has(r.split("?")[0])) return;
+  e.preventDefault();
+  go(r);
+});
+
+window.addEventListener("popstate", render);
 window.addEventListener("hashchange", render);
 
 function setPageTitle(name, p) {
@@ -5285,7 +5322,7 @@ function setProductSchema(p) {
     } : undefined,
     "offers": {
       "@type": "Offer",
-      "url": "https://stanleybrand.com.ua/#product?id=" + p.id,
+      "url": "https://stanleybrand.com.ua/shop.html?v=product&id=" + p.id,
       "priceCurrency": "UAH",
       "price": p.price,
       "availability": p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
@@ -7414,31 +7451,31 @@ function bindRouteSpecific(route) {
     // Filter pills
     $$("[data-brand]").forEach(b => b.addEventListener("click", () => {
       const v = b.dataset.brand;
-      const params = new URLSearchParams(location.hash.split("?")[1] || "");
+      const params = parseRoute().params;
       if (v) params.set("brand", v); else params.delete("brand");
-      location.hash = "shop?" + params.toString();
+      go("shop?" + params.toString());
     }));
     $$("[data-vol]").forEach(b => b.addEventListener("click", () => {
       const v = b.dataset.vol;
-      const params = new URLSearchParams(location.hash.split("?")[1] || "");
+      const params = parseRoute().params;
       if (v) params.set("vol", v); else params.delete("vol");
-      location.hash = "shop?" + params.toString();
+      go("shop?" + params.toString());
     }));
     $$("[data-color]").forEach(b => b.addEventListener("click", () => {
       const v = b.dataset.color;
-      const params = new URLSearchParams(location.hash.split("?")[1] || "");
+      const params = parseRoute().params;
       if (params.get("color") === v) params.delete("color");
       else params.set("color", v);
-      location.hash = "shop?" + params.toString();
+      go("shop?" + params.toString());
     }));
     const sortSel = $("#sortSel");
     if (sortSel) sortSel.addEventListener("change", () => {
-      const params = new URLSearchParams(location.hash.split("?")[1] || "");
+      const params = parseRoute().params;
       params.set("sort", sortSel.value);
-      location.hash = "shop?" + params.toString();
+      go("shop?" + params.toString());
     });
-    const cf = $("#clearF"); if (cf) cf.addEventListener("click", () => location.hash = "shop");
-    const cf2 = $("#clearF2"); if (cf2) cf2.addEventListener("click", () => location.hash = "shop");
+    const cf = $("#clearF"); if (cf) cf.addEventListener("click", () => go("shop"));
+    const cf2 = $("#clearF2"); if (cf2) cf2.addEventListener("click", () => go("shop"));
   }
 
   if (route.name === "product") {
@@ -7488,7 +7525,7 @@ function bindRouteSpecific(route) {
           return;
         }
         toast(t('login_done'));
-        location.hash = "account";
+        go("account");
         setTimeout(render, 80);
       } finally {
         if (submitBtn) { submitBtn.disabled = false; }
@@ -7523,7 +7560,7 @@ function bindRouteSpecific(route) {
           return;
         }
         toast(t('register_done'));
-        location.hash = "account";
+        go("account");
         setTimeout(render, 80);
       } finally {
         if (submitBtn) { submitBtn.disabled = false; }
@@ -7536,8 +7573,8 @@ function bindRouteSpecific(route) {
     if (lo) lo.addEventListener("click", () => {
       User.logout();
       toast(t('logout_done'));
-      /* Reset hash so re-entering #account shows guest view */
-      location.hash = "home";
+      /* Reset route so re-entering account shows guest view */
+      go("home");
       setTimeout(render, 80);
     });
   }
@@ -7816,7 +7853,7 @@ function placeOrder(f, recalc, isTermsOk) {
     // The Storage.setItem hook on "dua_orders" handles dispatch automatically.
 
     Cart.clear();
-    location.hash = "confirmation";
+    go("confirmation");
   }, 900);
 }
 
