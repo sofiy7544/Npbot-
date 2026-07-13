@@ -77,14 +77,14 @@ footer{background:var(--ink);color:rgba(246,243,235,.75);padding:40px 0 76px;tex
 </style></head><body>
 <header class="nav"><div class="wrap row">
   <a class="logo" href="index.html"><span class="dot">S</span>Stanley Brand UA<span style="color:var(--clay)">.</span></a>
-  <nav class="filters"><a href="catalog.html#cat-0">Термокухлі</a><a href="catalog.html#cat-3">Аксесуари</a><a href="catalog.html#cat-1">Пляшки</a><a href="catalog.html">Каталог</a></nav>
+  <nav class="filters"><a href="catalog.html">Каталог</a><a href="about.html">Про нас</a><a href="delivery.html">Доставка й оплата</a><a href="faq.html">FAQ</a><a href="b2b.html">Опт / B2B</a><a href="contacts.html">Контакти</a></nav>
   <a class="tg" href="https://t.me/stanley_brand_ua" target="_blank" rel="noopener">Telegram</a>
 </div></header>
 <main class="wrap" id="app">
   <div class="miss"><h1>Завантаження…</h1><p class="subv">Готуємо товар</p></div>
 </main>
 <div class="sticky" id="sticky"></div>
-<footer><div class="wrap">Замовляй у <a href="https://t.me/stanley_brand_ua" target="_blank" rel="noopener">Telegram → @stanley_brand_ua</a> · тел. <a href="tel:+380637041617">+38 063 704 16 17</a> · Опт/B2B: <a href="mailto:LokmobeoLTD@mytoy.toys">LokmobeoLTD@mytoy.toys</a> · © 2026 Stanley Brand UA · Зроблено в Україні 🇺🇦</div></footer>
+<footer><div class="wrap">Замовляй у <a href="https://t.me/stanley_brand_ua" target="_blank" rel="noopener">Telegram → @stanley_brand_ua</a> · Опт/B2B: <a href="mailto:LokmobeoLTD@mytoy.toys">LokmobeoLTD@mytoy.toys</a> · © 2026 Stanley Brand UA · Зроблено в Україні 🇺🇦</div></footer>
 <script>
 (function(){
   var TG='https://t.me/stanley_brand_ua';
@@ -133,7 +133,7 @@ footer{background:var(--ink);color:rgba(246,243,235,.75);padding:40px 0 76px;tex
           '<h1 id="pname">'+esc(p.name)+'</h1>'+
           '<div class="subv" id="psub">'+esc([p.volume&&p.volume!=='—'?p.volume:'',p.color&&p.color!=='—'?p.color:''].filter(Boolean).join(' · '))+'</div>'+
           '<div class="prices"><b id="pprice">'+fmt(p.price)+'</b>'+(hasSave?'<s id="pcompare">'+fmt(p.compareAt)+'</s><span class="save" id="psave">−'+Math.round((1-p.price/p.compareAt)*100)+'%</span>':'')+'</div>'+
-          '<div class="instock">В наявності · готово до відправки</div>'+
+          (p.inStock===false?'<div class="preorder" style="color:#8a7f6a;font-size:13px;font-weight:700;margin-top:10px">Під замовлення · ~14 днів</div>':'<div class="instock">В наявності · готово до відправки</div>')+
           (variants.length>1?'<div class="swsec"><div class="swlbl">Колір: <b id="swname">'+esc(p.color)+'</b></div><div class="sws" id="sws"></div></div>':'')+
           '<p class="desc" id="pdesc">'+esc(p.desc||'')+'</p>'+
           '<div class="cta"><a class="btn btn-buy" href="'+TG+'" target="_blank" rel="noopener">Замовити в Telegram →</a><a class="btn btn-ghost" href="catalog.html">Весь каталог</a></div>'+
