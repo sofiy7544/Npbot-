@@ -25,6 +25,35 @@ export function getRedis(): Redis {
   return client;
 }
 
+const bullConnections: Redis[] = [];
+
+/**
+ * Dedicated connection for a BullMQ Worker.
+ *
+ * Two reasons this exists instead of reusing `getRedis()`:
+ *   1. Workers issue blocking commands (BRPOPLPUSH) that monopolise a connection,
+ *      so every Worker needs its own — sharing one starves the others.
+ *   2. It is built from REDIS_URL, so TLS (`rediss://`) and ACL usernames survive.
+ *      Rebuilding options by hand from `client.options` drops both, which breaks
+ *      every managed Redis (Railway, Render, Upstash).
+ */
+export function makeBullConnection(): Redis {
+  const cfg = loadConfig();
+  const conn = new Redis(cfg.REDIS_URL, {
+    maxRetriesPerRequest: null, // required by BullMQ
+    enableReadyCheck: false, // BullMQ manages readiness itself
+    retryStrategy: (times) => Math.min(times * 200, 5000),
+  });
+  conn.on("error", (e) => log.error({ err: e.message }, "redis.bull.error"));
+  bullConnections.push(conn);
+  return conn;
+}
+
+export async function closeBullConnections(): Promise<void> {
+  await Promise.all(bullConnections.map((c) => c.quit().catch(() => c.disconnect())));
+  bullConnections.length = 0;
+}
+
 export async function closeRedis(): Promise<void> {
   if (client) {
     await client.quit();

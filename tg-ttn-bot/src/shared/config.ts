@@ -88,9 +88,17 @@ const Schema = z.object({
     .transform((s) => s.toLowerCase() !== "false"),
   ADMIN_API_HOST: z.string().default("0.0.0.0"),
   ADMIN_API_PORT: z.coerce.number().int().min(1).max(65535).default(3001),
-  ADMIN_API_TOKEN: z.string().min(16, "Set a strong ADMIN_API_TOKEN (≥16 chars)").default(""),
+  // Empty = admin API auth disabled (the admin server is not wired up yet).
+  // If you DO set it, it must be strong — a short token is worse than none.
+  ADMIN_API_TOKEN: z
+    .string()
+    .default("")
+    .refine((s) => s === "" || s.length >= 16, "Set a strong ADMIN_API_TOKEN (≥16 chars) or leave it empty"),
 
   // ─── Observability ────────────────────────────────────────
+  // Set by the cloud platform (Railway/Render/Fly inject PORT). When present the
+  // health server binds to it; when absent nothing listens — see presentation/health.
+  PORT: z.coerce.number().int().min(1).max(65535).optional(),
   SENTRY_DSN: z.string().optional(),
   METRICS_PORT: z.coerce.number().int().min(1).max(65535).default(9464),
 });

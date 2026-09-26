@@ -8,8 +8,8 @@
  * Graceful shutdown drains in-flight jobs.
  */
 import { Worker } from "bullmq";
-import { QUEUE_NAMES, type CreateTtnJobData, type SweepDraftsJobData } from "./queues.js";
-import { getRedis, closeRedis } from "../infrastructure/redis/redis.js";
+import { QUEUE_NAMES, scheduleSweepDrafts, closeQueues, type CreateTtnJobData, type SweepDraftsJobData } from "./queues.js";
+import { closeRedis, closeBullConnections, makeBullConnection } from "../infrastructure/redis/redis.js";
 import { closePrisma, getPrisma } from "../infrastructure/persistence/prisma.js";
 import { makeLogger, withContext } from "../shared/logger.js";
 import { randomUUID } from "node:crypto";
@@ -20,8 +20,8 @@ const log = makeLogger("worker");
 
 async function main() {
   const container: AppContainer = await buildContainer();
-  const redis = getRedis();
-  const conn = { host: redis.options.host, port: redis.options.port, db: redis.options.db, password: redis.options.password ?? undefined };
+  // Each Worker gets its own connection: BullMQ blocks on it, and building it
+  // from REDIS_URL keeps TLS/username intact on managed Redis.
 
   // ── createTtn worker ──────────────────────────────────────
   const createTtnWorker = new Worker<CreateTtnJobData>(
@@ -42,7 +42,7 @@ async function main() {
         return { ttn: r.value.ttn };
       });
     },
-    { connection: conn, concurrency: 5 },
+    { connection: makeBullConnection(), concurrency: 5 },
   );
 
   createTtnWorker.on("failed", (job, err) => log.error({ jobId: job?.id, err: String(err) }, "worker.job_failed"));
@@ -57,8 +57,13 @@ async function main() {
       log.info({ drafts: swept, cache: cacheSwept }, "sweep.done");
       return { drafts: swept, cache: cacheSwept };
     },
-    { connection: conn, concurrency: 1 },
+    { connection: makeBullConnection(), concurrency: 1 },
   );
+
+  // Register the recurring sweep. Without this nothing ever puts a job on the
+  // sweepDrafts queue, so the worker above idles and expired PENDING drafts
+  // accumulate in Postgres forever despite DRAFT_TTL_MS.
+  await scheduleSweepDrafts().catch((e) => log.warn({ err: String(e) }, "sweep.schedule_failed"));
 
   // ── warehouseSync worker + weekly cron ────────────────────
   const syncWorker = makeWarehouseSyncWorker();
@@ -71,7 +76,9 @@ async function main() {
   const stop = async () => {
     log.info("worker.shutdown.start");
     await Promise.all([createTtnWorker.close(), sweepWorker.close(), syncWorker.close()]);
+    await closeQueues();
     await closePrisma();
+    await closeBullConnections();
     await closeRedis();
     log.info("worker.shutdown.done");
     process.exit(0);

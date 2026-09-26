@@ -45,11 +45,16 @@ correction, postomat/branch detection, COD/prepaid classification, and a bundled
 ### Running it
 - **Mock mode** (default when `NP_API_KEY` is empty): creates FAKE TTNs starting
   with `9999`. No Nova Poshta account needed. Set `TG_BOT_TOKEN` and go.
+- **Cloud deploy**: `DEPLOY-CLOUD.md` (Railway step-by-step + Render/Fly).
+  `railway.json` runs the bot, `railway.worker.json` the queue worker — same
+  image, different start command.
 - **Real TTNs**: fill `NP_API_KEY` + sender Refs in `.env` (see `QUICK-START.md`
   "Phase 3").
 - Commands: `npm run dev` (tsx watch), `npm run build` then `npm start`,
-  `npm run worker` (queue), `npm run admin` (admin API),
-  `npm run sync:warehouses` (NP warehouse sync).
+  `npm run worker` (queue), `npm run sync:warehouses` (NP warehouse sync).
+  `npm run start:migrate` = migrate + start, used as the container start command.
+  (`npm run admin` points at `presentation/admin/server.ts`, which does not
+  exist yet — the admin API is unbuilt.)
 - Full stack: `docker compose up -d --build` (Postgres + Redis + queue).
 
 ### Tests — IMPORTANT gotcha
@@ -62,6 +67,14 @@ for f in $(find src -name '*.test.ts'); do npx tsx "$f"; done
 ```
 Verified: **265 assertions pass, 0 fail** across 16 files (parser, segmenter,
 payment-classifier, Money, Phone, fingerprint, sync-diff).
+
+### Gotchas that bite on deploy
+- **Webhook mode is not implemented** — no HTTP receiver exists. Setting
+  `TG_WEBHOOK_URL` now aborts startup on purpose; long-polling is the only mode.
+- **Exactly one bot instance.** Two pollers on one token → Telegram `409`.
+- **Migrations** live in `prisma/migrations/0_init/`. Change the schema →
+  `npx prisma migrate dev --name <desc>` and commit the result.
+- `ADMIN_API_TOKEN` must stay empty or be ≥16 chars; the admin server is unbuilt.
 
 ### Config
 `.env.example` is the source of truth for env vars (Telegram, DB, Redis, NP API,
@@ -116,15 +129,16 @@ These document past review rounds. Useful history; not load-bearing.
 - Keep UI text Ukrainian/Russian.
 
 ## Environment notes (this sandbox)
-- `npm install` fails on **Prisma's postinstall** (engine download from
-  `binaries.prisma.sh` is blocked). Use `npm install --ignore-scripts`; parser
-  and domain tests don't need the Prisma engine.
-- `tsc --noEmit` reports ~19 errors, **all** stemming from the un-generated
-  `@prisma/client` (run `prisma generate` where the engine host is reachable to
-  clear them). Non-Prisma code typechecks clean.
-- Outbound to `api.telegram.org`, `novaposhta.ua`, `binaries.prisma.sh` is
-  blocked here — live bot polling / real TTNs / Prisma generate must be done on
-  a machine with open network. These are environment limits, not code defects.
+- Network egress varies between sessions. When `binaries.prisma.sh` is
+  reachable, `npm install` + `npx prisma generate` work normally and
+  `tsc --noEmit` is **clean**. When it is blocked, use
+  `npm install --ignore-scripts`; the ~19 errors that then appear all stem from
+  the un-generated `@prisma/client`, not from the code.
+- `api.telegram.org` and `novaposhta.ua` have been blocked here — live polling
+  and real TTNs must be tested on a machine with open network.
+- Postgres 16 and Redis are installed locally, so migrations and the queue
+  worker can be verified for real:
+  `pg_ctl -D <dir> -o '-p 5433 -k /tmp' start`, `redis-server --port 6380 --daemonize yes`.
 
 ## Git workflow
 Active branch for assistant work: `claude/claude-md-docs-tkeav6`.

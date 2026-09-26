@@ -14,7 +14,7 @@
  * burn rate-limit and double-count counters.
  */
 import { Queue, Worker, type Job } from "bullmq";
-import { getRedis } from "../infrastructure/redis/redis.js";
+import { getRedis, makeBullConnection } from "../infrastructure/redis/redis.js";
 import { makeLogger, withContext } from "../shared/logger.js";
 import { randomUUID } from "node:crypto";
 import { buildContainer } from "../main.container.js";
@@ -107,7 +107,8 @@ export function makeWarehouseSyncWorker(): Worker<WarehouseSyncJobData> {
       });
     },
     {
-      ...getConnection(),
+      // Own connection — this Worker blocks on it for up to 30 min at a time.
+      connection: makeBullConnection(),
       concurrency: 1,                    // single sync at a time
       lockDuration: 30 * 60_000,        // 30min lock — sync may take 15-20min
       stalledInterval: 60_000,

@@ -20,6 +20,7 @@ import { registerHandlers } from "./presentation/bot/handlers.js";
 import { closePrisma } from "./infrastructure/persistence/prisma.js";
 import { closeRedis } from "./infrastructure/redis/redis.js";
 import { isMockMode } from "./infrastructure/nova-poshta/np-mock.js";
+import { startHealthServer, stopHealthServer } from "./presentation/health/server.js";
 
 async function main() {
   const cfg = loadConfig();
@@ -41,6 +42,10 @@ async function main() {
   });
 
   await telegramBot.start();
+
+  // Only binds when the platform gave us a PORT; no-op locally.
+  const healthServer = startHealthServer(cfg.PORT, { prisma: container.prisma, redis: container.redis });
+
   log.info("app.ready");
 
   // ── Graceful shutdown ────────────────────────────────────
@@ -52,6 +57,7 @@ async function main() {
 
     // Stop accepting new updates
     await telegramBot.stop().catch((e) => log.warn({ err: String(e) }, "shutdown.bot_stop_failed"));
+    await stopHealthServer(healthServer).catch((e) => log.warn({ err: String(e) }, "shutdown.health_failed"));
 
     // Close DB / Redis connections
     await closePrisma().catch((e) => log.warn({ err: String(e) }, "shutdown.prisma_failed"));

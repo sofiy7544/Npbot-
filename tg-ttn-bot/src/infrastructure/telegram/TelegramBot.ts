@@ -2,7 +2,7 @@
  * Telegram bot wrapper — thin layer around grammY that adapts to our domain.
  *
  * Responsibilities:
- *   - Long-polling OR webhook (TG_WEBHOOK_URL switch)
+ *   - Long-polling (webhook mode is not implemented — setting TG_WEBHOOK_URL aborts startup)
  *   - Global error handler (logs to pino, never crashes)
  *   - Flood control (catch FloodWaitError, requeue with delay)
  *   - Per-update correlation ID propagation
@@ -80,13 +80,15 @@ export class TelegramBot {
   async start(): Promise<void> {
     const cfg = loadConfig();
     if (cfg.TG_WEBHOOK_URL) {
-      log.info({ url: cfg.TG_WEBHOOK_URL }, "tg.webhook_mode");
-      await this.bot.api.setWebhook(cfg.TG_WEBHOOK_URL, {
-        secret_token: cfg.TG_WEBHOOK_SECRET,
-        allowed_updates: ["message", "edited_message", "callback_query"],
-        drop_pending_updates: true,
-      });
-      // The Fastify webhook handler (presentation/webhooks) will call this.bot.handleUpdate()
+      // There is no HTTP receiver for webhook updates in this codebase yet, so
+      // registering the webhook would silence the bot: Telegram stops delivering
+      // updates to getUpdates and nothing would ever call bot.handleUpdate().
+      // Fail loudly at startup instead of running a bot that answers nobody.
+      log.fatal({ url: cfg.TG_WEBHOOK_URL }, "tg.webhook_mode_unsupported");
+      throw new Error(
+        "TG_WEBHOOK_URL is set, but webhook mode is not implemented (no HTTP receiver). " +
+          "Unset TG_WEBHOOK_URL to use long-polling, which is what the cloud deploy expects.",
+      );
     } else {
       log.info("tg.polling_mode");
       // Don't await — bot.start() blocks until shutdown

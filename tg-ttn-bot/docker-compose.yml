@@ -57,7 +57,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+    # Uses the bundled Prisma CLI — no npm-registry round-trip on boot.
+    command: ["npm", "run", "start:migrate"]
     networks: [internal]
     logging:
       driver: json-file

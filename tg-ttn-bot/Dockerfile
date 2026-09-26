@@ -34,14 +34,22 @@ COPY --from=deps  --chown=app:app /app/node_modules ./node_modules
 COPY --from=build --chown=app:app /app/dist ./dist
 COPY --from=build --chown=app:app /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build --chown=app:app /app/node_modules/@prisma ./node_modules/@prisma
+
+# The Prisma CLI (a devDependency, so absent from the deps stage) ships in the
+# runtime image on purpose: the container runs `prisma migrate deploy` on start.
+# Without it `npx prisma` would fetch ~45MB from the npm registry on every boot —
+# slow, and a hard failure whenever the registry is unreachable.
+COPY --from=build --chown=app:app /app/node_modules/prisma ./node_modules/prisma
+
 COPY --chown=app:app prisma ./prisma
+COPY --chown=app:app healthcheck.mjs ./
 COPY --chown=app:app package.json ./
 
 USER app
 
-# Healthcheck — process must respond to its own Telegram getMe roundtrip
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD node -e "process.exit(0)" || exit 1
+# Probes the health server when PORT is set; a bare liveness pass otherwise.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD node healthcheck.mjs || exit 1
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "dist/main.js"]
