@@ -46,7 +46,7 @@ export type CreateTtnOutput = {
   ttn: string;                  // "20450123456789"
   ref: string;                  // NP internal UUID
   costOnSite: number;           // UAH
-  estimatedDelivery: Date;
+  estimatedDelivery: Date | null;   // null when NP sends a date we cannot parse
   rawResponse: unknown;
 };
 

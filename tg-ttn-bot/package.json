@@ -24,7 +24,8 @@
     "worker": "tsx src/jobs/worker.ts",
     "admin": "tsx src/presentation/admin/server.ts",
     "sync:warehouses": "tsx src/jobs/warehouse-sync-cli.ts",
-    "sync:warehouses:dry": "tsx src/jobs/warehouse-sync-cli.ts -- --dry-run --max=5"
+    "sync:warehouses:dry": "tsx src/jobs/warehouse-sync-cli.ts -- --dry-run --max=5",
+    "smoke:e2e": "tsx scripts/smoke-e2e.ts"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",

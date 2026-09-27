@@ -68,6 +68,14 @@ for f in $(find src -name '*.test.ts'); do npx tsx "$f"; done
 Verified: **265 assertions pass, 0 fail** across 16 files (parser, segmenter,
 payment-classifier, Money, Phone, fingerprint, sync-diff).
 
+Separately, `npm run smoke:e2e` (`scripts/smoke-e2e.ts`) is an end-to-end smoke
+test: it feeds a real order update through the actual grammY handlers and asserts
+the bot's replies — preview → «Створити ТТН» → mock TTN → rows in Postgres →
+idempotency on resend. A transformer intercepts every Telegram API call, so
+nothing touches api.telegram.org and no token is needed. It **requires a running
+Postgres + Redis** with migrations applied, which is why it lives in `scripts/`
+and not in the `src/**/*.test.ts` loop above. 13 assertions.
+
 ### Gotchas that bite on deploy
 - **Webhook mode is not implemented** — no HTTP receiver exists. Setting
   `TG_WEBHOOK_URL` now aborts startup on purpose; long-polling is the only mode.

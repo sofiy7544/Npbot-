@@ -162,7 +162,7 @@ export class NovaPoshtaHttpClient implements NovaPoshtaClient {
         ttn: m.data.IntDocNumber,
         ref: m.data.Ref,
         costOnSite: m.data.CostOnSite,
-        estimatedDelivery: new Date(m.data.EstimatedDeliveryDate),
+        estimatedDelivery: this.parseUaDate(m.data.EstimatedDeliveryDate),
         rawResponse: m.data,
       });
     }
@@ -328,12 +328,28 @@ export class NovaPoshtaHttpClient implements NovaPoshtaClient {
     return createHash("sha1").update(`${method}:${JSON.stringify(args)}`).digest("hex");
   }
 
-  private parseUaDate(s: string): Date {
-    // NP returns "01.05.2026" or "01.05.2026 14:00:00"
-    const [d, m, rest] = s.split(".");
+  /**
+   * NP returns "01.05.2026" or "01.05.2026 14:00:00" — never something `new Date()`
+   * understands, so the string must be reshaped into ISO first.
+   *
+   * Returns null rather than an Invalid Date on anything unexpected: by the time
+   * this runs the TTN already exists at Nova Poshta and has been charged, so an
+   * unparseable date must not blow up the row that records it. The field is
+   * optional; the shipment is not.
+   */
+  private parseUaDate(s: string): Date | null {
+    const [d, m, rest] = (s ?? "").split(".");
     const [y, time] = (rest ?? "").split(" ");
-    const iso = `${y}-${m}-${d}T${time ?? "00:00:00"}Z`;
-    return new Date(iso);
+    if (!d || !m || !y) {
+      log.warn({ raw: s }, "np.unparseable_delivery_date");
+      return null;
+    }
+    const parsed = new Date(`${y}-${m}-${d}T${time ?? "00:00:00"}Z`);
+    if (Number.isNaN(parsed.getTime())) {
+      log.warn({ raw: s }, "np.unparseable_delivery_date");
+      return null;
+    }
+    return parsed;
   }
 
   private mapMockCity(m: { Ref: string; Description: string; AreaDescription: string }): NpCity {
