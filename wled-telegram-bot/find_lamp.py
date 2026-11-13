@@ -25,8 +25,11 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 def local_ipv4s() -> list[str]:
-    """Локальные IPv4 этого ПК (чтобы понять, какие подсети сканировать)."""
+    """Локальные IPv4 этого ПК со всех интерфейсов (чтобы понять, какие
+    подсети сканировать). Берём из нескольких источников — так надёжнее на
+    машинах с VPN (Radmin/Hamachi) и несколькими адаптерами."""
     ips: set[str] = set()
+    # 1) исходящий маршрут по умолчанию (обычно это и есть домашний адаптер)
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))           # не шлёт пакетов, просто узнаёт исходящий IP
@@ -34,9 +37,19 @@ def local_ipv4s() -> list[str]:
         s.close()
     except Exception:
         pass
+    # 2) по имени хоста
     try:
         for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
             ips.add(info[4][0])
+    except Exception:
+        pass
+    # 3) все адаптеры через psutil (если установлен)
+    try:
+        import psutil
+        for addrs in psutil.net_if_addrs().values():
+            for a in addrs:
+                if getattr(a, "family", None) == socket.AF_INET and a.address:
+                    ips.add(a.address)
     except Exception:
         pass
     return [ip for ip in ips if not ip.startswith("127.")]
@@ -62,16 +75,27 @@ def _probe(ip: str, timeout: float):
     }
 
 
-def discover(timeout: float = 0.4, workers: int = 128) -> list[dict]:
-    """Просканировать локальные /24-подсети и вернуть найденные лампы WLED."""
-    nets = set()
+def _subnets_to_scan() -> list:
+    """/24-подсети для скана. Домашние (RFC1918: 192.168/10/172.16) в приоритете;
+    VPN-подсети вроде Radmin (26.x) пропускаем, если есть домашние."""
+    private, other = [], []
     for ip in local_ipv4s():
         try:
-            nets.add(ipaddress.ip_network(ip + "/24", strict=False))
+            net = ipaddress.ip_network(ip + "/24", strict=False)
         except Exception:
-            pass
+            continue
+        if ipaddress.ip_address(ip).is_private:
+            if net not in private:
+                private.append(net)
+        elif net not in other:
+            other.append(net)
+    return private or other   # если домашних нет — сканируем что есть
+
+
+def discover(timeout: float = 0.4, workers: int = 128) -> list[dict]:
+    """Просканировать локальные /24-подсети и вернуть найденные лампы WLED."""
     hosts: list[str] = []
-    for net in nets:
+    for net in _subnets_to_scan():
         hosts += [str(h) for h in net.hosts()]
     if not hosts:
         return []
@@ -91,8 +115,7 @@ def find_one(timeout: float = 0.4) -> str | None:
 
 if __name__ == "__main__":
     print("Ищу лампы WLED в локальной сети… (пара секунд)")
-    nets = {str(ipaddress.ip_network(ip + "/24", strict=False)) for ip in local_ipv4s()}
-    print("Сканирую подсети:", ", ".join(nets) or "—")
+    print("Сканирую подсети:", ", ".join(str(n) for n in _subnets_to_scan()) or "—")
     hits = discover()
     if not hits:
         print("\n❌ Лампа WLED не найдена.")

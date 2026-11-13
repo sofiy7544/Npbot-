@@ -31,6 +31,7 @@ import html
 import asyncio
 import logging
 import urllib.request
+from datetime import datetime
 import httpx
 import tvremote
 import timers
@@ -96,6 +97,13 @@ logging.basicConfig(
     level=logging.INFO, handlers=_handlers,
 )
 log = logging.getLogger("wled-bot")
+
+# Приглушаем шумные сторонние логи. Опрос Telegram (getUpdates) спамил лог
+# строками «HTTP Request... 200 OK» каждые 10 секунд И светил токен бота в
+# каждой строке. Оставляем только наши понятные сообщения.
+for _noisy in ("httpx", "httpcore", "telegram", "telegram.ext", "telegram.request",
+               "apscheduler", "apscheduler.scheduler", "asyncio", "hpack"):
+    logging.getLogger(_noisy).setLevel(logging.WARNING)
 
 # Постоянный HTTP-клиент с keep-alive — ради быстрого отклика.
 _client: httpx.AsyncClient | None = None
@@ -180,7 +188,7 @@ async def wled_post(payload: dict) -> bool:
         r = await client().post(f"{BASE}/json/state", json=payload)
         return r.status_code == 200
     except Exception as e:
-        log.warning(f"POST fail: {e}")
+        log.warning(f"Команда лампе не дошла ({type(e).__name__}).")
         return False
 
 
@@ -191,10 +199,13 @@ async def wled_sync() -> bool:
         r = await client().get(f"{BASE}/json/state")
         r.raise_for_status()
         STATE = r.json()
+        if not ONLINE:
+            log.info(f"🟢 Лампа на связи: {BASE}")
         ONLINE = True
         return True
     except Exception as e:
-        log.warning(f"GET fail: {e}")
+        if ONLINE:
+            log.warning(f"🔴 Лампа пропала из сети ({type(e).__name__}).")
         ONLINE = False
         return False
 
@@ -210,7 +221,7 @@ async def wled_meta() -> bool:
         META["loaded"] = True
         return True
     except Exception as e:
-        log.warning(f"META fail: {e}")
+        log.warning(f"Не прочитать данные лампы ({type(e).__name__}).")
         return False
 
 
@@ -564,7 +575,8 @@ async def cmd_help(update, context):
         "• «открой нетфликс», «включи на ютубе <запрос>»\n"
         "🧠 <b>Свободная речь</b> (если включён GPT-ключ): «сделай уютно», "
         "«что-то скучно, оживи комнату», «приглуши свет и телик потише».\n\n"
-        "⌨️ Быстрые команды: /on /off /toggle /fxlist",
+        "⌨️ Быстрые команды: /on /off /toggle /find /fxlist\n"
+        "🔍 /find — найти лампу в сети (например, после подключения к Wi-Fi)",
         parse_mode=ParseMode.HTML)
 
 
@@ -587,6 +599,43 @@ async def cmd_toggle(update, context):
         await _prompt_password(update.message, update.effective_user.id); return
     ok = await wled_post({"on": "t"})
     await update.message.reply_text("Переключено 🔁" if ok else "Лампа недоступна ❌")
+
+
+async def cmd_find(update, context):
+    """Найти лампу в сети и переключиться на неё (без перезапуска бота).
+    Удобно сразу после того, как лампу подключили к Wi-Fi."""
+    if not allowed(update):
+        await _prompt_password(update.message, update.effective_user.id); return
+    global WLED_IP, BASE
+    await update.message.reply_text("🔍 Ищу лампу в сети…")
+    try:
+        import find_lamp
+        hits = await asyncio.get_running_loop().run_in_executor(None, find_lamp.discover)
+    except Exception as e:
+        log.warning(f"/find: {e}")
+        hits = []
+    if hits:
+        WLED_IP = hits[0]["ip"]
+        BASE = f"http://{WLED_IP}"
+        voice.init(WLED_IP)
+        timers.init(WLED_IP)
+        try:
+            webapp_mod = __import__("webapp")
+            webapp_mod._IP = WLED_IP
+        except Exception:
+            pass
+        _persist_wled_ip(WLED_IP)
+        META["loaded"] = False
+        await wled_meta()
+        await wled_sync()
+        log.info(f"🔍 /find: лампа найдена {WLED_IP} ({hits[0]['name']})")
+        await update.message.reply_text(f"✅ Нашёл лампу: {WLED_IP} ({hits[0]['name']})")
+        await _send_dashboard(update.message)
+    else:
+        log.info("🔍 /find: лампа не найдена")
+        await update.message.reply_text(
+            "❌ Лампа не найдена.\nПроверь: лампа включена и подключена к Wi-Fi «INTELLECT» "
+            "(после сброса — через её точку «WLED-AP», пароль wled1234).")
 
 
 async def cmd_fxlist(update, context):
@@ -619,6 +668,8 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = (msg.text or "").strip()
         loop = asyncio.get_running_loop()
         ok, reply = await loop.run_in_executor(None, voice.handle, text)
+        log.info(f"💬 {update.effective_user.full_name}: «{text}» -> "
+                 f"{'OK' if ok else 'не вышло'}: {reply}")
         await msg.reply_text(reply)
         if ok:
             await wled_sync()  # подтянуть состояние, если меняли лампу
@@ -885,6 +936,7 @@ async def _post_init(app):
             BotCommand("on", "Включить лампу"),
             BotCommand("off", "Выключить лампу"),
             BotCommand("toggle", "Переключить лампу"),
+            BotCommand("find", "Найти лампу в сети"),
             BotCommand("fxlist", "Список эффектов с лампы"),
         ])
     except Exception as e:
@@ -929,15 +981,22 @@ def _persist_wled_ip(ip: str) -> None:
 
 # ----------------------- main -----------------------
 def main():
+    global WLED_IP, BASE
     if "ВСТАВЬ_ТОКЕН" in BOT_TOKEN:
         log.error("Не задан токен! Укажи WLED_BOT_TOKEN или впиши BOT_TOKEN в файле.")
         return
     _load_access()
     tvremote.load_config()  # общий конфиг телевизора (с веб-приложением)
 
+    log.info("==================== INTELLECT ====================")
+    log.info(f"Старт: {datetime.now():%Y-%m-%d %H:%M:%S}")
+    log.info(f"Лампа (из .env): {WLED_IP} | ТВ: {tvremote.config.get('ip') or 'не задан'} | "
+             f"AI: {'вкл' if os.getenv('OPENAI_API_KEY') else 'выкл (правила)'}")
+    log.info(f"Доступ разрешён ID: {os.getenv('ALLOWED_USERS') or 'всем'}")
+    log.info("==================================================")
+
     # Авто-поиск лампы: если фиксированный IP недоступен (сменился Wi-Fi/роутер —
     # IP или подсеть могли поменяться), ищем WLED по сети и берём найденный.
-    global WLED_IP, BASE
     if not _lamp_reachable(WLED_IP):
         log.warning(f"Лампа по {WLED_IP} не отвечает — ищу в сети…")
         try:
@@ -986,6 +1045,7 @@ def main():
     app.add_handler(CommandHandler("off", cmd_off))
     app.add_handler(CommandHandler("toggle", cmd_toggle))
     app.add_handler(CommandHandler("fxlist", cmd_fxlist))
+    app.add_handler(CommandHandler("find", cmd_find))
     app.add_handler(CallbackQueryHandler(on_button))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
     log.info("Бот запущен. Ctrl+C для остановки.")
