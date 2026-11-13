@@ -30,6 +30,7 @@ import json
 import html
 import asyncio
 import logging
+import urllib.request
 import httpx
 import tvremote
 import timers
@@ -897,6 +898,35 @@ async def _post_shutdown(app):
         _client = None
 
 
+def _lamp_reachable(ip: str, timeout: float = 2.0) -> bool:
+    """Быстрая синхронная проверка, что по этому IP отвечает лампа."""
+    try:
+        urllib.request.urlopen(f"http://{ip}/json/info", timeout=timeout).read()
+        return True
+    except Exception:
+        return False
+
+
+def _persist_wled_ip(ip: str) -> None:
+    """Обновить строку WLED_IP в .env, чтобы в следующий раз найти сразу."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    try:
+        lines, found = [], False
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as f:
+                for line in f:
+                    if line.strip().startswith("WLED_IP="):
+                        lines.append(f"WLED_IP={ip}\n"); found = True
+                    else:
+                        lines.append(line)
+        if not found:
+            lines.append(f"WLED_IP={ip}\n")
+        with open(path, "w", encoding="utf-8") as f:
+            f.writelines(lines)
+    except Exception as e:
+        log.warning(f"не смог записать WLED_IP в .env: {e}")
+
+
 # ----------------------- main -----------------------
 def main():
     if "ВСТАВЬ_ТОКЕН" in BOT_TOKEN:
@@ -904,6 +934,26 @@ def main():
         return
     _load_access()
     tvremote.load_config()  # общий конфиг телевизора (с веб-приложением)
+
+    # Авто-поиск лампы: если фиксированный IP недоступен (сменился Wi-Fi/роутер —
+    # IP или подсеть могли поменяться), ищем WLED по сети и берём найденный.
+    global WLED_IP, BASE
+    if not _lamp_reachable(WLED_IP):
+        log.warning(f"Лампа по {WLED_IP} не отвечает — ищу в сети…")
+        try:
+            import find_lamp
+            hits = find_lamp.discover()
+            if hits:
+                WLED_IP = hits[0]["ip"]
+                BASE = f"http://{WLED_IP}"
+                log.info(f"✅ Лампа найдена: {WLED_IP} ({hits[0]['name']}). Обновляю .env.")
+                _persist_wled_ip(WLED_IP)
+            else:
+                log.warning("Лампа WLED не найдена. Проверь, что она переподключена "
+                            "к новому Wi-Fi «INTELLECT» и включена (НАЙТИ_ЛАМПУ.bat).")
+        except Exception as e:
+            log.warning(f"Автопоиск лампы не удался: {e}")
+
     timers.init(WLED_IP)    # таймеры авто-выключения лампы/ТВ
     voice.init(WLED_IP)     # текстовые/голосовые команды
 
