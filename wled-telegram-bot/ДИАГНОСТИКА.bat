@@ -1,28 +1,26 @@
 @echo off
 chcp 65001 >nul
-title INTELLECT - диагностика ПК
+title INTELLECT - PC diagnostics
 cd /d "%~dp0"
 
 echo ============================================
-echo   Диагностика ПК для оптимизации
-echo   Собирается ТОЛЬКО техническая информация.
-echo   Фото, файлы, пароли, браузер - НЕ трогаются.
-echo   Ничего никуда не отправляется - только файл.
+echo   PC diagnostics for optimization.
+echo   Only technical info is collected.
+echo   No personal files/photos/passwords.
+echo   Nothing is uploaded - just a local file.
 echo ============================================
 echo.
 
-python --version >nul 2>&1
-if errorlevel 1 (
-  echo [!] Python не найден. Сначала запусти УСТАНОВКА.bat
-  pause
-  exit /b 1
-)
+set "PY="
+where py >nul 2>&1 && set "PY=py"
+if not defined PY ( where python >nul 2>&1 && set "PY=python" )
+if not defined PY ( echo Python not found. Run START.bat first. & pause & exit /b 1 )
 
-python -m pip install psutil >nul 2>&1
-python "setup\pc_report.py"
+"%PY%" -m pip install psutil >nul 2>&1
+"%PY%" "setup\pc_report.py"
 
 echo.
-echo Открываю папку с отчётом. Пришли мне файл .json
+echo Report folder opens. Send me the .json file.
 start "" "%~dp0setup\pc-reports"
 echo.
 pause
