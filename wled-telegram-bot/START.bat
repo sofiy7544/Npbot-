@@ -46,9 +46,13 @@ if not exist ".env" (
 
 REM ---------- 4) First-run PC optimization (ONCE) ----------
 if not exist ".optimized" (
-  echo [*] First run: optimizing this PC (one time)...
-  call :optimize
-  echo done > ".optimized"
+  echo [*] First run: optimizing this PC. Approve the admin prompt for a full clean.
+  powershell -NoProfile -Command "try{ Start-Process -Verb RunAs -Wait -FilePath '%~dp0optimize_admin.bat' }catch{}"
+  if not exist ".optimized" (
+    echo [i] Admin declined - applying the safe optimization instead...
+    call :optimize
+    echo done > ".optimized"
+  )
 )
 
 REM ---------- 5) Autostart on Windows logon (once, no admin) ----------
