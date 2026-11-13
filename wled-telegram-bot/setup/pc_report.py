@@ -338,6 +338,62 @@ def sec_installed() -> list:
     return []
 
 
+def sec_health() -> dict:
+    """Здоровье железа: температура/троттлинг CPU, SMART-статус дисков.
+    Часть данных доступна только с правами админа — чего нет, помечаем."""
+    if not IS_WIN:
+        return {"note": "только Windows"}
+    d = {}
+
+    # Температура CPU (ACPI thermal zone; на части десктопов недоступна)
+    tz = ps("Get-CimInstance -Namespace root/wmi -ClassName "
+            "MSAcpi_ThermalZoneTemperature -EA SilentlyContinue | "
+            "Select-Object CurrentTemperature")
+    if tz:
+        tzs = tz if isinstance(tz, list) else [tz]
+        temps = []
+        for z in tzs:
+            raw = z.get("CurrentTemperature")
+            if raw:
+                temps.append(round(raw / 10 - 273.15, 1))   # десятые Кельвина → °C
+        if temps:
+            d["cpu_temp_c"] = temps
+    if "cpu_temp_c" not in d:
+        d["cpu_temp_note"] = "датчик недоступен (частая ситуация на ПК; нужна HWiNFO)"
+
+    # Троттлинг: текущая частота против максимальной
+    clk = ps("Get-CimInstance Win32_Processor | "
+             "Select-Object CurrentClockSpeed,MaxClockSpeed")
+    if clk:
+        c = clk[0] if isinstance(clk, list) else clk
+        cur, mx = c.get("CurrentClockSpeed"), c.get("MaxClockSpeed")
+        if cur and mx:
+            d["cpu_clock"] = {"current_mhz": cur, "max_mhz": mx,
+                              "percent_of_max": round(cur / mx * 100)}
+
+    # SMART / здоровье дисков
+    disks = ps("Get-PhysicalDisk | Select-Object FriendlyName,MediaType,"
+               "HealthStatus,OperationalStatus,"
+               "@{N='SizeGB';E={[math]::Round($_.Size/1GB)}}")
+    if disks:
+        disks = disks if isinstance(disks, list) else [disks]
+        d["disks_health"] = [{"name": x.get("FriendlyName"), "type": x.get("MediaType"),
+                              "health": x.get("HealthStatus"),
+                              "state": x.get("OperationalStatus"),
+                              "size_gb": x.get("SizeGB")} for x in disks]
+    # Счётчики надёжности (температура диска, износ SSD, часы работы) — best-effort
+    rel = ps("Get-PhysicalDisk | ForEach-Object { Get-StorageReliabilityCounter "
+             "-PhysicalDisk $_ -EA SilentlyContinue | Select-Object DeviceId,"
+             "Temperature,Wear,ReadErrorsTotal,PowerOnHours }")
+    if rel:
+        rel = rel if isinstance(rel, list) else [rel]
+        d["disks_reliability"] = [{"id": x.get("DeviceId"), "temp_c": x.get("Temperature"),
+                                   "wear_percent": x.get("Wear"),
+                                   "read_errors": x.get("ReadErrorsTotal"),
+                                   "power_on_hours": x.get("PowerOnHours")} for x in rel]
+    return d
+
+
 def sec_network() -> dict:
     d = {}
     try:
@@ -358,8 +414,8 @@ SECTIONS = [
     ("memory", sec_memory), ("disks", sec_disks),
     ("storage_hotspots", sec_storage_hotspots), ("top_processes", sec_top_processes),
     ("startup", sec_startup), ("autostart_services", sec_services),
-    ("power", sec_power), ("installed_programs", sec_installed),
-    ("network", sec_network),
+    ("power", sec_power), ("health", sec_health),
+    ("installed_programs", sec_installed), ("network", sec_network),
 ]
 
 
@@ -410,6 +466,19 @@ def summary_txt(r: dict) -> str:
     for p in (r.get("top_processes") or [])[:10]:
         if p.get("name"):
             L.append(f"  {p['name']}: {p.get('mem_mb','?')} МБ")
+    hl = r.get("health", {})
+    if hl and "note" not in hl:
+        L.append("")
+        L.append("ЗДОРОВЬЕ ЖЕЛЕЗА:")
+        if hl.get("cpu_temp_c"):
+            L.append(f"  Темп. CPU: {', '.join(str(t) for t in hl['cpu_temp_c'])} °C")
+        clk = hl.get("cpu_clock")
+        if clk:
+            L.append(f"  Частота CPU: {clk['current_mhz']}/{clk['max_mhz']} МГц "
+                     f"({clk['percent_of_max']}% — ниже ~70% подряд = троттлинг)")
+        for dh in hl.get("disks_health", []):
+            L.append(f"  Диск {dh.get('name')}: {dh.get('health')} "
+                     f"({dh.get('type')}, {dh.get('size_gb')} ГБ)")
     L.append("")
     L.append("Полные данные — в .json рядом. Личные файлы/фото/пароли НЕ собирались.")
     return "\n".join(L)
