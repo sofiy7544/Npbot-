@@ -8,3 +8,4 @@ __pycache__/
 venv/
 *.log
 setup/pc-reports/
+.optimized
