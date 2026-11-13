@@ -1,0 +1,7 @@
+services:
+  wled-bot:
+    build: .
+    container_name: wled-bot
+    restart: unless-stopped
+    env_file: .env
+    network_mode: host   # нужно, чтобы достучаться до WLED в локальной сети

@@ -1,0 +1,28 @@
+# Автозапуск WLED-бота на Linux (Raspberry Pi / мини-ПК).
+#
+# Установка:
+#   1) Положи проект в /home/pi/wled-bot
+#   2) Впиши свой токен в строку Environment ниже
+#   3) sudo cp wled-bot.service /etc/systemd/system/
+#      sudo systemctl daemon-reload
+#      sudo systemctl enable --now wled-bot
+#   4) Логи:   journalctl -u wled-bot -f
+#
+# Если пользователь/путь другие — поправь User, WorkingDirectory, ExecStart.
+
+[Unit]
+Description=WLED Telegram Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/wled-bot
+Environment=WLED_BOT_TOKEN=ВСТАВЬ_ТОКЕН_ОТ_BOTFATHER
+ExecStart=/usr/bin/python3 /home/pi/wled-bot/wled_bot.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

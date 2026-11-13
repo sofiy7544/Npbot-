@@ -1,0 +1,9 @@
+.env
+access.json
+tv.json
+tv_token.txt
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.log
