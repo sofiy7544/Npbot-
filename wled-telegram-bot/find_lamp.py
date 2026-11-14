@@ -75,21 +75,35 @@ def _probe(ip: str, timeout: float):
     }
 
 
+def _docker_ish(ip) -> bool:
+    """Диапазоны Docker/WSL (172.17–172.31.x) — не домашняя сеть."""
+    o = str(ip).split(".")
+    return o[0] == "172" and o[1].isdigit() and 17 <= int(o[1]) <= 31
+
+
 def _subnets_to_scan() -> list:
-    """/24-подсети для скана. Домашние (RFC1918: 192.168/10/172.16) в приоритете;
-    VPN-подсети вроде Radmin (26.x) пропускаем, если есть домашние."""
-    private, other = [], []
-    for ip in local_ipv4s():
+    """/24-подсети для скана. Домашние (192.168/10) в приоритете. Пропускаем
+    link-local (169.254 — отключённые адаптеры), Docker/WSL (172.17+) и VPN
+    (напр. Radmin 26.x), если есть нормальная домашняя сеть."""
+    home, docker, other = [], [], []
+    for ips in local_ipv4s():
         try:
-            net = ipaddress.ip_network(ip + "/24", strict=False)
+            ip = ipaddress.ip_address(ips)
+            net = ipaddress.ip_network(ips + "/24", strict=False)
         except Exception:
             continue
-        if ipaddress.ip_address(ip).is_private:
-            if net not in private:
-                private.append(net)
+        if ip.is_link_local:               # 169.254.x — мусор, всегда мимо
+            continue
+        if ip.is_private and not _docker_ish(ip):
+            if net not in home:
+                home.append(net)
+        elif _docker_ish(ip):
+            if net not in docker:
+                docker.append(net)
         elif net not in other:
             other.append(net)
-    return private or other   # если домашних нет — сканируем что есть
+    # домашние → затем docker → затем прочее (VPN и т.п.), но только если лучше нет
+    return home or docker or other
 
 
 def discover(timeout: float = 0.4, workers: int = 128) -> list[dict]:
