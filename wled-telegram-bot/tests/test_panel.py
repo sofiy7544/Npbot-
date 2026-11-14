@@ -71,10 +71,15 @@ PRE = (
 )
 
 
-def _run_bot(env_text, seconds=14):
+OLD_FILES = ("cloudflared.exe", "tunnel.py", "GITHUB_RESEARCH.md", "site/config.js", "tests/test_tunnel.py")
+
+
+def _run_bot(env_text, seconds=14, old_files=()):
     work = Path(tempfile.mkdtemp()) / "bot"
     shutil.copytree(ROOT, work, ignore=shutil.ignore_patterns(".env", "__pycache__", "*.db", "*.log", "logs", ".git", "site"))
     (work / ".env").write_text(env_text, encoding="utf-8")
+    for rel in old_files:                       # как после распаковки 2.4.0 поверх 2.3.x
+        (work / rel).parent.mkdir(parents=True, exist_ok=True); (work / rel).write_text("old")
     cf = work / "fake_cloudflared.sh"; cf.write_text(FAKE_CF); cf.chmod(cf.stat().st_mode | stat.S_IEXEC)
     env = {k: v for k, v in os.environ.items() if k not in ("WLED_BOT_TOKEN", "ALLOWED_USERS", "OPENAI_API_KEY", "WLED_IP", "ACCESS_PASSWORD", "TUNNEL")}
     env.update(WEB_PORT="0", INTELLECT_WEB_PORT=str(_free_port()), PYTHONIOENCODING="utf-8", CLOUDFLARED_PATH=str(cf))
@@ -87,15 +92,19 @@ def _run_bot(env_text, seconds=14):
         pr.kill(); out = pr.communicate()[0]
     log = (work / "logs" / "bot.log").read_text(encoding="utf-8") if (work / "logs" / "bot.log").exists() else ""
     diag = (work / "logs" / "diag.txt").read_text(encoding="utf-8") if (work / "logs" / "diag.txt").exists() else ""
+    left = [rel for rel in old_files if (work / rel).exists()]
     shutil.rmtree(work.parent, ignore_errors=True)
+    _run_bot.left = left
     return out, log, diag
 
 
 def test_old_env_stays_local():
     env = (f"WLED_BOT_TOKEN={FAKE_TOK}\nALLOWED_USERS=42\nWLED_IP=127.0.0.1\nACCESS_PASSWORD=aZ3kQ9mT2p\n"
            "TUNNEL=1\nPAGES_URL=https://user.github.io/intellect/\nGITHUB_PAGES_REPO=user/x\nGITHUB_TOKEN=ghp_fake\n")
-    out, log, diag = _run_bot(env)
+    out, log, diag = _run_bot(env, old_files=OLD_FILES)
     check("бот запустился", "Бот запущен" in log)
+    check("старые файлы туннеля/GitHub удалены при запуске", _run_bot.left == [])
+    check("в журнале записано, что удалено", "Удалены ненужные файлы" in log)
     check("туннель НЕ поднят, хотя в .env TUNNEL=1", "trycloudflare" not in log and "trycloudflare" not in out)
     check("в журнале объяснено, что TUNNEL больше не используется", "TUNNEL в .env больше не используется" in log)
     check("в Telegram не ушли адреса интернета", "github.io" not in out and "trycloudflare" not in out)

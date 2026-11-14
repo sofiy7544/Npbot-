@@ -720,6 +720,29 @@ async def cmd_panel(update, context):
                                     disable_web_page_preview=True)
 
 
+# Файлы 2.3.x, которые больше не нужны (туннель/GitHub). Архив распаковывают ПОВЕРХ
+# старой папки, поэтому сами они не исчезают — убираем при запуске.
+OBSOLETE_FILES = ("cloudflared.exe", "cloudflared", "tunnel.py", "GITHUB_RESEARCH.md",
+                  os.path.join("site", "config.js"), os.path.join("site", "api.json"),
+                  os.path.join("site", "api.json.example"), os.path.join("tests", "test_tunnel.py"))
+
+
+def _cleanup_obsolete(root: str | None = None) -> list[str]:
+    root = root or os.path.dirname(os.path.abspath(__file__))
+    removed = []
+    for rel in OBSOLETE_FILES:
+        f = os.path.join(root, rel)
+        try:
+            if os.path.isfile(f):
+                os.remove(f)
+                removed.append(rel)
+        except OSError as e:
+            log.warning(f"не удалился старый файл {rel}: {e}")
+    if removed:
+        log.info("Удалены ненужные файлы прошлой версии (туннель/GitHub): " + ", ".join(removed))
+    return removed
+
+
 _MAIN_LOOP = [None]   # event loop бота
 _pending_confirm: dict[int, str] = {}   # uid → фраза, ждущая подтверждения
 
@@ -1185,14 +1208,7 @@ async def _post_init(app):
     _MAIN_LOOP[0] = asyncio.get_running_loop()
     if os.getenv("TUNNEL", "0").strip() not in ("0", "", "no", "off"):
         log.info("TUNNEL в .env больше не используется: INTELLECT работает только в домашней сети.")
-    # остаток 2.3.x: скачанный cloudflared.exe больше не нужен (~20 МБ)
-    _cf = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cloudflared.exe")
-    try:
-        if os.path.isfile(_cf):
-            os.remove(_cf)
-            log.info("Удалён ненужный cloudflared.exe (туннель в интернет больше не используется).")
-    except OSError as e:
-        log.warning(f"cloudflared.exe не удалился: {e}")
+    _cleanup_obsolete()
     # Прогреть кэш: имя/эффекты и текущее состояние (не критично, если лампа спит).
     await wled_meta()
     await wled_sync()
