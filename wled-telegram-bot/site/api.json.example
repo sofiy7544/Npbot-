@@ -1,5 +1,0 @@
-{
-  "_comment": "Скопируй в api.json рядом с index.html. Бот сам обновляет этот файл на GitHub Pages адресом туннеля (меняется при перезапуске ПК). В локальной сети не нужен: сайт сам находит API по своему адресу.",
-  "api": "https://example-words-here.trycloudflare.com",
-  "updated": "2026-11-14T12:00:00Z"
-}
