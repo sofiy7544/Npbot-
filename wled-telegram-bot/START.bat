@@ -4,17 +4,6 @@ setlocal enabledelayedexpansion
 title INTELLECT - smart light and TV
 cd /d "%~dp0"
 
-REM Trap: if anything below exits abnormally, pause so the user sees what happened.
-if /i "%~1" NEQ "nopause" (
-  cmd /c ""%~f0" nopause"
-  echo.
-  echo ==================================================
-  echo [i] Window will stay open. Press any key to close.
-  echo ==================================================
-  pause >nul
-  exit /b %ERRORLEVEL%
-)
-
 echo ==================================================
 echo    INTELLECT - everything installs itself.
 echo    Please wait (first run takes a couple of minutes).
@@ -34,7 +23,7 @@ if not defined PY (
   if errorlevel 1 (
     echo [!] Could not download Python. Check internet and run again.
     start https://www.python.org/downloads/
-    pause & exit /b 1
+    goto :end
   )
   echo [*] Installing Python silently...
   "!PYEXE!" /quiet InstallAllUsers=0 PrependPath=1 Include_test=0 Include_pip=1
@@ -47,7 +36,7 @@ REM ---------- 2) Libraries (only first time / after an update) ----------
 if exist ".deps_ok" (
   echo [i] Libraries already installed - skipping.
 ) else (
-  echo [*] Installing libraries (one time)...
+  echo [*] Installing libraries (one time, can take 2-3 min)...
   "!PY!" -m pip install --upgrade pip >nul 2>&1
   "!PY!" -m pip install -r requirements.txt
   "!PY!" -m pip install psutil >nul 2>&1
@@ -60,13 +49,13 @@ if not exist ".env" (
   if exist ".env.example" (
     echo [*] Creating .env from .env.example, opening it in Notepad...
     copy /y ".env.example" ".env" >nul
-    echo [i] Fill in WLED_BOT_TOKEN and ALLOWED_USERS (and OPENAI_API_KEY),
+    echo [i] Fill in WLED_BOT_TOKEN and ALLOWED_USERS ^(and OPENAI_API_KEY^),
     echo     save the file, close Notepad, then run START.bat again.
     start /wait notepad ".env"
-    exit /b 0
+    goto :end
   ) else (
     echo [!] .env.example is also missing. Reinstall from the archive.
-    pause & exit /b 1
+    goto :end
   )
 )
 
@@ -109,20 +98,24 @@ goto loop
 REM ================= subroutines =================
 :optimize
 REM Safe, per-user, reversible tweaks (no admin needed).
-REM Power: balanced plan, never sleep on AC (always-on host).
 powercfg /setactive SCHEME_BALANCED >nul 2>&1
 powercfg /change standby-timeout-ac 0 >nul 2>&1
 powercfg /change hibernate-timeout-ac 0 >nul 2>&1
 powercfg /change disk-timeout-ac 0 >nul 2>&1
-REM Laptop lid closed on AC = keep running (do nothing).
 powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 0 >nul 2>&1
 powercfg /setactive SCHEME_CURRENT >nul 2>&1
-REM Trim startup bloat (HKCU only - just stops auto-start, nothing is uninstalled).
 for %%A in ("OneDrive" "CCleaner Smart Cleaning" "uTorrentWeb" "uTorrent Web" "uTorrent") do (
   reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v %%~A /f >nul 2>&1
 )
-REM Clear current user's TEMP (files in use are skipped).
 del /q /f /s "%TEMP%\*" >nul 2>&1
 for /d %%D in ("%TEMP%\*") do rmdir /s /q "%%D" >nul 2>&1
 echo [i] Done: power plan = Balanced, no sleep, startup trimmed, TEMP cleared.
 goto :eof
+
+:end
+echo.
+echo ==================================================
+echo [i] Press any key to close this window.
+echo ==================================================
+pause >nul
+exit /b
