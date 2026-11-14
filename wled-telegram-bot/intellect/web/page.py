@@ -248,7 +248,14 @@ if(TOKEN) showApp();
 # Новый премиальный визуал (дизайн-доработка) — лежит в panel.html рядом.
 # Если файла нет, панель откатывается на классическую функциональную страницу.
 from pathlib import Path as _P
-try:
-    PAGE = (_P(__file__).parent / "panel.html").read_text("utf-8")
-except Exception:
-    PAGE = CLASSIC_PAGE
+_here = _P(__file__).resolve().parent
+# Ищем файл премиального визуала: сначала в корне проекта (рядом со START.bat),
+# затем в папке intellect/web/. Нет файла — классическая функциональная панель.
+_cands = [_here.parent.parent / "panel.html", _here / "panel.html"]
+PAGE = CLASSIC_PAGE
+for _c in _cands:
+    try:
+        if _c.exists():
+            PAGE = _c.read_text("utf-8"); break
+    except Exception:
+        pass
