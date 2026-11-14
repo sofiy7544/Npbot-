@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import time
 
 
 class SafetyError(Exception):
@@ -63,34 +64,86 @@ class ComputerControl:
         return {"ok": killed > 0, "message": f"Завершено процессов: {killed}"}
 
     # ----------------------- питание (ОПАСНО) -----------------------
-    def shutdown(self, delay_sec: int = 30) -> dict:
-        """ОПАСНО. Вызывать только после подтверждения пользователя."""
+    # Минимальная задержка: ИИ может передать 0 → ПК уходил в перезагрузку
+    # мгновенно, и кнопка «Отмена»/команда /cancel уже не успевали.
+    MIN_POWER_DELAY = 20
+    MAX_POWER_DELAY = 3600
+
+    @classmethod
+    def _clamp_delay(cls, delay_sec) -> int:
+        try:
+            d = int(delay_sec)
+        except (TypeError, ValueError):
+            d = 30
+        return max(cls.MIN_POWER_DELAY, min(d, cls.MAX_POWER_DELAY))
+
+    def power_pending(self) -> str | None:
+        """Что запланировано и ещё не случилось: 'restart' / 'shutdown' / None."""
+        until = getattr(self, "_power_until", 0.0)
+        if until and time.monotonic() < until:
+            return getattr(self, "_power_kind", None)
+        return None
+
+    # Коды shutdown.exe (Windows)
+    ERR_ALREADY_SCHEDULED = 1190   # «выключение уже запланировано»
+    ERR_NOTHING_SCHEDULED = 1116   # «нечего отменять»
+
+    @staticmethod
+    def _run(args):
+        """subprocess.run с перехватом вывода; вернуть код выхода."""
+        r = subprocess.run(args, check=False, capture_output=True)
+        return getattr(r, "returncode", 0) or 0
+
+    def _schedule(self, kind: str, delay_sec) -> dict:
+        d = self._clamp_delay(delay_sec)
+        what = "Перезагрузка" if kind == "restart" else "Выключение"
         try:
             if os.name == "nt":
-                subprocess.run(["shutdown", "/s", "/t", str(delay_sec)], check=False)
+                # Сначала снять прежний таймер: иначе Windows откажет (1190),
+                # а пользователь будет думать, что время поменялось.
+                self._run(["shutdown", "/a"])
+                flag = "/r" if kind == "restart" else "/s"
+                rc = self._run(["shutdown", flag, "/t", str(d)])
             else:
-                subprocess.run(["shutdown", "-h", f"+{max(1, delay_sec // 60)}"], check=False)
-            return {"ok": True, "message": f"Выключение через {delay_sec} с (отмена: /cancel)"}
+                self._run(["shutdown", "-c"])
+                flag = "-r" if kind == "restart" else "-h"
+                rc = self._run(["shutdown", flag, f"+{max(1, d // 60)}"])
+            if rc != 0:
+                self._power_kind, self._power_until = None, 0.0
+                return {"ok": False, "message": f"⚠️ Не получилось запланировать: "
+                                                f"{what.lower()} (код Windows {rc})."}
+            self._power_kind, self._power_until = kind, time.monotonic() + d
+            return {"ok": True, "message": f"⏳ {what} через {d} с. Передумал — отправь /cancel."}
         except Exception as e:
             return {"ok": False, "message": f"Ошибка: {type(e).__name__}"}
 
-    def cancel_shutdown(self) -> dict:
-        try:
-            if os.name == "nt":
-                subprocess.run(["shutdown", "/a"], check=False)
-            else:
-                subprocess.run(["shutdown", "-c"], check=False)
-            return {"ok": True, "message": "Выключение отменено"}
-        except Exception as e:
-            return {"ok": False, "message": f"Ошибка: {type(e).__name__}"}
+    def shutdown(self, delay_sec: int = 30) -> dict:
+        """ОПАСНО. Вызывать только после подтверждения пользователя."""
+        return self._schedule("shutdown", delay_sec)
 
     def restart(self, delay_sec: int = 30) -> dict:
         """ОПАСНО. Только после подтверждения."""
+        return self._schedule("restart", delay_sec)
+
+    def cancel_shutdown(self) -> dict:
+        """Отменить выключение/перезагрузку. Спрашиваем саму Windows (shutdown /a),
+        а не память бота — так отмена работает и после перезапуска бота."""
+        kind = self.power_pending()
         try:
             if os.name == "nt":
-                subprocess.run(["shutdown", "/r", "/t", str(delay_sec)], check=False)
+                rc = self._run(["shutdown", "/a"])
+                nothing = rc == self.ERR_NOTHING_SCHEDULED
             else:
-                subprocess.run(["shutdown", "-r", f"+{max(1, delay_sec // 60)}"], check=False)
-            return {"ok": True, "message": f"Перезагрузка через {delay_sec} с"}
+                rc = self._run(["shutdown", "-c"])
+                nothing = kind is None
+            self._power_kind, self._power_until = None, 0.0
+            if nothing:
+                return {"ok": False, "nothing": True,
+                        "message": "Отменять нечего — выключение/перезагрузка ПК не запланированы."}
+            if rc != 0:
+                return {"ok": False, "message": f"⚠️ Не получилось отменить (код Windows {rc})."}
+            msg = {"restart": "🛑 Перезагрузка отменена.",
+                   "shutdown": "🛑 Выключение отменено."}.get(kind, "🛑 Выключение/перезагрузка ПК отменены.")
+            return {"ok": True, "message": msg}
         except Exception as e:
             return {"ok": False, "message": f"Ошибка: {type(e).__name__}"}

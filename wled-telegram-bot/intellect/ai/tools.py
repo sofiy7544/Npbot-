@@ -12,6 +12,7 @@ tools.py — реестр инструментов для AI Brain (function cal
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -25,6 +26,13 @@ class Tool:
     parameters: dict           # JSON Schema (object)
     handler: Callable[[dict], Any]
     dangerous: bool = False
+    # intent — regex явной просьбы. Если во фразе пользователя её нет, мозг не
+    # выполняет инструмент (модель «потянулась» сама), а вызывает instead (если есть).
+    intent: str | None = None
+    instead: str | None = None
+
+    def wanted(self, text: str) -> bool:
+        return not self.intent or bool(re.search(self.intent, text or "", re.I))
 
     def schema(self) -> dict:
         """Схема в формате OpenAI tools."""
@@ -46,8 +54,10 @@ class ToolRegistry:
         self._tools[tool.name] = tool
 
     def add(self, name: str, description: str, parameters: dict,
-            handler: Callable[[dict], Any], dangerous: bool = False) -> None:
-        self.register(Tool(name, description, parameters, handler, dangerous))
+            handler: Callable[[dict], Any], dangerous: bool = False, *,
+            intent: str | None = None, instead: str | None = None) -> None:
+        self.register(Tool(name, description, parameters, handler, dangerous,
+                           intent, instead))
 
     def get(self, name: str) -> Tool | None:
         return self._tools.get(name)

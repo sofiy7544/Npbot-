@@ -28,7 +28,10 @@ DEFAULT_SYSTEM = (
     "Если тебя просят о том, чего ты не умеешь (скачать файл из интернета, открыть "
     "сайт и т.п.) — честно скажи, что не можешь, не выдумывай. "
     "Не выдумывай факты о состоянии устройств/ПК — бери их из инструментов "
-    "(lamp_status, computer_status)."
+    "(lamp_status, tv_status, computer_status). "
+    "Что сейчас идёт на экране телевизора (канал, фильм, сериал), ты НЕ видишь — "
+    "так и скажи честно. tv_power вызывай ТОЛЬКО если прямо просят включить или "
+    "выключить телевизор; для вопросов и проверок — tv_status."
 )
 
 
@@ -79,8 +82,25 @@ class Brain:
             return BrainResult(reply=reply, model=model, source="ai")
 
         results, pending, pending_calls = [], [], []
+        substituted: set[str] = set()
+        # Явную просьбу ищем в текущей фразе И в паре последних реплик пользователя:
+        # «можешь выключить телик?» → «выключить?» → «да» — это тоже явная просьба.
+        recent_user = [m.content for m in (history or []) if m.role == "user"][-2:]
+        intent_text = " ".join(recent_user + [text])
         for call in calls:
             tool = self.registry.get(call.name)
+            if tool and not tool.wanted(intent_text):
+                # Модель сама потянулась к действию, о котором не просили (tv_power
+                # на «что идёт по телеку») — не выполняем, отвечаем через instead.
+                alt = tool.instead
+                if (alt and self.registry.get(alt) and alt not in substituted
+                        and not any(c.name == alt for c in calls)):
+                    substituted.add(alt)
+                    results.append(self.registry.dispatch(ToolCall(alt, {})))
+                elif not alt:
+                    results.append({"ok": False, "name": call.name,
+                                    "error": "не выполнил — об этом не просили"})
+                continue
             if tool and tool.dangerous and not self._confirmed(call.name):
                 pending.append(call.name)
                 pending_calls.append(call)     # запоминаем САМ вызов, не фразу

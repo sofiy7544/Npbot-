@@ -23,7 +23,11 @@ def check(name, cond):
     if cond: _ok += 1; print(f"  ✅ {name}")
     else: _fail += 1; print(f"  ❌ {name}")
 
-PORT = 8191
+def _free_port():
+    import socket as _s
+    with _s.socket() as t:
+        t.bind(("127.0.0.1", 0)); return t.getsockname()[1]
+PORT = _free_port()   # свой порт на прогон: параллельные прогоны/чужие процессы не мешают
 BASE = f"http://127.0.0.1:{PORT}"
 
 def req(path, method="GET", token=None, body=None):

@@ -43,7 +43,9 @@ class IntellectApp:
 
         # Устройства
         self.wled = WledDevice(self.settings.wled_ip)
-        self.tv = SamsungTVDevice(self.settings.samsung_tv_ip or None)
+        # ТВ — тот же общий конфиг tvremote (tv.json), что у кнопок пульта;
+        # SAMSUNG_TV_IP из .env tvremote учитывает сам.
+        self.tv = SamsungTVDevice()
         self.devices = DeviceRegistry(self.db)
         self.devices.add("lamp", self.wled)
         self.devices.add("tv", self.tv)
@@ -119,8 +121,28 @@ class IntellectApp:
               detail={"tools": [getattr(c, "name", "?") for c in calls]})
         return {"reply": result.reply, "did_actions": result.did_actions}
 
-    def cancel_pending(self, user_id: int) -> None:
-        self._pending.pop(user_id, None)
+    def cancel_pending(self, user_id: int, *, power: bool = False) -> dict:
+        """Отмена. Ответ честно говорит, что именно отменено.
+
+        • Кнопка «❌ Отмена» под вопросом (power=False) отменяет ТОЛЬКО этот вопрос;
+          уже подтверждённый таймер выключения она не трогает.
+        • /cancel (power=True) — прервать запланированное выключение/перезагрузку.
+          Спрашиваем саму Windows, поэтому работает и после перезапуска бота.
+        """
+        had_pending = self._pending.pop(user_id, None) is not None
+        if not power:
+            tail = ("\n⏳ Запланированное выключение/перезагрузка ПК всё ещё в силе — "
+                    "/cancel, чтобы отменить." if self.computer.power_pending() else "")
+            head = ("Отменено ✖️ — ничего не выполнял." if had_pending
+                    else "Этот вопрос уже неактуален — отменять нечего.")
+            return {"reply": head + tail, "did_actions": False}
+        res = self.computer.cancel_shutdown()
+        if res.get("ok"):
+            audit(self.db, "computer.power_cancel", user_id=user_id, detail={})
+            return {"reply": res.get("message") or "🛑 Отменено.", "did_actions": True}
+        if had_pending:
+            return {"reply": "Отменено ✖️ — ничего не выполнял.", "did_actions": False}
+        return {"reply": res.get("message") or "Отменять нечего.", "did_actions": False}
 
     def handle_voice(self, user_id: int, audio_path: str, *, name: str | None = None) -> dict:
         """Голосовое → распознать → обработать как текст."""

@@ -12,3 +12,4 @@ setup/pc-reports/
 /intellect.db
 /intellect.db-*
 .deps_ok
+logs/

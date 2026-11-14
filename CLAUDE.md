@@ -16,6 +16,15 @@ Monorepo with two cooperating projects for a Stanley-thermos dropshipping shop
 The site **produces** order text in Telegram; the bot **consumes** it and makes
 the TTN. They are independent — each runs and is tested on its own.
 
+A third, unrelated project lives here too:
+
+- **`wled-telegram-bot/`** — **INTELLECT**: Telegram bot + AI assistant for the
+  owner's home lamp (WLED), Samsung TV and Windows PC, running locally on that PC.
+  **Before any work on it, read `wled-telegram-bot/HANDOFF.md`** (owner context,
+  PC/network, START.bat flow, logs, build/test tools, open tasks, session protocol)
+  and the top of `wled-telegram-bot/CHANGELOG.md`. The latest delivered archive is the
+  source of truth (git commits were blocked for part of 2026-11-14).
+
 User-facing language is Ukrainian/Russian. Match it in new strings.
 
 ---

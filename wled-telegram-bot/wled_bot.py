@@ -32,6 +32,13 @@ import asyncio
 import logging
 import urllib.request
 from datetime import datetime
+# Журналы logs\ — подключаем ДО сторонних библиотек, чтобы в logs\crash.log
+# попало даже «не установлена библиотека» (иначе это видно только в окне).
+import diaglog
+diaglog.install_crash_logging()
+# Момент запуска (до тяжёлых импортов): по нему отличаем старые сообщения,
+# накопившиеся, пока бот был выключен, от свежих (см. stale_updates.py).
+import stale_updates
 import httpx
 import tvremote
 import timers
@@ -41,10 +48,12 @@ from telegram.constants import ParseMode
 from telegram.error import BadRequest
 from telegram.ext import (
     Application,
+    ApplicationHandlerStop,
     CommandHandler,
     CallbackQueryHandler,
     MessageHandler,
     ContextTypes,
+    TypeHandler,
     filters,
 )
 
@@ -55,7 +64,8 @@ def _load_dotenv():
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
     if not os.path.exists(path):
         return
-    with open(path, encoding="utf-8") as f:
+    # utf-8-sig: Блокнот может сохранить с BOM; errors=replace: не падать на чужой кодировке
+    with open(path, encoding="utf-8-sig", errors="replace") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
@@ -83,8 +93,10 @@ MAX_ATTEMPTS = 3
 # ==================================================
 
 BASE = f"http://{WLED_IP}"
-# Логи — и в окно, и в файл wled-bot.log (его удобно прислать для разбора).
-LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wled-bot.log")
+# Логи — и в окно, и в файл logs\bot.log (папку logs\ удобно прислать для разбора).
+# Токен и ключи в журнале всегда заменяются на *** (RedactingFormatter).
+LOG_FILE = os.path.join(diaglog.ensure_dir(), "bot.log")
+_fmt = diaglog.RedactingFormatter("%(asctime)s | %(levelname)s | %(message)s")
 _handlers = [logging.StreamHandler()]
 try:
     from logging.handlers import RotatingFileHandler
@@ -92,10 +104,9 @@ try:
         LOG_FILE, maxBytes=1_000_000, backupCount=2, encoding="utf-8"))
 except Exception:
     pass
-logging.basicConfig(
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    level=logging.INFO, handlers=_handlers,
-)
+for _h in _handlers:
+    _h.setFormatter(_fmt)
+logging.basicConfig(level=logging.INFO, handlers=_handlers)
 log = logging.getLogger("wled-bot")
 
 # Приглушаем шумные сторонние логи. Опрос Telegram (getUpdates) спамил лог
@@ -577,8 +588,9 @@ async def cmd_help(update, context):
         "• «открой нетфликс», «включи на ютубе &lt;запрос&gt;»\n"
         "🧠 <b>Свободная речь</b> (если включён GPT-ключ): «сделай уютно», "
         "«что-то скучно, оживи комнату», «приглуши свет и телик потише».\n\n"
-        "⌨️ Быстрые команды: /on /off /toggle /find /fxlist\n"
-        "🔍 /find — найти лампу в сети (например, после подключения к Wi-Fi)",
+        "⌨️ Быстрые команды: /on /off /toggle /find /fxlist /cancel\n"
+        "🔍 /find — найти лампу в сети (например, после подключения к Wi-Fi)\n"
+        "🛑 /cancel — отменить перезагрузку/выключение ПК",
         parse_mode=ParseMode.HTML)
 
 
@@ -601,6 +613,24 @@ async def cmd_toggle(update, context):
         await _prompt_password(update.message, update.effective_user.id); return
     ok = await wled_post({"on": "t"})
     await update.message.reply_text("Переключено 🔁" if ok else "Лампа недоступна ❌")
+
+
+async def cmd_cancel(update, context):
+    """/cancel — отменить запланированную перезагрузку/выключение ПК
+    или неподтверждённое опасное действие."""
+    if not allowed(update):
+        await _prompt_password(update.message, update.effective_user.id); return
+    uid = update.effective_user.id
+    _pending_confirm.pop(uid, None)
+    loop = asyncio.get_running_loop()
+    if INTELLECT is not None:
+        out = await loop.run_in_executor(None, lambda: INTELLECT.cancel_pending(uid, power=True))
+        await update.message.reply_text(out.get("reply") or "Отменено ✖️")
+        return
+    # без ядра INTELLECT — просто прерываем выключение Windows
+    from intellect.computer.control import ComputerControl
+    res = await loop.run_in_executor(None, lambda: ComputerControl().cancel_shutdown())
+    await update.message.reply_text(res.get("message") or "Отменено ✖️")
 
 
 async def cmd_find(update, context):
@@ -917,6 +947,11 @@ async def on_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await q.answer()
         uid = q.from_user.id
         _pending_confirm.pop(uid, None)
+        # убираем кнопки: иначе можно нажать «Отмена» уже ПОСЛЕ «Подтвердить»
+        try:
+            await q.edit_message_reply_markup(reply_markup=None)
+        except Exception:
+            pass
         if data == "cfm:yes" and INTELLECT is not None:
             # выполняем РОВНО то действие, что ждало подтверждения (без перезапроса GPT)
             loop = asyncio.get_running_loop()
@@ -928,9 +963,12 @@ async def on_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 except Exception:
                     pass
         else:
+            reply = "Отменено ✖️"
             if INTELLECT is not None:
-                INTELLECT.cancel_pending(uid)
-            await q.message.reply_text("Отменено ✖️")
+                loop = asyncio.get_running_loop()
+                reply = (await loop.run_in_executor(
+                    None, lambda: INTELLECT.cancel_pending(uid))).get("reply") or reply
+            await q.message.reply_text(reply)
         return
 
     # ---- Телевизор: клавиша / приложение (отвечаем тостом с результатом) ----
@@ -1051,11 +1089,69 @@ async def on_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             pass
 
 
+# ----------------------- Пропущенное, пока бот был выключен -----------------------
+STALE = stale_updates.StaleGate()
+_STALE_NOTICE_DELAY = 2.0   # сек: дождаться, пока PTB раздаст весь накопленный пакет
+
+
+async def _send_stale_notice(bot, chat_id: int):
+    """Одно уведомление на чат: сколько пропущено и что можно повторить."""
+    text = STALE.pop_notice(chat_id)
+    if not text:
+        return
+    kb = (InlineKeyboardMarkup([[InlineKeyboardButton("📋 Открыть панель", callback_data="refresh")]])
+          if is_allowed(chat_id) else None)
+    try:
+        await bot.send_message(chat_id, text, reply_markup=kb)
+        log.info(f"⏸ Чат {chat_id}: {text.splitlines()[0]}")
+    except Exception as e:
+        log.warning(f"Уведомление о пропущенном не отправилось: {e}")
+
+
+async def _send_stale_notice_later(bot, chat_id: int):
+    await asyncio.sleep(_STALE_NOTICE_DELAY)
+    await _send_stale_notice(bot, chat_id)
+
+
+async def _stale_gate(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Группа -1 — раньше всех хендлеров. Накопленное за время простоя не
+    обрабатываем (ApplicationHandlerStop), а сообщаем о нём один раз на чат."""
+    chat = update.effective_chat
+    if not STALE.is_stale(update):
+        if chat is not None and STALE.has_pending(chat.id):
+            await _send_stale_notice(context.bot, chat.id)   # уведомление — раньше ответа на свежее
+        return
+    q = update.callback_query
+    if q is not None:
+        try:
+            # нажатие во время запуска ещё можно «ответить» — пусть просто нажмёт снова
+            await q.answer("⏸ Я был выключен — нажми кнопку ещё раз.", show_alert=True)
+            answered = True
+        except Exception:
+            answered = False   # нажатие слишком старое — сообщим в чате вместе с остальным
+        log.info(f"⏭ Пропускаю нажатие кнопки «{q.data}» из очереди простоя")
+        if answered:
+            raise ApplicationHandlerStop
+    else:
+        m = update.effective_message
+        when = f"{m.date.astimezone():%H:%M}" if m is not None and m.date else "?"
+        text = ((m.text or m.caption or "") if m is not None else "")[:60]
+        log.info(f"⏭ Пропускаю старое сообщение ({when}): «{text}»")
+    if STALE.record(update) and chat is not None:
+        context.application.create_task(_send_stale_notice_later(context.bot, chat.id))
+    raise ApplicationHandlerStop
+
+
 # ----------------------- Жизненный цикл -----------------------
 async def _post_init(app):
     # Прогреть кэш: имя/эффекты и текущее состояние (не критично, если лампа спит).
     await wled_meta()
     await wled_sync()
+    if not ONLINE:
+        # окончательный вывод — здесь, а не сразу при старте: лампа по Wi-Fi
+        # часто отвечает не с первой секунды (была ложная тревога «не найдена»)
+        log.warning(f"Лампа WLED по {WLED_IP} не отвечает. Проверь, что она включена и "
+                    "подключена к Wi-Fi «INTELLECT». Если сменился IP — отправь боту /find.")
     # Подсказки команд в меню Telegram
     try:
         from telegram import BotCommand
@@ -1067,9 +1163,18 @@ async def _post_init(app):
             BotCommand("toggle", "Переключить лампу"),
             BotCommand("find", "Найти лампу в сети"),
             BotCommand("fxlist", "Список эффектов с лампы"),
+            BotCommand("cancel", "Отменить перезагрузку/выключение ПК"),
         ])
     except Exception as e:
         log.warning(f"set_my_commands: {e}")
+    # Сколько апдейтов ждало в Telegram до запуска: их отдадут первыми (см. _stale_gate).
+    try:
+        info = await app.bot.get_webhook_info()
+        STALE.set_backlog(info.pending_update_count)
+        if info.pending_update_count:
+            log.info(f"📬 Пока бот был выключен, накопилось апдейтов: {info.pending_update_count}")
+    except Exception as e:
+        log.warning(f"getWebhookInfo: {e}")
 
 
 async def _post_shutdown(app):
@@ -1079,13 +1184,15 @@ async def _post_shutdown(app):
         _client = None
 
 
-def _lamp_reachable(ip: str, timeout: float = 2.0) -> bool:
-    """Быстрая синхронная проверка, что по этому IP отвечает лампа."""
-    try:
-        urllib.request.urlopen(f"http://{ip}/json/info", timeout=timeout).read()
-        return True
-    except Exception:
-        return False
+def _lamp_reachable(ip: str, timeout: float = 2.0, attempts: int = 1) -> bool:
+    """Синхронная проверка, что по этому IP отвечает лампа WLED.
+    attempts>1 — повторы с растущим таймаутом (2 → 3 → 4 с): лампа по Wi-Fi
+    на первый запрос после простоя нередко молчит пару секунд."""
+    import find_lamp
+    hit, why = find_lamp.check(ip, attempts=attempts, timeout=timeout)
+    if hit is None and attempts > 1:
+        log.info(f"Лампа {ip}: нет ответа (попыток: {attempts}; {why}).")
+    return hit is not None
 
 
 def _persist_wled_ip(ip: str) -> None:
@@ -1094,7 +1201,7 @@ def _persist_wled_ip(ip: str) -> None:
     try:
         lines, found = [], False
         if os.path.exists(path):
-            with open(path, encoding="utf-8") as f:
+            with open(path, encoding="utf-8-sig") as f:
                 for line in f:
                     if line.strip().startswith("WLED_IP="):
                         lines.append(f"WLED_IP={ip}\n"); found = True
@@ -1109,16 +1216,34 @@ def _persist_wled_ip(ip: str) -> None:
 
 
 # ----------------------- main -----------------------
+_INSTANCE_LOCK = None   # держим сокет-замок до конца работы процесса
+
+
 def main():
-    global WLED_IP, BASE
-    if "ВСТАВЬ_ТОКЕН" in BOT_TOKEN:
-        log.error("Не задан токен! Укажи WLED_BOT_TOKEN или впиши BOT_TOKEN в файле.")
-        return
+    global WLED_IP, BASE, _INSTANCE_LOCK
+    import sys
+    import startup_checks as sc
+    # 1) Настройки: шаблонный/пустой токен → понятная ошибка и код 2
+    #    (START.bat откроет .env, а не будет перезапускать бота каждые 5 сек).
+    problem = sc.config_problem(BOT_TOKEN, os.getenv("ALLOWED_USERS"))
+    _diag = {"Проверка .env": problem or "ок"}
+    diaglog.write_diag(_diag)              # снимок сразу — даже если дальше выход
+    if problem:
+        log.error(f"⚙️ {problem}")
+        sys.exit(sc.EXIT_BAD_CONFIG)
+    # 2) Только одна копия: две копии с одним токеном Telegram не пускает.
+    _INSTANCE_LOCK = sc.acquire_single_instance_lock()
+    if _INSTANCE_LOCK is None:
+        _diag["Запуск"] = "ОТКАЗ: уже запущена другая копия на этом ПК"
+        diaglog.write_diag(_diag)
+        log.error("⛔ Бот INTELLECT уже запущен в другом окне. Закрой лишнее окно "
+                  "(две копии одновременно Telegram не пускает).")
+        sys.exit(sc.EXIT_ALREADY_RUNNING)
     _load_access()
     tvremote.load_config()  # общий конфиг телевизора (с веб-приложением)
 
     log.info("==================== INTELLECT ====================")
-    log.info(f"Старт: {datetime.now():%Y-%m-%d %H:%M:%S}")
+    log.info(f"Старт: {datetime.now():%Y-%m-%d %H:%M:%S} | версия {diaglog.version()}")
     log.info(f"Лампа (из .env): {WLED_IP} | ТВ: {tvremote.config.get('ip') or 'не задан'} | "
              f"AI: {'вкл' if os.getenv('OPENAI_API_KEY') else 'выкл (правила)'}")
     log.info(f"Доступ разрешён ID: {os.getenv('ALLOWED_USERS') or 'всем'}")
@@ -1126,25 +1251,35 @@ def main():
 
     # Авто-поиск лампы: если фиксированный IP недоступен (сменился Wi-Fi/роутер —
     # IP или подсеть могли поменяться), ищем WLED по сети и берём найденный.
-    if not _lamp_reachable(WLED_IP):
-        log.warning(f"Лампа по {WLED_IP} не отвечает — ищу в сети…")
+    # Сначала 3 попытки (до ~10 с): лампа по Wi-Fi нередко отвечает не на первый
+    # запрос. Вывод «лампы нет» — только в _post_init, ещё через полминуты
+    # (14.11: «не найдена» в 13:53:47, а в 13:54:09 она уже отвечала).
+    if not _lamp_reachable(WLED_IP, attempts=3):
+        log.info(f"Лампа по {WLED_IP} пока не отвечает — ищу в сети (вдруг сменился IP)…")
         try:
             import find_lamp
             hits = find_lamp.discover()
-            if hits:
+            if any(h["ip"] == WLED_IP for h in hits):   # проснулась, IP прежний
+                log.info(f"🟢 Лампа ответила: {WLED_IP}")
+            elif hits:
                 WLED_IP = hits[0]["ip"]
                 BASE = f"http://{WLED_IP}"
+                # ядро INTELLECT читает настройки из окружения — иначе ИИ/голос/
+                # автоматизации слали бы команды на старый IP до перезапуска
+                os.environ["WLED_IP"] = WLED_IP
                 log.info(f"✅ Лампа найдена: {WLED_IP} ({hits[0]['name']}). Обновляю .env.")
                 _persist_wled_ip(WLED_IP)
             else:
-                log.warning("Лампа WLED не найдена. Проверь, что она переподключена "
-                            "к новому Wi-Fi «INTELLECT» и включена. В Telegram можно отправить /find — бот поищет снова.")
+                log.info(f"Лампа по {WLED_IP} пока не отвечает. Бот запускается дальше "
+                         "и проверит её ещё раз после подключения к Telegram.")
         except Exception as e:
             log.warning(f"Автопоиск лампы не удался: {e}")
 
     timers.init(WLED_IP)    # таймеры авто-выключения лампы/ТВ
     voice.init(WLED_IP)     # текстовые/голосовые команды (базовый режим)
     _build_intellect()      # ядро INTELLECT 2.0 (AI/память/голос/автоматизации)
+    if INTELLECT is not None and INTELLECT.wled.ip != WLED_IP:
+        INTELLECT.wled.ip = WLED_IP   # тот же IP лампы, что нашёл автопоиск
 
     # Новая мобильная панель INTELLECT 2.0 (отдельный порт; старый пульт остаётся)
     global INTELLECT_WEB_URL
@@ -1190,6 +1325,8 @@ def main():
         .post_shutdown(_post_shutdown)
         .build()
     )
+    # старое (пришло, пока бот был выключен) — отсекаем раньше всех хендлеров
+    app.add_handler(TypeHandler(Update, _stale_gate), group=-1)
     app.add_handler(CommandHandler(["start", "menu"], start))
     app.add_handler(CommandHandler("help", cmd_help))
     app.add_handler(CommandHandler("on", cmd_on))
@@ -1197,12 +1334,55 @@ def main():
     app.add_handler(CommandHandler("toggle", cmd_toggle))
     app.add_handler(CommandHandler("fxlist", cmd_fxlist))
     app.add_handler(CommandHandler("find", cmd_find))
+    app.add_handler(CommandHandler("cancel", cmd_cancel))
     app.add_handler(CallbackQueryHandler(on_button))
-    app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, on_voice))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
+    # только НОВЫЕ сообщения: правка старого (edited_message) раньше роняла on_text
+    # (update.message там None → AttributeError)
+    app.add_handler(MessageHandler((filters.VOICE | filters.AUDIO) & filters.UpdateType.MESSAGE, on_voice))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND & filters.UpdateType.MESSAGE, on_text))
     log.info("Бот запущен. Ctrl+C для остановки.")
-    log.info(f"📄 Лог пишется в файл: {LOG_FILE} (его можно прислать для разбора).")
-    app.run_polling()
+    log.info(f"📄 Журналы — в папке logs\\ рядом с ботом ({LOG_FILE}); её можно прислать для разбора.")
+    _diag.update({
+        "Лампа": f"{WLED_IP} ({'отвечает' if _lamp_reachable(WLED_IP) else 'НЕ ОТВЕЧАЕТ'})",
+        "Ядро INTELLECT": ("вкл, ИИ " + ("вкл" if INTELLECT.provider.available() else "ВЫКЛ (нет ключа)"))
+                          if INTELLECT is not None else "ВЫКЛ",
+        "Ядро: IP лампы": getattr(getattr(INTELLECT, "wled", None), "ip", "—"),
+        "Панель INTELLECT": INTELLECT_WEB_URL or "—",
+        "Приложение для телефона": globals().get("WEB_URL") or "—",
+        "Запуск": "до подключения к Telegram дошли",
+    })
+    diaglog.write_diag(_diag)
+    from telegram.error import InvalidToken, Conflict
+    import time as _time
+    # уходит только ТОЛЬКО ЧТО запущенная копия; давно работающая — остаётся
+    watch = sc.ConflictWatch(started=_time.monotonic())
+
+    async def _on_error(update, context):
+        err = context.error
+        if isinstance(err, Conflict):
+            # PTB не бросает Conflict из run_polling, а повторяет вечно —
+            # ловим серию 409 и останавливаемся сами (иначе две копии дерутся).
+            log.warning("Telegram: Conflict — этим токеном пользуется ещё одна копия бота.")
+            if watch.hit(_time.monotonic()):
+                context.application.stop_running()
+            return
+        log.error(f"Ошибка: {err!r}", exc_info=err)
+
+    app.add_error_handler(_on_error)
+    try:
+        app.run_polling()
+    except InvalidToken:
+        _diag["Запуск"] = "ОТКАЗ: Telegram отверг токен (неверный или отозван)"
+        diaglog.write_diag(_diag)
+        log.error("⚙️ Telegram отверг WLED_BOT_TOKEN из .env (токен неверный или отозван). "
+                  "Возьми актуальный токен у @BotFather и впиши в .env.")
+        sys.exit(sc.EXIT_BAD_CONFIG)
+    if watch.tripped:
+        _diag["Запуск"] = "ОСТАНОВЛЕН: этим токеном пользуется другая копия (Conflict 409)"
+        diaglog.write_diag(_diag)
+        log.error("⛔ Этим ботом уже пользуется ДРУГАЯ копия (старое окно INTELLECT или "
+                  "другой ПК). Закрой её и запусти START.bat снова.")
+        sys.exit(sc.EXIT_ALREADY_RUNNING)
 
 
 if __name__ == "__main__":

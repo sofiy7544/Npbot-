@@ -128,37 +128,70 @@ def _lamp_status(lamp) -> dict:
                        f"яркость {d.get('brightness')}%", "state": d}
 
 
+TV_NOT_SET = ("📺 Телевизор ещё не настроен. Открой /menu → «📺 Телевизор» → "
+              "«🔍 Найти телевизор» — пульт не нужен, найду по сети.")
+TV_NO_LINK = "⚠️ Нет связи с телевизором — он включён и в той же Wi-Fi?"
+TV_CANT_SEE = ("Что сейчас идёт на экране, я не вижу — телевизор по сети этого "
+               "не сообщает.")
+# Явная просьба про питание ТВ. Без неё мозг не выполнит tv_power (вопрос
+# «что идёт по телеку» не должен выключать телевизор) — вместо него tv_status.
+TV_POWER_INTENT = (r"вкл|выкл|откл|вруб|выруб|отруб|гаси|погас|туши|вимк|вімк|"
+                   r"запуст|разбуд|розбуд|питани|power|\b(?:on|off)\b")
+
+
+def _tv_status(tv) -> dict:
+    st = tv.get_state()
+    d = st.data or {}
+    if not d.get("ip"):
+        return {"message": TV_NOT_SET}
+    name = d.get("model") or d.get("name") or d["ip"]
+    if st.online:
+        return {"message": f"📺 {name} на связи ({d['ip']}). {TV_CANT_SEE}"}
+    return {"message": f"📺 {name} не отвечает ({d['ip']}) — похоже, выключен "
+                       f"или не в сети. {TV_CANT_SEE}"}
+
+
 def _register_tv(reg: ToolRegistry, tv) -> None:
-    reg.add("tv_power", "Включить или выключить телевизор.",
+    def do(command: dict, ok_msg: str, fail_msg: str = TV_NO_LINK) -> dict:
+        if not getattr(tv, "configured", lambda: True)():
+            return {"message": TV_NOT_SET}
+        return {"message": ok_msg if tv.apply(command) else fail_msg}
+
+    reg.add("tv_status",
+            "Состояние телевизора: настроен ли, на связи ли. Используй для вопросов "
+            "«что с телеком», «что идёт по телевизору», «почему не работает». "
+            "Что показывается на экране, телевизор не сообщает.",
+            dict(_OBJ), lambda a: _tv_status(tv))
+
+    reg.add("tv_power",
+            "Включить (on=true) или выключить (on=false) телевизор. ТОЛЬКО по прямой "
+            "просьбе включить/выключить ТВ. Не для проверки состояния и не для "
+            "вопросов «что идёт» — для этого tv_status.",
             {"type": "object", "properties": {"on": {"type": "boolean"}},
              "required": ["on"]},
-            lambda a: {"message": ("📺 Включаю телевизор" if a.get("on", True)
-                                   else "📺 Выключаю телевизор")
-                       if tv.apply({"action": "power", "on": a.get("on", True)})
-                       else "⚠️ Телевизор недоступен"})
+            lambda a: do({"action": "power", "on": bool(a.get("on", True))},
+                         "📺 Включаю телевизор" if a.get("on", True)
+                         else "📺 Выключаю телевизор"),
+            intent=TV_POWER_INTENT, instead="tv_status")
 
     reg.add("tv_volume", "Громкость телевизора: dir=up|down, steps=1..10.",
             {"type": "object", "properties": {
                 "dir": {"type": "string", "enum": ["up", "down"]},
                 "steps": {"type": "integer"}}, "required": ["dir"]},
-            lambda a: {"message": ("🔊 Громче" if a.get("dir") == "up" else "🔉 Тише")
-                       if tv.apply({"action": "volume", "dir": a.get("dir"),
-                                    "steps": a.get("steps", 3)})
-                       else "⚠️ Телевизор недоступен"})
+            lambda a: do({"action": "volume", "dir": a.get("dir"),
+                          "steps": a.get("steps", 3)},
+                         "🔊 Громче" if a.get("dir") == "up" else "🔉 Тише"))
 
     reg.add("tv_mute", "Выключить/включить звук телевизора.", dict(_OBJ),
-            lambda a: {"message": "🔇 Звук" if tv.apply({"action": "mute"})
-                       else "⚠️ Телевизор недоступен"})
+            lambda a: do({"action": "mute"}, "🔇 Звук"))
 
     reg.add("tv_key", "Нажать клавишу пульта (KEY_UP/KEY_ENTER/KEY_RETURN/KEY_PLAY/…).",
             {"type": "object", "properties": {"key": {"type": "string"}},
              "required": ["key"]},
-            lambda a: {"message": f"🎮 {a['key']}" if tv.apply({"action": "key", "key": a["key"]})
-                       else "⚠️ Телевизор недоступен"})
+            lambda a: do({"action": "key", "key": a["key"]}, f"🎮 {a['key']}"))
 
     reg.add("tv_app", "Открыть приложение на ТВ (youtube/netflix).",
             {"type": "object", "properties": {"name": {"type": "string"}},
              "required": ["name"]},
-            lambda a: {"message": f"📺 Открываю {a['name']}"
-                       if tv.apply({"action": "app", "name": a["name"]})
-                       else "⚠️ Не вышло открыть приложение"})
+            lambda a: do({"action": "app", "name": a["name"]}, f"📺 Открываю {a['name']}",
+                         "⚠️ Не вышло открыть приложение"))

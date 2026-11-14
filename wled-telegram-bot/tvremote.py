@@ -23,10 +23,15 @@ import json
 import time
 import socket
 import base64
+import select
 import logging
+import threading
 import urllib.request
 
 log = logging.getLogger("tvremote")
+# samsungtvws на КАЖДОЕ подключение пишет INFO «New token 12345678» — это ключ
+# доступа к телевизору, ему не место в logs\bot.log (журналы пересылают).
+logging.getLogger("samsungtvws").setLevel(logging.WARNING)
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 TOKEN_FILE = os.path.join(_DIR, "tv_token.txt")
@@ -38,19 +43,35 @@ WS = "ws"
 ENCRYPTED = "encrypted"
 LEGACY = "legacy"
 
-# Общий конфиг телевизора (делят бот и веб-приложение). ip из переменной
-# окружения имеет приоритет над файлом tv.json.
+# Общий конфиг телевизора — ЕДИНЫЙ для кнопок бота, веб-пульта и ИИ-ядра
+# (intellect/devices/samsung_tv.py). ip из переменной окружения имеет
+# приоритет над файлом tv.json.
 CONFIG_FILE = os.path.join(_DIR, "tv.json")
-_ENV_IP = os.getenv("SAMSUNG_TV_IP", "")
-config = {"ip": _ENV_IP, "method": "", "mac": "", "name": "", "model": ""}
+config = {"ip": os.getenv("SAMSUNG_TV_IP", ""), "method": "", "mac": "", "name": "", "model": ""}
+_mtime = -1.0   # mtime прочитанного tv.json (-1 — ещё не читали)
+
+
+def _env_ip() -> str:
+    # Читаем при каждом вызове: wled_bot импортирует этот модуль ДО загрузки .env,
+    # поэтому значение на момент импорта всегда пустое.
+    return os.getenv("SAMSUNG_TV_IP", "").strip()
 
 
 def load_config():
+    global _mtime
+    env_ip = _env_ip()
+    if env_ip:
+        config["ip"] = env_ip
+    try:
+        _mtime = os.path.getmtime(CONFIG_FILE)
+    except OSError:
+        _mtime = None          # tv.json ещё нет (ТВ не настроен)
+        return
     try:
         with open(CONFIG_FILE, encoding="utf-8") as f:
             data = json.load(f)
         for k in config:
-            if k == "ip" and _ENV_IP:
+            if k == "ip" and env_ip:
                 continue
             if data.get(k):
                 config[k] = data[k]
@@ -58,10 +79,24 @@ def load_config():
         pass
 
 
+def current() -> dict:
+    """Актуальный общий конфиг. Если tv.json поменяли на ходу (кнопки, веб-пульт,
+    руками) — перечитываем, без перезапуска бота. Возвращает тот же словарь config."""
+    try:
+        m = os.path.getmtime(CONFIG_FILE)
+    except OSError:
+        m = None
+    if m != _mtime:
+        load_config()
+    return config
+
+
 def save_config():
+    global _mtime
     try:
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(dict(config), f, ensure_ascii=False)  # копия — thread-safe
+        _mtime = os.path.getmtime(CONFIG_FILE)              # свою запись не перечитывать
     except Exception:
         pass
 
@@ -182,12 +217,87 @@ def detect(ip: str) -> dict:
     return res
 
 
+# ----------------------- Одно WebSocket-соединение с ТВ -----------------------
+# Раньше КАЖДАЯ клавиша открывала новое TLS-соединение и новый сеанс на ТВ, а
+# старое не закрывала. ТВ на каждый сеанс выдавал новый токен — 5 строк
+# «New token …» за 14 с в logs\bot.log. Теперь соединение одно: открывается
+# при первой команде и переиспользуется, пока ТВ его не закрыл и прошло
+# меньше _WS_IDLE сек с прошлой команды.
+_WS_IDLE = 30.0
+_KEY_PAUSE = 1.0        # пауза после клавиши (прежний key_press_delay библиотеки)
+_ws_lock = threading.Lock()
+_ws_conn = {"key": None, "tv": None, "used": 0.0}
+
+
+def _ws_close(tv) -> None:
+    """Закрыть соединение сразу: close-кадр ТВ без ожидания ответа + сокет."""
+    conn, tv.connection = tv.connection, None
+    if conn is None:
+        return
+    try:
+        conn.close(timeout=0)
+    except Exception:
+        pass
+    try:
+        conn.shutdown()
+    except Exception:
+        pass
+
+
+def _ws_drop() -> None:
+    """Забыть и закрыть общее соединение (вызывать под _ws_lock)."""
+    tv = _ws_conn["tv"]
+    _ws_conn.update(key=None, tv=None, used=0.0)
+    if tv is not None:
+        _ws_close(tv)
+
+
+def _ws_alive(tv) -> bool:
+    """Соединение живо? Накопившиеся события ТВ вычитываются и выбрасываются;
+    если ТВ закрыл соединение (сон, перезагрузка) — не живо."""
+    conn = tv.connection
+    try:
+        if conn is None or not conn.connected:
+            return False
+        sock = conn.sock
+        while select.select([sock], [], [], 0)[0] or getattr(sock, "pending", lambda: 0)():
+            conn.recv_data(control_frame=True)    # событие/ping ТВ — не нужно
+            if not conn.connected:
+                return False
+        return True
+    except Exception:
+        return False
+
+
+def _ws_call(ip: str, port: int, fn, timeout: float = 6):
+    """Выполнить fn(tv) на общем соединении с ТВ (при необходимости — открыть)."""
+    from samsungtvws import SamsungTVWS  # ленивый импорт
+    with _ws_lock:
+        tv = _ws_conn["tv"]
+        if (tv is not None and _ws_conn["key"] == (ip, port)
+                and time.monotonic() - _ws_conn["used"] < _WS_IDLE and _ws_alive(tv)):
+            try:
+                result = fn(tv)
+                _ws_conn["used"] = time.monotonic()
+                return result
+            except Exception:
+                pass                          # соединение оборвалось — откроем новое
+        _ws_drop()
+        tv = SamsungTVWS(host=ip, port=port, token_file=TOKEN_FILE, name=NAME, timeout=timeout)
+        try:
+            result = fn(tv)                   # send_command сам откроет соединение
+        except Exception:
+            _ws_close(tv)
+            raise
+        _ws_conn.update(key=(ip, port), tv=tv, used=time.monotonic())
+        return result
+
+
 # ----------------------- Отправители клавиш -----------------------
 def _send_ws(ip: str, key: str, secure: bool):
-    from samsungtvws import SamsungTVWS  # ленивый импорт
     port = 8002 if secure else 8001
-    tv = SamsungTVWS(host=ip, port=port, token_file=TOKEN_FILE, name=NAME, timeout=6)
-    tv.send_key(key)
+    _ws_call(ip, port, lambda tv: tv.send_key(key, key_press_delay=0), timeout=6)
+    time.sleep(_KEY_PAUSE)  # как раньше, но вне _ws_lock: быстрые нажатия не ждут друг друга
 
 
 def _b64(s: str) -> bytes:
@@ -271,8 +381,7 @@ def run_app(ip: str, app_id: str, method: str | None = None) -> str:
     last = None
     for port in ports:
         try:
-            tv = SamsungTVWS(host=ip, port=port, token_file=TOKEN_FILE, name=NAME, timeout=8)
-            tv.run_app(app_id)
+            _ws_call(ip, port, lambda tv: tv.run_app(app_id), timeout=8)
             return WS_TOKEN if port == 8002 else WS
         except Exception as e:
             last = e
@@ -299,8 +408,7 @@ def list_apps(ip: str | None = None, method: str | None = None, force: bool = Fa
     last = None
     for port in ports:
         try:
-            tv = SamsungTVWS(host=ip, port=port, token_file=TOKEN_FILE, name=NAME, timeout=8)
-            raw = tv.app_list() or []
+            raw = _ws_call(ip, port, lambda tv: tv.app_list(), timeout=8) or []
             apps = [{"name": a.get("name", ""), "appId": str(a.get("appId", ""))}
                     for a in raw if a.get("appId") and a.get("name")]
             if apps:
@@ -348,8 +456,7 @@ def open_browser(url: str, method: str | None = None) -> bool:
     last = None
     for port in ports:
         try:
-            tv = SamsungTVWS(host=ip, port=port, token_file=TOKEN_FILE, name=NAME, timeout=8)
-            tv.open_browser(url)
+            _ws_call(ip, port, lambda tv: tv.open_browser(url), timeout=8)
             return True
         except Exception as e:
             last = e
