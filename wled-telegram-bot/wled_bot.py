@@ -659,20 +659,116 @@ async def cmd_fxlist(update, context):
 
 
 # ----------------------- Кнопки -----------------------
+# ===================== INTELLECT 2.0 (ядро) =====================
+INTELLECT = None                 # экземпляр IntellectApp (или None → базовый режим)
+_pending_confirm: dict[int, str] = {}   # uid → фраза, ждущая подтверждения
+
+
+def _build_intellect():
+    """Поднять ядро INTELLECT (AI/память/голос/автоматизации). Не критично:
+    если не вышло — бот работает в базовом режиме на старых правилах."""
+    global INTELLECT
+    try:
+        from intellect.app import IntellectApp
+        INTELLECT = IntellectApp(log=log)
+        INTELLECT.start_background()
+        ai = "вкл" if INTELLECT.provider.available() else "выкл (нет ключа)"
+        log.info(f"🧠 INTELLECT 2.0 ядро активно. AI: {ai}, голос: "
+                 f"{'да' if INTELLECT.voice.can_listen else 'нет'}")
+    except Exception as e:
+        INTELLECT = None
+        log.warning(f"INTELLECT-ядро не поднялось ({type(e).__name__}: {e}); базовый режим")
+
+
+async def _intellect_reply(reply_func, uid, name, text, confirm=False):
+    """Прогнать текст через ядро и ответить. reply_func(text, reply_markup=None)."""
+    loop = asyncio.get_running_loop()
+    out = await loop.run_in_executor(
+        None, lambda: INTELLECT.handle_text(uid, text, name=name, confirm=confirm))
+    if out.get("pending_confirmation") and not confirm:
+        _pending_confirm[uid] = text
+        kb = InlineKeyboardMarkup([[
+            InlineKeyboardButton("✅ Подтвердить", callback_data="cfm:yes"),
+            InlineKeyboardButton("❌ Отмена", callback_data="cfm:no")]])
+        await reply_func(out["reply"], reply_markup=kb)
+    else:
+        await reply_func(out["reply"])
+    if out.get("did_actions"):
+        try:
+            await wled_sync()
+        except Exception:
+            pass
+    return out
+
+
+async def on_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Голосовое сообщение → распознать (Whisper) → обработать ядром."""
+    msg = update.message
+    uid = update.effective_user.id
+    if not is_allowed(uid):
+        await _prompt_password(msg, uid); return
+    if INTELLECT is None or not INTELLECT.voice.can_listen:
+        await msg.reply_text("🎤 Голос недоступен: нужен ключ OpenAI в .env (OPENAI_API_KEY).")
+        return
+    import os as _os, tempfile
+    await context.bot.send_chat_action(msg.chat.id, "typing")
+    src = msg.voice or msg.audio
+    tgfile = await src.get_file()
+    path = _os.path.join(tempfile.gettempdir(), f"voice_{uid}.oga")
+    await tgfile.download_to_drive(path)
+    loop = asyncio.get_running_loop()
+    out = await loop.run_in_executor(
+        None, lambda: INTELLECT.handle_voice(uid, path, name=update.effective_user.full_name))
+    try:
+        _os.remove(path)
+    except Exception:
+        pass
+    transcript = out.get("transcript") or ""
+    reply = (f"🗣 «{transcript}»\n\n" if transcript else "") + out["reply"]
+    if out.get("pending_confirmation"):
+        _pending_confirm[uid] = transcript
+        kb = InlineKeyboardMarkup([[
+            InlineKeyboardButton("✅ Подтвердить", callback_data="cfm:yes"),
+            InlineKeyboardButton("❌ Отмена", callback_data="cfm:no")]])
+        await msg.reply_text(reply, reply_markup=kb)
+    else:
+        await msg.reply_text(reply)
+        if INTELLECT.voice.can_speak:
+            mp3 = await loop.run_in_executor(None, lambda: INTELLECT.voice.speak(out["reply"]))
+            if mp3:
+                try:
+                    with open(mp3, "rb") as vf:
+                        await msg.reply_voice(vf)
+                    _os.remove(mp3)
+                except Exception:
+                    pass
+    if out.get("did_actions"):
+        try:
+            await wled_sync()
+        except Exception:
+            pass
+
+
 async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Любой текст от неавторизованного — это попытка ввести пароль."""
     msg = update.message
     uid = update.effective_user.id
     if is_allowed(uid):
-        # авторизованный пишет текст — понимаем как команду («включи свет» и т.п.)
         text = (msg.text or "").strip()
+        name = update.effective_user.full_name
+        # INTELLECT 2.0: умный роутинг (AI + память + инструменты)
+        if INTELLECT is not None:
+            log.info(f"💬 {name}: «{text}»")
+            await context.bot.send_chat_action(msg.chat.id, "typing")
+            await _intellect_reply(msg.reply_text, uid, name, text)
+            return
+        # базовый режим: старые правила
         loop = asyncio.get_running_loop()
         ok, reply = await loop.run_in_executor(None, voice.handle, text)
-        log.info(f"💬 {update.effective_user.full_name}: «{text}» -> "
-                 f"{'OK' if ok else 'не вышло'}: {reply}")
+        log.info(f"💬 {name}: «{text}» -> {'OK' if ok else 'не вышло'}: {reply}")
         await msg.reply_text(reply)
         if ok:
-            await wled_sync()  # подтянуть состояние, если меняли лампу
+            await wled_sync()
         return
     if uid in _blocked:
         await msg.reply_text("⛔ Доступ заблокирован: все попытки израсходованы.")
@@ -803,6 +899,18 @@ async def on_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     global ONLINE
     data = q.data
+
+    # ---- Подтверждение опасного действия (INTELLECT) ----
+    if data.startswith("cfm:"):
+        await q.answer()
+        uid = q.from_user.id
+        text = _pending_confirm.pop(uid, None)
+        if data == "cfm:yes" and text and INTELLECT is not None:
+            await _intellect_reply(q.message.reply_text, uid,
+                                   q.from_user.full_name, text, confirm=True)
+        else:
+            await q.message.reply_text("Отменено ✖️")
+        return
 
     # ---- Телевизор: клавиша / приложение (отвечаем тостом с результатом) ----
     if data.startswith("tvk:"):
@@ -1014,7 +1122,8 @@ def main():
             log.warning(f"Автопоиск лампы не удался: {e}")
 
     timers.init(WLED_IP)    # таймеры авто-выключения лампы/ТВ
-    voice.init(WLED_IP)     # текстовые/голосовые команды
+    voice.init(WLED_IP)     # текстовые/голосовые команды (базовый режим)
+    _build_intellect()      # ядро INTELLECT 2.0 (AI/память/голос/автоматизации)
 
     # Веб-приложение для телефона (айфон/андроид). WEB_PORT=0 — отключить.
     web_port = int(os.getenv("WEB_PORT", "8080"))
@@ -1047,6 +1156,7 @@ def main():
     app.add_handler(CommandHandler("fxlist", cmd_fxlist))
     app.add_handler(CommandHandler("find", cmd_find))
     app.add_handler(CallbackQueryHandler(on_button))
+    app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, on_voice))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
     log.info("Бот запущен. Ctrl+C для остановки.")
     log.info(f"📄 Лог пишется в файл: {LOG_FILE} (его можно прислать для разбора).")
