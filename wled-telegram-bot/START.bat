@@ -32,11 +32,16 @@ if not defined PY (
 )
 echo [i] Python: !PY!
 
-REM ---------- 2) Libraries ----------
-echo [*] Installing libraries (one time)...
-"!PY!" -m pip install --upgrade pip >nul 2>&1
-"!PY!" -m pip install -r requirements.txt
-"!PY!" -m pip install psutil >nul 2>&1
+REM ---------- 2) Libraries (only first time / after an update) ----------
+if exist ".deps_ok" (
+  echo [i] Libraries already installed - skipping.
+) else (
+  echo [*] Installing libraries (one time)...
+  "!PY!" -m pip install --upgrade pip >nul 2>&1
+  "!PY!" -m pip install -r requirements.txt
+  "!PY!" -m pip install psutil >nul 2>&1
+  if not errorlevel 1 echo done > ".deps_ok"
+)
 
 REM ---------- 3) Config check ----------
 if not exist ".env" (

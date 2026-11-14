@@ -128,6 +128,10 @@ class IntellectApp:
     def _run_action(self, action: dict) -> tuple[bool, str]:
         """Выполнить одно действие сценария: {'tool': имя, 'args': {...}}."""
         from .core.interfaces import ToolCall
+        # контекст пользователя для инструментов памяти/задач (планировщик — свой поток)
+        if not getattr(self._ctx, "user_id", 0):
+            ids = self.settings.allowed_users
+            self._ctx.user_id = action.get("user_id") or (ids[0] if ids else 1)
         res = self.registry.dispatch(ToolCall(action.get("tool", ""), action.get("args", {})))
         msg = ""
         if isinstance(res.get("result"), dict):

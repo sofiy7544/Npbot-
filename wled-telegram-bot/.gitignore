@@ -11,3 +11,4 @@ setup/pc-reports/
 .optimized
 /intellect.db
 /intellect.db-*
+.deps_ok
