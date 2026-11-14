@@ -15,6 +15,7 @@ from intellect.config import load_settings
 from intellect.db.database import Database
 from intellect.app import IntellectApp
 from intellect.web import IntellectWeb
+from intellect.web.server import _RateLimiter
 
 _ok = _fail = 0
 def check(name, cond):
@@ -82,6 +83,20 @@ def main():
     check("устройства в ответе", "lamp" in data["devices"])
     code,data = req("/api/system", token="1234")
     check("система: есть host", "host" in data)
+
+    print("\n[rate-limit]")
+    rl = _RateLimiter()
+    # 3 запроса в окне 10 секунд
+    allowed = sum(rl.allow("1.1.1.1", "b", 3, 10.0) for _ in range(5))
+    check("rate-limit пропускает ровно 3 из 5", allowed == 3)
+    allowed_other = rl.allow("2.2.2.2", "b", 3, 10.0)
+    check("другой IP считается независимо", allowed_other is True)
+    for _ in range(10):
+        rl.note_auth_fail("9.9.9.9")
+    check("10 неудачных авторизаций → IP блокируется", rl.is_locked("9.9.9.9"))
+    check("чистый IP не заблокирован", not rl.is_locked("1.1.1.1"))
+    rl.note_auth_ok("9.9.9.9")
+    check("успешная авторизация снимает блок", not rl.is_locked("9.9.9.9"))
 
     web.stop()
     print(f"\nИТОГ: {_ok} ok, {_fail} fail")
