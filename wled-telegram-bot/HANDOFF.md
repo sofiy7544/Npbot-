@@ -183,10 +183,12 @@ tools/test_bats.sh /tmp/out/INTELLECT-2.0
   ПК, бот присылает новую в Telegram (`/panel`).
 - Постоянный адрес (решение пользователя 14.11): сайт в ЭТОМ репозитории, рядом с магазином —
   `docs/intellect/` (публикуемая папка Pages) + зеркало `intellect/` в корне →
-  **https://stanleybrand.com.ua/intellect/**. Деплой — существующий ручной workflow
-  `.github/workflows/deploy-pages.yml` (Actions → «Deploy site to GitHub Pages (manual)» →
-  Run workflow) из ветки по умолчанию `claude/claude-md-docs-tkeav6`. Магазин при этом
-  переопубликовывается без изменений. Файлы магазина НЕ трогать.
+  **https://stanleybrand.com.ua/intellect/**. Деплой: Pages настроен «из ветки»
+  (`claude/claude-md-docs-tkeav6`, папка `/docs`) и публикуется АВТОМАТИЧЕСКИ при push в
+  эту ветку (workflow `pages-build-deployment`, run #45 от 14.11 14:16 UTC прошёл успешно
+  с коммитом 7b6f54e). Ручной workflow `deploy-pages.yml` ни разу не запускался, и из
+  облачной сессии его запустить нельзя (403). Файлы магазина НЕ трогать; пушить в ветку
+  по умолчанию только fast-forward и только с согласия пользователя.
 - Адрес туннеля сайт берёт из `api.json` служебной ветки `intellect-api`
   (`site/config.js` → raw.githubusercontent.com, кэш до 5 мин). Бот пишет его туда сам
   (`panel_link.publish_api_url(branch="intellect-api")`, ветка создаётся автоматически),
