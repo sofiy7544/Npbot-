@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Тесты панели из интернета: публикация адреса на GitHub, текст /panel,
-запуск туннеля ботом (с фейковым cloudflared), запрет при слабом пароле."""
+"""Тесты 2.4.0 «только локально»: текст /panel без интернета; бот со старым .env
+(TUNNEL=1, GITHUB_TOKEN, PAGES_URL) НЕ поднимает туннель и не ходит на GitHub."""
 import os, sys, json, base64, threading, tempfile, shutil, subprocess, time, stat
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -26,112 +26,17 @@ def check(name, cond):
 FAKE_TOK = "1122334455:AAFakeTokenForTestsOnly_abcdefghijkl"
 
 
-class FakeGitHub(BaseHTTPRequestHandler):
-    """Хранит один файл; проверяет Bearer-токен; считает запросы."""
-    store = {}          # path → (sha, content_b64)
-    calls = []
-    token = "ghp_testtoken"
-
-    def log_message(self, *a): pass
-
-    def _send(self, code, obj):
-        b = json.dumps(obj).encode()
-        self.send_response(code); self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
-
-    branches = {"main": "abc123"}
-
-    def do_POST(self):
-        FakeGitHub.calls.append(("POST", self.path))
-        if self.headers.get("Authorization") != f"Bearer {FakeGitHub.token}":
-            return self._send(401, {"message": "Bad credentials"})
-        n = int(self.headers.get("Content-Length", 0))
-        body = json.loads(self.rfile.read(n) or b"{}")
-        if self.path.endswith("/git/refs"):
-            name = body["ref"].split("refs/heads/")[1]
-            FakeGitHub.branches[name] = body["sha"]
-            return self._send(201, {"ref": body["ref"]})
-        self._send(404, {})
-
-    def do_GET(self):
-        FakeGitHub.calls.append(("GET", self.path))
-        if self.headers.get("Authorization") != f"Bearer {FakeGitHub.token}":
-            return self._send(401, {"message": "Bad credentials"})
-        p = self.path.split("?")[0]
-        if p.endswith("/repos/user/intellect"):
-            return self._send(200, {"default_branch": "main"})
-        if "/git/ref/heads/" in p:
-            b = p.split("/git/ref/heads/")[1]
-            if b in FakeGitHub.branches:
-                return self._send(200, {"object": {"sha": FakeGitHub.branches[b]}})
-            return self._send(404, {"message": "Not Found"})
-        if p in FakeGitHub.store:
-            sha, content = FakeGitHub.store[p]
-            return self._send(200, {"sha": sha, "content": content})
-        self._send(404, {"message": "Not Found"})
-
-    def do_PUT(self):
-        FakeGitHub.calls.append(("PUT", self.path))
-        if self.headers.get("Authorization") != f"Bearer {FakeGitHub.token}":
-            return self._send(401, {"message": "Bad credentials"})
-        n = int(self.headers.get("Content-Length", 0))
-        body = json.loads(self.rfile.read(n) or b"{}")
-        existing = FakeGitHub.store.get(self.path)
-        if existing and body.get("sha") != existing[0]:
-            return self._send(409, {"message": "sha mismatch"})
-        sha = f"sha{len(FakeGitHub.calls)}"
-        FakeGitHub.store[self.path] = (sha, body["content"])
-        self._send(201 if not existing else 200, {"content": {"sha": sha}})
-
-
-def test_publish_api_url():
-    srv = ThreadingHTTPServer(("127.0.0.1", 0), FakeGitHub)
-    threading.Thread(target=srv.serve_forever, daemon=True).start()
-    panel_link.GITHUB_API = f"http://127.0.0.1:{srv.server_address[1]}"
-    FakeGitHub.store.clear(); FakeGitHub.calls.clear()
-    ok = panel_link.publish_api_url("user/intellect", "ghp_testtoken", "https://a1.trycloudflare.com")
-    check("файла нет → создан (GET 404 → PUT 201)", ok and [c[0] for c in FakeGitHub.calls] == ["GET", "PUT"])
-    saved = json.loads(base64.b64decode(FakeGitHub.store["/repos/user/intellect/contents/api.json"][1]))
-    check("в api.json записан адрес", saved["api"] == "https://a1.trycloudflare.com")
-    FakeGitHub.calls.clear()
-    ok = panel_link.publish_api_url("user/intellect", "ghp_testtoken", "https://a1.trycloudflare.com")
-    check("тот же адрес → без лишней записи (только GET)", ok and [c[0] for c in FakeGitHub.calls] == ["GET"])
-    FakeGitHub.calls.clear()
-    ok = panel_link.publish_api_url("user/intellect", "ghp_testtoken", "https://b2.trycloudflare.com")
-    saved = json.loads(base64.b64decode(FakeGitHub.store["/repos/user/intellect/contents/api.json"][1]))
-    check("новый адрес → перезаписан с правильным sha", ok and saved["api"] == "https://b2.trycloudflare.com")
-    # служебная ветка: нет → создаётся от default, api.json пишется в неё
-    FakeGitHub.calls.clear(); FakeGitHub.branches = {"main": "abc123"}
-    ok = panel_link.publish_api_url("user/intellect", "ghp_testtoken", "https://e5.trycloudflare.com", branch="intellect-api")
-    check("ветки intellect-api не было → создана от default и api.json записан",
-          ok and FakeGitHub.branches.get("intellect-api") == "abc123" and ("POST", "/repos/user/intellect/git/refs") in FakeGitHub.calls)
-    FakeGitHub.calls.clear()
-    ok = panel_link.publish_api_url("user/intellect", "ghp_testtoken", "https://e6.trycloudflare.com", branch="intellect-api")
-    check("ветка есть → без POST, только обновление файла", ok and not any(c[0] == "POST" for c in FakeGitHub.calls))
-    ok = panel_link.publish_api_url("user/intellect", "wrong", "https://c3.trycloudflare.com")
-    check("неверный токен → False, без исключения", ok is False)
-    check("пустые параметры → False", panel_link.publish_api_url("", "", "") is False)
-    panel_link.GITHUB_API = "http://127.0.0.1:9"      # закрытый порт
-    t0 = time.time(); ok = panel_link.publish_api_url("user/intellect", "ghp_testtoken", "https://d4.trycloudflare.com")
-    check("GitHub недоступен → False быстро", ok is False and time.time() - t0 < 10)
-    srv.shutdown()
-
-
 def test_panel_message():
-    m = panel_link.panel_message(lan_url="http://192.168.1.107:8090", tunnel_url="https://x.trycloudflare.com",
-                                 pages_url="https://user.github.io/intellect/", password="aZ3kQ9mT2p",
-                                 tunnel_enabled=True, weak_password=False)
-    check("в /panel есть сайт, прямой адрес, дом и пароль",
-          all(x in m for x in ("github.io", "trycloudflare", "192.168.1.107", "aZ3kQ9mT2p")))
-    m2 = panel_link.panel_message(lan_url="http://192.168.1.107:8090", tunnel_url=None, pages_url=None,
-                                  password="5750", tunnel_enabled=True, weak_password=True)
-    check("слабый пароль → предупреждение, а не «поднимается»", "слабый" in m2 and "поднимается" not in m2)
-    m3 = panel_link.panel_message(lan_url="http://x", tunnel_url=None, pages_url=None, password="aZ3kQ9mT2p",
-                                  tunnel_enabled=True, weak_password=False)
-    check("туннель ещё поднимается → так и сказано", "поднимается" in m3)
+    m = panel_link.panel_message(lan_url="http://192.168.1.107:8090", password="aZ3kQ9mT2p")
+    check("в /panel есть домашний адрес и пароль", "192.168.1.107:8090" in m and "aZ3kQ9mT2p" in m)
+    check("в /panel нет интернета/туннеля/GitHub", not any(x in m.lower() for x in ("trycloudflare", "github", "туннел")))
+    check("в /panel сказано, что только дома", "только в домашней сети" in m)
+    m2 = panel_link.panel_message(lan_url=None, password=None)
+    check("панель не запущена → честно", "не запущена" in m2)
     check("HTML-опасные символы экранированы", "<" not in panel_link.panel_message(
-        lan_url="http://x/<b>", tunnel_url=None, pages_url=None, password="p<w>12345",
-        tunnel_enabled=False, weak_password=False).replace("<b>Панель", "").replace("<code>", "").replace("</code>", "").replace("</b>", ""))
+        lan_url="http://x/<b>", password="p<w>12345").replace("<b>Панель", "").replace("<code>", "").replace("</code>", "").replace("</b>", ""))
+    check("в panel_link больше нет GitHub-публикации", not hasattr(panel_link, "publish_api_url"))
+    check("tunnel.py удалён из проекта", not (ROOT / "tunnel.py").exists())
 
 
 # ---------- сквозной: настоящий wled_bot.py, фейковые Telegram и cloudflared ----------
@@ -186,30 +91,20 @@ def _run_bot(env_text, seconds=14):
     return out, log, diag
 
 
-def test_bot_starts_tunnel_and_notifies():
-    env = f"WLED_BOT_TOKEN={FAKE_TOK}\nALLOWED_USERS=42\nWLED_IP=127.0.0.1\nACCESS_PASSWORD=aZ3kQ9mT2p\nTUNNEL=1\nPAGES_URL=https://user.github.io/intellect/\n"
+def test_old_env_stays_local():
+    env = (f"WLED_BOT_TOKEN={FAKE_TOK}\nALLOWED_USERS=42\nWLED_IP=127.0.0.1\nACCESS_PASSWORD=aZ3kQ9mT2p\n"
+           "TUNNEL=1\nPAGES_URL=https://user.github.io/intellect/\nGITHUB_PAGES_REPO=user/x\nGITHUB_TOKEN=ghp_fake\n")
     out, log, diag = _run_bot(env)
-    check("бот поднял туннель и получил адрес", "fake-panel-url.trycloudflare.com" in log)
-    check("владельцу в Telegram ушла ссылка с паролем", "SENT_MESSAGE" in out and "fake-panel-url" in out and "aZ3kQ9mT2p" in out)
-    check("в сообщении есть сайт на GitHub Pages", "user.github.io" in out)
-    check("diag: туннель включён", "Туннель (TUNNEL): 1" in diag)
-    check("пароль не попал в журнал бота", "aZ3kQ9mT2p" not in log)
-
-
-def test_bot_refuses_tunnel_with_weak_password():
-    env = f"WLED_BOT_TOKEN={FAKE_TOK}\nALLOWED_USERS=42\nWLED_IP=127.0.0.1\nACCESS_PASSWORD=5750\nTUNNEL=1\n"
-    out, log, diag = _run_bot(env, seconds=10)
-    check("слабый пароль → туннель НЕ поднят", "trycloudflare" not in log)
-    check("в журнале понятное предупреждение", "пароль панели слабый" in log)
-    env2 = f"WLED_BOT_TOKEN={FAKE_TOK}\nALLOWED_USERS=42\nWLED_IP=127.0.0.1\nACCESS_PASSWORD=aZ3kQ9mT2p\nTUNNEL=0\n"
-    out, log, diag = _run_bot(env2, seconds=10)
-    check("TUNNEL=0 → туннель не поднимается", "trycloudflare" not in log and "Туннель (TUNNEL): 0" in diag)
+    check("бот запустился", "Бот запущен" in log)
+    check("туннель НЕ поднят, хотя в .env TUNNEL=1", "trycloudflare" not in log and "trycloudflare" not in out)
+    check("в журнале объяснено, что TUNNEL больше не используется", "TUNNEL в .env больше не используется" in log)
+    check("в Telegram не ушли адреса интернета", "github.io" not in out and "trycloudflare" not in out)
+    check("diag: доступ — только домашняя сеть", "только домашняя сеть" in diag)
 
 
 if __name__ == "__main__":
-    print("=== Панель из интернета: GitHub api.json, /panel, туннель ===")
-    for t in (test_publish_api_url, test_panel_message, test_bot_starts_tunnel_and_notifies,
-              test_bot_refuses_tunnel_with_weak_password):
+    print("=== Панель только дома: /panel, старый .env с TUNNEL=1 ===")
+    for t in (test_panel_message, test_old_env_stays_local):
         print(f"\n[{t.__name__}]"); t()
     print(f"\nИТОГ: {_ok} ok, {_fail} fail")
     sys.exit(1 if _fail else 0)

@@ -535,7 +535,7 @@ async def _send_dashboard(msg):
 
 async def _web_hint(msg):
     """Отдельным сообщением — ссылка на единый сайт панели (лампа, ТВ, ИИ, ПК)."""
-    if not (INTELLECT_WEB_URL or TUNNEL_URL or PAGES_URL):
+    if not INTELLECT_WEB_URL:
         return
     await msg.reply_text(
         _panel_text() + "\n\nОткрой ссылку в <b>Safari</b> → «Поделиться» → "
@@ -697,27 +697,19 @@ async def cmd_fxlist(update, context):
 INTELLECT = None                 # экземпляр IntellectApp (или None → базовый режим)
 INTELLECT_WEB_URL = None         # URL панели в домашней сети (единый сайт, :8090)
 INTELLECT_WEB = None             # объект IntellectWeb (API сайта)
-TUNNEL = None                    # tunnel.Tunnel — выход панели в интернет (2.3.0)
-TUNNEL_URL = None                # текущий публичный адрес туннеля (меняется при перезапуске)
-PAGES_URL = (os.getenv("PAGES_URL") or "").strip().rstrip("/") or None
+# 2.4.0: INTELLECT работает ТОЛЬКО дома — без туннеля и без сайта в интернете.
 
 
 def _panel_info() -> dict:
-    """Где сейчас живёт панель — для /panel, сайта (/api/panel) и уведомлений."""
-    from intellect.web.api import WebAPI
+    """Где сейчас живёт панель — для /panel и сайта (/api/panel)."""
     pw = os.getenv("ACCESS_PASSWORD", "5750")
-    return {"lan_url": INTELLECT_WEB_URL, "tunnel_url": TUNNEL_URL, "pages_url": PAGES_URL,
-            "password_required": bool(pw), "password": pw,
-            "tunnel_enabled": os.getenv("TUNNEL", "0").strip() not in ("0", "", "no", "off"),
-            "weak_password": WebAPI.password_is_weak(pw)}
+    return {"lan_url": INTELLECT_WEB_URL, "password_required": bool(pw), "password": pw}
 
 
 def _panel_text() -> str:
     import panel_link
     i = _panel_info()
-    return panel_link.panel_message(lan_url=i["lan_url"], tunnel_url=i["tunnel_url"],
-                                    pages_url=i["pages_url"], password=i["password"],
-                                    tunnel_enabled=i["tunnel_enabled"], weak_password=i["weak_password"])
+    return panel_link.panel_message(lan_url=i["lan_url"], password=i["password"])
 
 
 async def cmd_panel(update, context):
@@ -728,50 +720,7 @@ async def cmd_panel(update, context):
                                     disable_web_page_preview=True)
 
 
-def _start_tunnel(app_ref):
-    """Поднять туннель Cloudflare к панели; при появлении адреса — опубликовать
-    его на GitHub Pages (если есть токен) и прислать владельцу в Telegram."""
-    global TUNNEL
-    from intellect.web.api import WebAPI
-    import panel_link
-    import tunnel as _tunnel
-    pw = os.getenv("ACCESS_PASSWORD", "5750")
-    if WebAPI.password_is_weak(pw):
-        log.warning("🌐 Туннель НЕ поднимаю: пароль панели слабый (ACCESS_PASSWORD от 6 символов).")
-        return
-    port = int(os.getenv("INTELLECT_WEB_PORT", "8090"))
-    repo, token = os.getenv("GITHUB_PAGES_REPO", "").strip(), os.getenv("GITHUB_TOKEN", "").strip()
-    branch = os.getenv("GITHUB_PAGES_BRANCH", "intellect-api").strip() or None
-    owners = sorted(ALLOWED_USERS)
-
-    def _on_url(url):
-        global TUNNEL_URL
-        TUNNEL_URL = url
-        if not url:
-            return
-        log.info(f"🌐 Панель доступна из интернета: {url}")
-        if repo and token:
-            threading.Thread(target=panel_link.publish_api_url, args=(repo, token, url),
-                             kwargs={"branch": branch}, daemon=True, name="publish-api-url").start()
-        if owners and app_ref is not None:
-            async def _notify():
-                for uid in owners[:3]:
-                    try:
-                        await app_ref.bot.send_message(uid, _panel_text(), parse_mode=ParseMode.HTML,
-                                                       disable_web_page_preview=True)
-                    except Exception as e:
-                        log.warning(f"не смог прислать адрес панели {uid}: {e}")
-            try:
-                asyncio.run_coroutine_threadsafe(_notify(), _MAIN_LOOP[0]) if _MAIN_LOOP[0] else None
-            except Exception as e:
-                log.warning(f"уведомление о панели: {e}")
-
-    TUNNEL = _tunnel.Tunnel()
-    TUNNEL.on_url(_on_url)
-    TUNNEL.start(port)
-
-
-_MAIN_LOOP = [None]   # event loop бота — чтобы слать сообщения из потока туннеля
+_MAIN_LOOP = [None]   # event loop бота
 _pending_confirm: dict[int, str] = {}   # uid → фраза, ждущая подтверждения
 
 
@@ -1234,11 +1183,16 @@ async def _stale_gate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ----------------------- Жизненный цикл -----------------------
 async def _post_init(app):
     _MAIN_LOOP[0] = asyncio.get_running_loop()
-    if INTELLECT_WEB is not None and os.getenv("TUNNEL", "0").strip() not in ("0", "", "no", "off"):
-        try:
-            _start_tunnel(app)
-        except Exception as e:
-            log.warning(f"Туннель не запустился: {type(e).__name__}: {e}")
+    if os.getenv("TUNNEL", "0").strip() not in ("0", "", "no", "off"):
+        log.info("TUNNEL в .env больше не используется: INTELLECT работает только в домашней сети.")
+    # остаток 2.3.x: скачанный cloudflared.exe больше не нужен (~20 МБ)
+    _cf = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cloudflared.exe")
+    try:
+        if os.path.isfile(_cf):
+            os.remove(_cf)
+            log.info("Удалён ненужный cloudflared.exe (туннель в интернет больше не используется).")
+    except OSError as e:
+        log.warning(f"cloudflared.exe не удалился: {e}")
     # Прогреть кэш: имя/эффекты и текущее состояние (не критично, если лампа спит).
     await wled_meta()
     await wled_sync()
@@ -1378,14 +1332,13 @@ def main():
     if INTELLECT is not None and INTELLECT.wled.ip != WLED_IP:
         INTELLECT.wled.ip = WLED_IP   # тот же IP лампы, что нашёл автопоиск
 
-    # Единый сайт панели (site/) + API на :8090; наружу — через туннель (2.3.0)
+    # Единый сайт панели (site/) + API на :8090 — только домашняя сеть (2.4.0)
     global INTELLECT_WEB_URL, INTELLECT_WEB
     if INTELLECT is not None:
         try:
             from intellect.web import start_web
             intel_port = int(os.getenv("INTELLECT_WEB_PORT", "8090"))
-            origins = [o.strip() for o in os.getenv("WEB_ALLOWED_ORIGINS", "").split(",") if o.strip()]
-            INTELLECT_WEB_URL, INTELLECT_WEB = start_web(INTELLECT, intel_port, allowed_origins=origins)
+            INTELLECT_WEB_URL, INTELLECT_WEB = start_web(INTELLECT, intel_port)
             INTELLECT_WEB.api.panel_provider = _panel_info
             log.info(f"🖥 Панель INTELLECT (дома): {INTELLECT_WEB_URL}")
         except Exception as e:
@@ -1449,8 +1402,7 @@ def main():
         "Ядро: IP лампы": getattr(getattr(INTELLECT, "wled", None), "ip", "—"),
         "Панель INTELLECT": INTELLECT_WEB_URL or "—",
         "Приложение для телефона": globals().get("WEB_URL") or "— (заменено единым сайтом)",
-        "Туннель (TUNNEL)": os.getenv("TUNNEL", "0"),
-        "Сайт на GitHub Pages": PAGES_URL or "—",
+        "Доступ к панели": "только домашняя сеть (без интернета)",
         "Запуск": "до подключения к Telegram дошли",
     })
     diaglog.write_diag(_diag)

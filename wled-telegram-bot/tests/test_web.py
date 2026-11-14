@@ -127,21 +127,33 @@ def main():
     code, data = req("/api/devices/command", "POST", token="1234", body={"device": "lamp", "command": {"action": "scene", "name": "сон"}})
     check("сцена «сон» через /api/devices/command → ok", code == 200 and "ok" in data)
 
-    print("\n[CORS для сайта на другом домене]")
+    print("\n[только домашняя сеть: без CORS, чужие адреса — 403]")
     r = urllib.request.Request(BASE + "/api/devices", method="OPTIONS")
-    r.add_header("Origin", "https://user.github.io"); r.add_header("Access-Control-Request-Method", "GET")
-    r.add_header("Access-Control-Request-Headers", "x-intellect-token")
+    r.add_header("Origin", "https://evil.example.com"); r.add_header("Access-Control-Request-Method", "GET")
     with urllib.request.urlopen(r, timeout=5) as resp:
-        h = dict(resp.headers)
-        check("preflight OPTIONS → 204", resp.status == 204)
-        check("Allow-Origin для GitHub Pages", h.get("Access-Control-Allow-Origin") in ("*", "https://user.github.io"))
-        check("Allow-Headers содержит X-Intellect-Token", "X-Intellect-Token" in h.get("Access-Control-Allow-Headers", ""))
-        check("Allow-Methods содержит DELETE", "DELETE" in h.get("Access-Control-Allow-Methods", ""))
+        check("preflight с чужого сайта — без Allow-Origin", "Access-Control-Allow-Origin" not in dict(resp.headers))
     r = urllib.request.Request(BASE + "/api/ping"); r.add_header("Origin", "https://user.github.io")
     with urllib.request.urlopen(r, timeout=5) as resp:
-        check("обычный ответ тоже с Allow-Origin", resp.headers.get("Access-Control-Allow-Origin") is not None)
+        check("обычный ответ — без Allow-Origin", resp.headers.get("Access-Control-Allow-Origin") is None)
+    from intellect.web import server as _srv
+    loc = _srv.is_local_client
+    check("дом/ПК — свои", all(loc(x) for x in ("127.0.0.1", "192.168.1.107", "10.0.0.5", "172.16.3.4",
+                                                    "169.254.1.1", "::1", "fe80::1%eth0", "::ffff:192.168.1.5")))
+    check("интернет — чужие", not any(loc(x) for x in ("8.8.8.8", "104.16.1.1", "2001:4860::8888",
+                                                          "::ffff:8.8.8.8", "", "?", "мусор")))
+    _orig = _srv.is_local_client
+    _srv.is_local_client = lambda ip: False          # как будто запрос пришёл из интернета
+    try:
+        code, data = req("/api/ping")
+        check("запрос не из домашней сети → 403", code == 403)
+        code, data = req("/", token="1234")
+        check("и страница сайта не отдаётся → 403", code == 403)
+        code, data = req("/api/chat", "POST", token="1234", body={"text": "привет"})
+        check("и POST → 403", code == 403)
+    finally:
+        _srv.is_local_client = _orig
     code, _ = req("/api/ping")
-    check("без Origin — без CORS-заголовков (не мешаем)", "Access-Control-Allow-Origin" not in req.last_headers)
+    check("с самого ПК — снова 200", code == 200)
 
     print("\n[надёжность пароля]")
     from intellect.web.api import WebAPI as _W

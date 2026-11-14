@@ -6,6 +6,7 @@ server.py — HTTP-сервер веб-панели INTELLECT (http.server, бе
 """
 from __future__ import annotations
 
+import ipaddress
 import json
 import socket
 import threading
@@ -69,7 +70,7 @@ class _RateLimiter:
             return False
 
 _ASSETS = Path(__file__).resolve().parent.parent.parent / "assets"
-# Единый сайт панели (2.3.0): та же папка публикуется на GitHub Pages.
+# Единый сайт панели (2.3.0): папка site/, отдаётся только этим сервером (только дома).
 _SITE = Path(__file__).resolve().parent.parent.parent / "site"
 _SITE_TYPES = {".html": "text/html; charset=utf-8", ".js": "application/javascript; charset=utf-8",
                ".css": "text/css; charset=utf-8", ".json": "application/json; charset=utf-8",
@@ -98,36 +99,19 @@ def lan_ip() -> str:
 
 
 class IntellectWeb:
-    def __init__(self, app, port: int = 8090, *, allowed_origins: list[str] | None = None):
+    def __init__(self, app, port: int = 8090):
         self.api = WebAPI(app)
         self.port = port
         self._httpd = None
         self._rl = _RateLimiter()
-        # Откуда разрешены запросы из браузера (сайт панели на GitHub Pages и т.п.).
-        # Пусто → любой origin: авторизация идёт заголовком-токеном, cookies нет,
-        # поэтому это безопасно; список нужен лишь чтобы сузить при желании.
-        self.allowed_origins = [o.rstrip("/") for o in (allowed_origins or []) if o]
 
     def start(self) -> str:
         api = self.api
         rl = self._rl
-        allowed_origins = self.allowed_origins
 
         class H(BaseHTTPRequestHandler):
             def log_message(self, *a):
                 pass
-
-            def _cors(self):
-                origin = (self.headers.get("Origin") or "").rstrip("/")
-                if not origin:
-                    return
-                if allowed_origins and origin not in allowed_origins:
-                    return
-                self.send_header("Access-Control-Allow-Origin", origin if allowed_origins else "*")
-                self.send_header("Vary", "Origin")
-                self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
-                self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Intellect-Token")
-                self.send_header("Access-Control-Max-Age", "86400")
 
             def _ip(self) -> str:
                 # X-Forwarded-For корректен только за доверенным прокси, здесь
@@ -156,15 +140,20 @@ class IntellectWeb:
                 self.send_header("Content-Type", ctype)
                 self.send_header("Content-Length", str(len(body)))
                 self.send_header("Cache-Control", "no-store")
-                self._cors()
                 self.end_headers()
                 self.wfile.write(body)
 
-            # ---------- OPTIONS (CORS preflight браузера) ----------
+            # Только локально (2.4.0): CORS не отдаём — чужие сайты в браузере
+            # не могут обращаться к панели; запросы не из домашней сети — 403.
+            def _local_ok(self) -> bool:
+                if is_local_client(self._ip()):
+                    return True
+                self._send(403, {"error": "only local network"})
+                return False
+
             def do_OPTIONS(self):
                 self.send_response(204)
                 self.send_header("Content-Length", "0")
-                self._cors()
                 self.end_headers()
 
             def _asset(self, name, ctype):
@@ -212,6 +201,8 @@ class IntellectWeb:
 
             # ---------- GET ----------
             def do_GET(self):
+                if not self._local_ok():
+                    return
                 p = self.path.split("?")[0]
                 if not p.startswith("/api/") and self._site_file(p):
                     return
@@ -250,6 +241,8 @@ class IntellectWeb:
 
             # ---------- POST ----------
             def do_POST(self):
+                if not self._local_ok():
+                    return
                 p = self.path.split("?")[0]
                 # /api/chat ходит в OpenAI — жёсткий лимит; остальные POST мягче
                 if p == "/api/chat":
@@ -284,6 +277,8 @@ class IntellectWeb:
 
             # ---------- DELETE ----------
             def do_DELETE(self):
+                if not self._local_ok():
+                    return
                 if not self._rate_ok("api_post", 40, 60.0):
                     return
                 if not self._auth():
@@ -302,7 +297,19 @@ class IntellectWeb:
             self._httpd.shutdown()
 
 
-def start_web(app, port: int = 8090, *, allowed_origins: list[str] | None = None):
-    """Запустить панель. Возвращает (URL в домашней сети, объект IntellectWeb)."""
-    web = IntellectWeb(app, port, allowed_origins=allowed_origins)
+def is_local_client(ip: str) -> bool:
+    """Адрес клиента из домашней сети или с самого ПК (127.x, 192.168.x, 10.x, 172.16–31.x,
+    169.254.x, IPv6 fe80::/fc00::). Всё остальное — из интернета: не пускаем."""
+    try:
+        a = ipaddress.ip_address((ip or "").split("%")[0])
+    except ValueError:
+        return False
+    if a.version == 6 and a.ipv4_mapped:
+        a = a.ipv4_mapped
+    return a.is_loopback or a.is_private or a.is_link_local
+
+
+def start_web(app, port: int = 8090):
+    """Запустить панель (только домашняя сеть). Возвращает (URL в домашней сети, объект IntellectWeb)."""
+    web = IntellectWeb(app, port)
     return web.start(), web

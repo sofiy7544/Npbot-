@@ -1,6 +1,5 @@
 /* INTELLECT — единый пульт: лампа WLED, Samsung TV, ИИ-ассистент, дом, ПК.
-   Без сборки и библиотек. Работает и с адреса бота (:8090), и с GitHub Pages
-   (тогда API доходит до ПК через туннель, адрес которого лежит в api.json). */
+   Без сборки и библиотек. Отдаётся самим ботом на :8090 — только в домашней сети. */
 (() => {
   'use strict';
 
@@ -75,21 +74,11 @@
     },
   };
 
-  /** Найти адрес API: сохранённый → api.json (рядом и из config.js) → свой origin → спросить. */
+  /** Найти адрес API: сохранённый → свой origin (сайт отдаёт сам бот) → спросить.
+      С 2.4.0 — только домашняя сеть: никаких внешних источников адреса. */
   async function discoverBase() {
     const saved = store.get('intellect_api');
     if (saved) { API.base = saved.replace(/\/+$/, ''); return 'saved'; }
-    const cfg = (window.INTELLECT_CONFIG && window.INTELLECT_CONFIG.apiSources) || ['api.json'];
-    for (const src of cfg) {
-      try {
-        // raw.githubusercontent кэширует до 5 минут — добавляем метку времени
-        const url = src + (src.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000);
-        const r = await fetch(url, { cache: 'no-store' });
-        if (!r.ok) continue;
-        const j = await r.json();
-        if (j && j.api && await API.probe(j.api)) { API.base = j.api.replace(/\/+$/, ''); return 'api.json'; }
-      } catch (_) {}
-    }
     if (/^https?:/.test(location.origin) && await API.probe(location.origin)) { API.base = location.origin; return 'origin'; }
     return null;
   }
@@ -510,8 +499,6 @@
       const p = await API.get('/api/panel');
       const parts = [];
       if (p.lan_url) parts.push(el('div', {}, 'Дома: ', el('a', { href: p.lan_url }, p.lan_url)));
-      if (p.tunnel_url) parts.push(el('div', {}, 'Из интернета (бот): ', el('a', { href: p.tunnel_url }, p.tunnel_url)));
-      if (p.pages_url) parts.push(el('div', {}, 'Сайт: ', el('a', { href: p.pages_url }, p.pages_url)));
       parts.forEach(x => host.append(x));
     } catch (_) {}
   }

@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 """Тесты единого сайта site/: фейковый API (контракт intellect/web) + Playwright.
 
-Сайт отдаётся с ОДНОГО порта (как GitHub Pages), API — с ДРУГОГО (как туннель):
-так проверяется cross-origin. Отдельно — автоопределение адреса: через api.json
-рядом со страницей и через свой origin, когда сайт отдаёт сам бот.
+Основной сценарий 2.4.0 — сайт отдаёт сам бот (same-origin, только дома). Логика
+экранов проверяется и с сайтом на ДРУГОМ порту (адрес API введён вручную) —
+фейковый API это разрешает. Проверяется, что сайт не ходит ни на какие внешние адреса.
 Если Playwright/Chromium недоступны — тест честно пропускается (0 fail).
 """
 import os, sys, json, threading, time, shutil, tempfile, socket
@@ -103,7 +103,7 @@ class FakeAPI(BaseHTTPRequestHandler):
             return self._send(200, {"host": "Zmey32", "os": "Windows-10", "cpu": {"percent": 12.5, "cores": 2}, "ram": {"percent": 69.9, "used_gb": 2.7, "total_gb": 3.9},
                                     "disks": {"C:\\": {"percent": 52, "free_gb": 45.1}, "E:\\": {"percent": 75, "free_gb": 94.2}}, "uptime_hours": 4117.3})
         if p == "/api/status": return self._send(200, {"ai": {"available": True, "model_fast": "gpt-4o-mini", "provider": "openai"}, "voice": {"listen": True, "speak": True}, "automations_active": 1, "tasks_open": 1})
-        if p == "/api/panel": return self._send(200, {"lan_url": "http://192.168.1.107:8090", "tunnel_url": "https://abc.trycloudflare.com", "pages_url": None, "password_required": True})
+        if p == "/api/panel": return self._send(200, {"lan_url": "http://192.168.1.107:8090", "password_required": True})
         self._send(404, {"error": "not found"})
 
     def do_POST(self):
@@ -164,12 +164,11 @@ def main():
         print("\nИТОГ: 0 ok, 0 fail"); return 0
 
     api_srv, api_url = serve(FakeAPI)
-    # «GitHub Pages»: копия site/ с api.json, указывающим на API-origin
+    # копия site/ на другом порту — адрес API сохранён в localStorage (как после ручного входа)
     pages_dir = Path(tempfile.mkdtemp()) / "pages"
     shutil.copytree(SITE, pages_dir)
-    (pages_dir / "api.json").write_text(json.dumps({"api": api_url}), encoding="utf-8")
     pages_srv, pages_url = serve(partial(Quiet, directory=str(pages_dir)))
-    # «сайт без api.json» (чистая копия) — для ручного ввода адреса
+    # чистая копия — для ручного ввода адреса
     plain_dir = Path(tempfile.mkdtemp()) / "plain"
     shutil.copytree(SITE, plain_dir)
     plain_srv, plain_url = serve(partial(Quiet, directory=str(plain_dir)))
@@ -292,17 +291,18 @@ def main():
         check("ошибок JS на странице не было", not errors)
         ctx.close()
 
-        print("\n[автоопределение адреса через api.json (как на GitHub Pages)]")
+        print("\n[сохранённый адрес API]")
         ctx, page = new_page()
-        page.add_init_script(f"localStorage.setItem('intellect_token', {json.dumps(PASSWORD)})")
+        page.add_init_script(f"localStorage.setItem('intellect_token', {json.dumps(PASSWORD)}); localStorage.setItem('intellect_api', {json.dumps(api_url)})")
         page.goto(pages_url + "/index.html")
         page.wait_for_function("document.querySelector('#lampStatus').textContent !== '—'", timeout=10000)
-        check("адрес API взят из api.json, данные загружены", page.evaluate("localStorage.getItem('intellect_api')") in (None, "") and page.text_content("#lampStatus") in ("включена", "выключена"))
+        check("адрес API из localStorage, данные загружены", page.text_content("#lampStatus") in ("включена", "выключена"))
         check("шторка входа не показана", page.evaluate("document.querySelector('#sheetBg').classList.contains('hidden')"))
         ctx.close()
 
         print("\n[без пароля: 401 → показана шторка входа]")
         ctx, page = new_page()
+        page.add_init_script(f"localStorage.setItem('intellect_api', {json.dumps(api_url)})")
         page.goto(pages_url + "/index.html")
         page.wait_for_selector("#sheetBg:not(.hidden)", timeout=10000)
         check("нет пароля → предложено ввести", "пароль" in page.text_content("#sheetTitle").lower())
@@ -328,35 +328,24 @@ def main():
         page.wait_for_function("document.querySelector('#lampStatus').textContent !== '—'", timeout=10000)
         check("API найден по своему origin (без api.json)", page.text_content("#lampStatus") in ("включена", "выключена"))
 
-        print("\n[адрес API из служебной ветки GitHub (config.js → raw api.json)]")
-        # сайт без api.json рядом; config.js указывает на «raw.githubusercontent» — наш локальный сервер
-        raw_dir = Path(tempfile.mkdtemp()) / "raw"; raw_dir.mkdir()
-        (raw_dir / "api.json").write_text(json.dumps({"api": api_url}), encoding="utf-8")
-        class RawCORS(Quiet):                     # raw.githubusercontent.com отдаёт Allow-Origin: *
-            def end_headers(self):
-                self.send_header("Access-Control-Allow-Origin", "*"); super().end_headers()
-        raw_srv, raw_url = serve(partial(RawCORS, directory=str(raw_dir)))
-        remote_dir = Path(tempfile.mkdtemp()) / "remote"
-        shutil.copytree(SITE, remote_dir)
-        (remote_dir / "config.js").write_text(
-            "window.INTELLECT_CONFIG={apiSources:['api.json','https://127.0.0.1:9/nope.json','" + raw_url + "/api.json']};",
-            encoding="utf-8")
-        remote_srv, remote_url = serve(partial(Quiet, directory=str(remote_dir)))
+        print("\n[только локально: сайт не ходит на внешние адреса]")
         ctx, page = new_page()
+        hosts = set()
+        page.on("request", lambda r: hosts.add(r.url.split("/")[2]))
         page.add_init_script(f"localStorage.setItem('intellect_token', {json.dumps(PASSWORD)})")
-        page.goto(remote_url + "/")
-        page.wait_for_function("document.querySelector('#lampStatus').textContent !== '—'", timeout=15000)
-        check("адрес API взят из удалённого api.json (ветка intellect-api), недоступный источник пропущен",
-              page.text_content("#lampStatus") in ("включена", "выключена"))
-        check("в config.js проекта указан raw-адрес ветки intellect-api этого репозитория",
-              "raw.githubusercontent.com/sofiy7544/Npbot-/intellect-api/api.json" in (SITE / "config.js").read_text(encoding="utf-8"))
-        raw_srv.shutdown(); remote_srv.shutdown()
+        page.goto(same_url + "/")
+        page.wait_for_function("document.querySelector('#lampStatus').textContent !== '—'", timeout=10000)
+        page.wait_for_timeout(500)
+        check("все запросы — только к самому боту", hosts == {same_url.split("/")[2]})
+        site_text = "".join(f.read_text(encoding="utf-8", errors="ignore") for f in SITE.iterdir() if f.suffix in (".html", ".js", ".css"))
+        check("в сайте нет адресов GitHub/туннеля", not any(x in site_text for x in ("githubusercontent", "trycloudflare", "github.io", "api.json")))
+        check("config.js (источники адреса в интернете) удалён", not (SITE / "config.js").exists())
         ctx.close()
 
         print("\n[десктоп: сайдбар]")
         ctx, page = new_page(1280, 860)
         page.add_init_script(f"localStorage.setItem('intellect_token', {json.dumps(PASSWORD)})")
-        page.goto(pages_url + "/index.html")
+        page.goto(same_url + "/")
         page.wait_for_function("document.querySelector('#lampStatus').textContent !== '—'", timeout=10000)
         check("на широком экране виден сайдбар, таббар скрыт", page.is_visible("#sidebar") and not page.is_visible("#tabbar"))
         if shots:

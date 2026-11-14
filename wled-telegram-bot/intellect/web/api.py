@@ -116,7 +116,7 @@ class WebAPI:
 
     # ======================= единый API для сайта (2.3.0) =======================
     # Всё, что раньше умел только старый пульт :8080 (webapp.py), — здесь,
-    # под тем же паролем и лимитами. Сайт один: site/ (локально и на GitHub Pages).
+    # под тем же паролем и лимитами. Сайт один: site/ (только в домашней сети).
 
     def _lamp_json(self, path: str, payload: dict | None = None):
         import urllib.request
@@ -302,11 +302,10 @@ class WebAPI:
         return 200, self.app.cancel_pending(self.user_id, power=bool(body.get("power")))
 
     # ----- где панель живёт (для экрана настроек сайта) -----
-    panel_provider = None   # wled_bot подставляет функцию → {tunnel_url, pages_url, lan_url}
+    panel_provider = None   # wled_bot подставляет функцию → {lan_url, ...}
 
     def panel(self) -> tuple[int, dict]:
-        info = {"lan_url": None, "tunnel_url": None, "pages_url": None,
-                "password_required": bool(self.password)}
+        info = {"lan_url": None, "password_required": bool(self.password)}
         try:
             if self.panel_provider:
                 info.update(self.panel_provider() or {})
