@@ -23,6 +23,9 @@ import timers
 import voice
 
 _IP = "192.168.1.106"  # IP лампы, задаётся в serve()
+# Если бот поднял ядро INTELLECT, он кладёт сюда обработчик — тогда голосовые
+# команды старого пульта идут через AI-мозг (единый с Telegram), а не правила.
+BRAIN_HANDLER = None   # callable(text:str) -> (ok:bool, msg:str) | None
 # Конфиг телевизора общий с ботом — живёт в tvremote.config.
 _TV = tvremote.config
 
@@ -889,7 +892,11 @@ class _Handler(BaseHTTPRequestHandler):
         elif self.path == "/api/voice":
             try:
                 text = json.loads(self._body() or b"{}").get("text", "")
-                ok, msg = voice.handle(text)
+                if BRAIN_HANDLER is not None:
+                    res = BRAIN_HANDLER(text)        # единый AI-мозг
+                    ok, msg = res if res else (False, "Не понял")
+                else:
+                    ok, msg = voice.handle(text)     # фолбэк: старые правила
                 self._send(200, json.dumps({"ok": ok, "msg": msg}, ensure_ascii=False).encode())
             except Exception as e:
                 self._send(502, json.dumps({"ok": False, "msg": str(e)}).encode())

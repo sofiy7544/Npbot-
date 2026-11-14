@@ -1160,8 +1160,18 @@ def main():
     web_port = int(os.getenv("WEB_PORT", "8080"))
     if web_port:
         try:
+            import webapp as _webapp_mod
             from webapp import serve, lan_ip
             serve(WLED_IP, web_port)
+            # голос старого пульта — через единый AI-мозг (если ядро поднято)
+            if INTELLECT is not None:
+                _ids = INTELLECT.settings.allowed_users
+                _wu = _ids[0] if _ids else 0
+
+                def _brain_voice(t, _u=_wu):
+                    o = INTELLECT.handle_text(_u, t)
+                    return bool(o.get("did_actions") or o.get("reply")), (o.get("reply") or "Готово.")
+                _webapp_mod.BRAIN_HANDLER = _brain_voice
             ip = lan_ip()
             global WEB_URL
             WEB_URL = f"http://{ip}:{web_port}"
