@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from intellect.db.database import Database
 from intellect.automation import AutomationEngine, cron_matches
+from intellect.automation.cron import next_run_after
 
 _ok = _fail = 0
 def check(name, cond):
@@ -73,11 +74,31 @@ def test_scenario_multi_actions_logged():
     check("в журнале обе команды", "lamp_power" in run["detail"] and "lamp_brightness" in run["detail"])
 
 
+def test_next_run_after_is_fast():
+    """На редком расписании поиск быстрый (а не 500k итераций)."""
+    import time as _t
+    # редкое расписание: 3:17 первого января. Раньше крутило ~500k минут —
+    # сейчас должно вернуть ответ почти мгновенно.
+    t0 = _t.monotonic()
+    nxt = next_run_after("17 3 1 1 *", datetime(2026, 11, 14, 0, 0))
+    dt = _t.monotonic() - t0
+    check("1 января 3:17 найдено", nxt is not None and nxt.month == 1 and nxt.day == 1 and nxt.hour == 3 and nxt.minute == 17)
+    check("быстро (< 50 мс)", dt < 0.05)
+    # и обычный случай тоже работает
+    n2 = next_run_after("0 9 * * 1-5", datetime(2026, 11, 14, 10, 0))
+    check("будни 9:00: найден понедельник", n2 is not None and n2.hour == 9 and (n2.weekday() + 1) % 7 in {1,2,3,4,5})
+    # невозможный cron → None, но без зависаний
+    t0 = _t.monotonic()
+    nx = next_run_after("0 25 * * *", datetime(2026, 11, 14, 0, 0))  # час 25 не распарсится
+    check("невалидный cron → None", nx is None)
+    check("невалидный cron тоже быстрый", _t.monotonic() - t0 < 0.05)
+
+
 if __name__ == "__main__":
     print("=== ЭТАП 7: тесты Automation ===")
     for t in (test_cron_matcher, test_cron_fires_once_per_minute,
               test_once_runs_and_disables, test_event_trigger,
-              test_scenario_multi_actions_logged):
+              test_scenario_multi_actions_logged, test_next_run_after_is_fast):
         print(f"\n[{t.__name__}]"); t()
     print(f"\nИТОГ: {_ok} ok, {_fail} fail")
     sys.exit(1 if _fail else 0)

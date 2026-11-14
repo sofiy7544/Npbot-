@@ -102,15 +102,23 @@ class SQLiteMemory(MemoryStore):
 
         if q_emb is not None and have_vectors:
             qv = _normalize(np.asarray(q_emb, dtype=np.float32))
-            scored = []
+            scored, mismatched = [], []
             for r in have_vectors:
                 v = _normalize(_from_blob(r["embedding"]))
                 if v.shape != qv.shape:
+                    # модель эмбеддингов сменили → размерность не совпала.
+                    # Не теряем запись: отправим её в keyword-фолбэк.
+                    mismatched.append(r)
                     continue
                 sim = float(np.dot(qv, v))
                 scored.append((sim, r))
             scored.sort(key=lambda x: x[0], reverse=True)
-            return [self._item(r, score=s) for s, r in scored[:limit]]
+            items = [self._item(r, score=s) for s, r in scored[:limit]]
+            if len(items) < limit:
+                # добираем из записей без вектора + из «другой размерности»
+                leftover = [r for r in rows if not r["embedding"]] + mismatched
+                items += self._keyword_search(query, leftover, limit - len(items))
+            return items[:limit]
 
         # запасной поиск по ключевым словам (без эмбеддингов)
         return self._keyword_search(query, rows, limit)

@@ -50,10 +50,52 @@ def cron_matches(cron: str, dt: datetime) -> bool:
 
 
 def next_run_after(cron: str, after: datetime, *, horizon_minutes: int = 366 * 24 * 60):
-    """Ближайший момент после `after`, когда сработает cron (или None)."""
+    """Ближайший момент после `after`, когда сработает cron (или None).
+
+    Поля cron парсятся один раз, и при несовпадении мы «перепрыгиваем» на
+    следующую валидную единицу (месяц/день/час) вместо пошагового +1 минута.
+    На самых редких расписаниях это ~тысячи шагов вместо 500k.
+    """
+    try:
+        minute, hour, dom, month, dow = cron.split()
+    except ValueError:
+        return None
+    try:
+        M  = _parse_field(minute, 0, 59)
+        H  = _parse_field(hour, 0, 23)
+        D  = _parse_field(dom, 1, 31)
+        MO = _parse_field(month, 1, 12)
+        WD = _parse_field(dow, 0, 7)
+    except Exception:
+        return None
+    if 7 in WD: WD.add(0)
+    if not (M and H and D and MO and WD):
+        return None
+
     t = after.replace(second=0, microsecond=0) + timedelta(minutes=1)
-    for _ in range(horizon_minutes):
-        if cron_matches(cron, t):
-            return t
-        t += timedelta(minutes=1)
+    horizon = after + timedelta(minutes=horizon_minutes)
+    # защитный предохранитель: не больше 50_000 скачков даже в патологии
+    for _ in range(50000):
+        if t > horizon:
+            return None
+        if t.month not in MO:
+            # на 1-е число следующего месяца
+            if t.month == 12:
+                t = t.replace(year=t.year + 1, month=1, day=1, hour=0, minute=0)
+            else:
+                t = t.replace(month=t.month + 1, day=1, hour=0, minute=0)
+            continue
+        weekday = (t.weekday() + 1) % 7
+        if t.day not in D or weekday not in WD:
+            # на следующую полночь
+            t = (t + timedelta(days=1)).replace(hour=0, minute=0)
+            continue
+        if t.hour not in H:
+            # на следующий час :00
+            t = (t + timedelta(hours=1)).replace(minute=0)
+            continue
+        if t.minute not in M:
+            t += timedelta(minutes=1)
+            continue
+        return t
     return None
