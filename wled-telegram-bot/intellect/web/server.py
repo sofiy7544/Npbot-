@@ -30,6 +30,7 @@ class _RateLimiter:
         self._lock = threading.Lock()
         self._hits: dict[tuple[str, str], deque] = {}
         self._failed: dict[str, tuple[int, float]] = {}  # ip → (кол-во, до_когда)
+        self._bad_seen: dict[str, set] = {}               # ip → хэши уже посчитанных неверных паролей
 
     def allow(self, ip: str, bucket: str, limit: int, window: float) -> bool:
         now = time.monotonic()
@@ -43,9 +44,19 @@ class _RateLimiter:
             dq.append(now)
             return True
 
-    def note_auth_fail(self, ip: str) -> None:
+    def note_auth_fail(self, ip: str, token: str | None = None) -> None:
+        """Считаем РАЗНЫЕ неверные пароли: телефон со старым паролем, который сам
+        опрашивает лампу каждые 3 с, не должен блокировать себя на 15 минут."""
         now = time.monotonic()
         with self._lock:
+            if token is not None:
+                import hashlib
+                h = hashlib.sha256(str(token).encode()).hexdigest()[:16]
+                seen = self._bad_seen.setdefault(ip, set())
+                if h in seen and ip in self._failed:
+                    return
+                if len(seen) < 64:
+                    seen.add(h)
             cnt, _ = self._failed.get(ip, (0, 0.0))
             cnt += 1
             # после 10 подряд — блок на 15 минут
@@ -55,6 +66,7 @@ class _RateLimiter:
     def note_auth_ok(self, ip: str) -> None:
         with self._lock:
             self._failed.pop(ip, None)
+            self._bad_seen.pop(ip, None)
 
     def is_locked(self, ip: str) -> bool:
         now = time.monotonic()
@@ -172,12 +184,13 @@ class IntellectWeb:
                     return {}
 
             def _auth(self):
-                ok = api.authorized(self.headers.get("X-Intellect-Token"))
+                token = self.headers.get("X-Intellect-Token")
+                ok = api.authorized(token)
                 ip = self._ip()
                 if ok:
                     rl.note_auth_ok(ip)
                 else:
-                    rl.note_auth_fail(ip)
+                    rl.note_auth_fail(ip, token or "")
                 return ok
 
             def _site_file(self, p: str) -> bool:

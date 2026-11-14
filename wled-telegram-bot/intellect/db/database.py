@@ -63,6 +63,13 @@ class Database:
             self._conn.commit()
             return cur.lastrowid
 
+    def execute_count(self, sql: str, params: Iterable[Any] = ()) -> int:
+        """Выполнить запрос на запись, вернуть число изменённых строк."""
+        with self._lock:
+            cur = self._conn.execute(sql, tuple(params))
+            self._conn.commit()
+            return cur.rowcount
+
     def executemany(self, sql: str, seq: Iterable[Iterable[Any]]) -> None:
         with self._lock:
             self._conn.executemany(sql, [tuple(x) for x in seq])

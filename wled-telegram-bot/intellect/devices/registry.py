@@ -53,9 +53,14 @@ class DeviceRegistry:
             row = self.db.query_one(
                 "SELECT id FROM devices WHERE type=? AND address=?", (dev.type, dev.id()))
             if row:
+                now = time.time()
                 self.db.insert("device_states", {
                     "device_id": row["id"], "online": 1 if st.online else 0,
                     "state": json.dumps(st.data, ensure_ascii=False, default=str),
-                    "checked_at": time.time()})
+                    "checked_at": now})
+                # история только за 3 дня — база на слабом ПК не должна расти бесконечно
+                self._persist_n = getattr(self, "_persist_n", 0) + 1
+                if self._persist_n % 200 == 1:
+                    self.db.execute("DELETE FROM device_states WHERE checked_at < ?", (now - 3 * 86400,))
         except Exception:
             pass

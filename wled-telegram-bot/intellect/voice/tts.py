@@ -27,7 +27,7 @@ class TextToSpeech:
     def _c(self):
         if self._client is None:
             from openai import OpenAI
-            self._client = OpenAI(api_key=self._key)
+            self._client = OpenAI(api_key=self._key, timeout=60, max_retries=1)
         return self._client
 
     def synthesize(self, text: str, out_path: str | None = None) -> str | None:

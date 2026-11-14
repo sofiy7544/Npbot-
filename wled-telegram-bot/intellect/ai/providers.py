@@ -26,7 +26,8 @@ class OpenAIProvider(AIProvider):
     def _c(self):
         if self._client is None:
             from openai import OpenAI          # ленивый импорт
-            self._client = OpenAI(api_key=self._key)
+            # не ждать по 10 минут на слабом Wi-Fi (по умолчанию SDK: 600 с × 3 попытки)
+            self._client = OpenAI(api_key=self._key, timeout=30, max_retries=1)
         return self._client
 
     def available(self) -> bool:

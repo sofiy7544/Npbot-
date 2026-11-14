@@ -75,6 +75,8 @@ class Brain:
 
         tools = self.registry.schemas() if (allow_tools and self.registry.names()) else None
         resp, model = self._chat_with_fallback(messages, text, tools)
+        if model is None:               # все модели упали (сеть/ключ) — не врём «Готово.»
+            return self._fallback(text)
 
         calls: list[ToolCall] = resp.get("tool_calls") or []
         if not calls:
@@ -110,7 +112,7 @@ class Brain:
         # подтверждение) — дать модели осмыслить их и ответить по-человечески.
         if not pending:
             info = any(isinstance(r.get("result"), dict)
-                       and (set(r["result"].keys()) - {"message"})
+                       and (set(r["result"].keys()) - {"message", "ok", "nothing", "state"})
                        for r in results if r.get("ok"))
             if info:
                 follow = self._summarize_results(text, results)

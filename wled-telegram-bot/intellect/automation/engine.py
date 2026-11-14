@@ -38,7 +38,9 @@ class AutomationEngine:
         next_run = None
         if trigger_type == "cron":
             nr = next_run_after(trigger_spec, datetime.now())
-            next_run = nr.timestamp() if nr else None
+            if nr is None:
+                raise ValueError(f"неверное cron-выражение: {trigger_spec!r}")
+            next_run = nr.timestamp()
         elif trigger_type == "once":
             next_run = _parse_iso(trigger_spec)
         return self.db.insert("automations", {

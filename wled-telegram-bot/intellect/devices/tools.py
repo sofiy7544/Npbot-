@@ -114,11 +114,11 @@ def _apply_scene(lamp, name: str) -> dict:
     name = _SCENE_ALIASES.get(name, name)
     cmds = LAMP_SCENES.get(name)
     if not cmds:
-        return {"message": f"Нет сцены «{name}»"}
+        return {"ok": False, "message": f"Нет сцены «{name}»"}
     ok = True
     for c in cmds:
         ok = lamp.apply(c) and ok
-    return {"message": f"✨ Сцена «{name}»" if ok else "⚠️ Лампа недоступна"}
+    return {"ok": ok, "message": f"✨ Сцена «{name}»" if ok else "⚠️ Лампа недоступна"}
 
 
 def _lamp_status(lamp) -> dict:

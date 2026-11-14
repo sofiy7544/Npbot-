@@ -82,6 +82,8 @@ def _task_list(db, uid):
 
 def _task_done(db, uid, a):
     import time as _t
-    n = db.execute("UPDATE tasks SET status='done', done_at=? WHERE id=? AND user_id=?",
-                   (_t.time(), int(a["id"]), uid))
+    n = db.execute_count("UPDATE tasks SET status='done', done_at=? WHERE id=? AND user_id=?",
+                         (_t.time(), int(a["id"]), uid))
+    if not n:
+        return {"message": f"Задачи #{a['id']} нет"}
     return {"message": f"✔️ Задача #{a['id']} выполнена"}

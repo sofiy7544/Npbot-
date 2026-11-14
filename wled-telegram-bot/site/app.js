@@ -121,7 +121,7 @@
 
   /** Общая обработка ошибок запросов. */
   function onError(e) {
-    if (e.code === 401) { openSheet('Нужен пароль'); return; }
+    if (e.code === 401) { stopLampPoll(); openSheet('Нужен пароль'); return; }
     if (e.code === 'NOBASE') { openSheet('Подключение'); return; }
     if (e.code === 'NET') { setOnline(false); return; }
     toast(e.message || 'Ошибка');
@@ -221,13 +221,13 @@
       applyLampState(r.state);
       if (r.state && r.state.seg) renderEffectsSel();
     } catch (e) { if (e.code !== 'NET') onError(e); else setOnline(false); }
-    loadTimers();
+    if (!state.timersAt || Date.now() - state.timersAt > 30000) { state.timersAt = Date.now(); loadTimers(); }
   }
   function renderEffectsSel() {
     const cur = state.lamp.seg[0].fx;
     $$('#effects .item').forEach(i => i.classList.toggle('sel', +i.dataset.fx === cur));
   }
-  function startLampPoll() { stopLampPoll(); state.lampPollT = setInterval(() => { if (!document.hidden) loadLamp(); }, 3000); }
+  function startLampPoll() { stopLampPoll(); state.lampPollT = setInterval(() => { if (!document.hidden) loadLamp(); }, 5000); }
   function stopLampPoll() { clearInterval(state.lampPollT); state.lampPollT = null; }
 
   // таймеры лампы/ТВ
@@ -512,9 +512,11 @@
     try {
       const ping = await API.probe(full);
       if (!ping) { err.textContent = 'По этому адресу бот не отвечает'; return; }
+      const prevBase = API.base, prevToken = API.token;
       API.base = full; API.token = pwd; API.version = ping.version || ''; API.authRequired = !!ping.auth;
+      try { await API.get('/api/devices'); }      // проверка пароля — сохраняем только верный
+      catch (e2) { API.base = prevBase; API.token = prevToken; throw e2; }
       store.set('intellect_api', full); store.set('intellect_token', pwd || null);
-      await API.get('/api/devices');              // проверка пароля
       setOnline(true); closeSheet(); toast('Подключено ✓'); showTab(state.tab);
     } catch (e) {
       if (e.code === 401) err.textContent = 'Неверный пароль';

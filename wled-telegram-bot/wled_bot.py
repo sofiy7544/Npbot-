@@ -768,6 +768,12 @@ async def _intellect_reply(reply_func, uid, name, text, confirm=False):
     loop = asyncio.get_running_loop()
     out = await loop.run_in_executor(
         None, lambda: INTELLECT.handle_text(uid, text, name=name, confirm=confirm))
+    if out.get("source") == "fallback" and not confirm:
+        # ИИ недоступен (нет ключа/сети) — выполняем простыми правилами, как раньше
+        ok, basic = await loop.run_in_executor(None, voice.handle, text)
+        out["reply"] = basic if ok else (out.get("reply") or basic)
+        if ok:
+            out["did_actions"] = True
     if not (out.get("reply") or "").strip():
         out["reply"] = "Готово."
     if out.get("pending_confirmation") and not confirm:
@@ -801,14 +807,20 @@ async def on_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tgfile = await src.get_file()
     # уникальное имя: два подряд голосовых от одного юзера не затирают друг друга
     path = _os.path.join(tempfile.gettempdir(), f"voice_{uid}_{_uuid.uuid4().hex[:8]}.oga")
-    await tgfile.download_to_drive(path)
     loop = asyncio.get_running_loop()
-    out = await loop.run_in_executor(
-        None, lambda: INTELLECT.handle_voice(uid, path, name=update.effective_user.full_name))
     try:
-        _os.remove(path)
-    except Exception:
-        pass
+        await tgfile.download_to_drive(path)
+        out = await loop.run_in_executor(
+            None, lambda: INTELLECT.handle_voice(uid, path, name=update.effective_user.full_name))
+    except Exception as e:
+        log.warning(f"голосовое: {type(e).__name__}: {e}")
+        await msg.reply_text("🎤 Не получилось обработать голосовое — попробуй ещё раз.")
+        return
+    finally:
+        try:
+            _os.remove(path)
+        except Exception:
+            pass
     transcript = out.get("transcript") or ""
     reply = (f"🗣 «{transcript}»\n\n" if transcript else "") + out["reply"]
     if out.get("pending_confirmation"):
@@ -825,9 +837,13 @@ async def on_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 try:
                     with open(mp3, "rb") as vf:
                         await msg.reply_voice(vf)
-                    _os.remove(mp3)
                 except Exception:
                     pass
+                finally:
+                    try:
+                        _os.remove(mp3)
+                    except Exception:
+                        pass
     if out.get("did_actions"):
         try:
             await wled_sync()
@@ -1440,7 +1456,8 @@ def main():
 
     app.add_error_handler(_on_error)
     try:
-        app.run_polling()
+        # bootstrap_retries=-1: нет интернета при включении ПК — ждём сеть, а не падаем
+        app.run_polling(bootstrap_retries=-1)
     except InvalidToken:
         _diag["Запуск"] = "ОТКАЗ: Telegram отверг токен (неверный или отозван)"
         diaglog.write_diag(_diag)

@@ -36,11 +36,14 @@ def cron_matches(cron: str, dt: datetime) -> bool:
         minute, hour, dom, month, dow = cron.split()
     except ValueError:
         return False
-    m = _parse_field(minute, 0, 59)
-    h = _parse_field(hour, 0, 23)
-    d = _parse_field(dom, 1, 31)
-    mo = _parse_field(month, 1, 12)
-    wd = _parse_field(dow, 0, 7)
+    try:   # кривое выражение («*/0», «abc») не должно ронять все автоматизации
+        m = _parse_field(minute, 0, 59)
+        h = _parse_field(hour, 0, 23)
+        d = _parse_field(dom, 1, 31)
+        mo = _parse_field(month, 1, 12)
+        wd = _parse_field(dow, 0, 7)
+    except (ValueError, TypeError):
+        return False
     # 0 и 7 — воскресенье
     weekday = (dt.weekday() + 1) % 7  # Python: Пн=0 → cron: Вс=0
     if 7 in wd:

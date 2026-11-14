@@ -52,6 +52,11 @@ PRE = (
     "SENT = []\n"
     "async def fake(self, url, method, request_data=None, read_timeout=None, write_timeout=None, connect_timeout=None, pool_timeout=None):\n"
     "    m = url.rsplit('/', 1)[-1]\n"
+    "    if m == 'getMe' and int(os.environ.get('FAIL_GETME', '0')) > 0:\n"
+    "        os.environ['FAIL_GETME'] = str(int(os.environ['FAIL_GETME']) - 1)\n"
+    "        from telegram.error import NetworkError\n"
+    "        print('GETME_FAIL', flush=True)\n"
+    "        raise NetworkError('нет сети (тест)')\n"
     "    if m == 'getMe':\n"
     "        return 200, json.dumps({'ok': True, 'result': {'id': 1, 'is_bot': True, 'first_name': 'x', 'username': 'x_bot'}}).encode()\n"
     "    if m == 'sendMessage':\n"
@@ -74,7 +79,7 @@ PRE = (
 OLD_FILES = ("cloudflared.exe", "tunnel.py", "GITHUB_RESEARCH.md", "site/config.js", "tests/test_tunnel.py")
 
 
-def _run_bot(env_text, seconds=14, old_files=()):
+def _run_bot(env_text, seconds=14, old_files=(), extra_env=None):
     work = Path(tempfile.mkdtemp()) / "bot"
     shutil.copytree(ROOT, work, ignore=shutil.ignore_patterns(".env", "__pycache__", "*.db", "*.log", "logs", ".git", "site"))
     (work / ".env").write_text(env_text, encoding="utf-8")
@@ -83,6 +88,7 @@ def _run_bot(env_text, seconds=14, old_files=()):
     cf = work / "fake_cloudflared.sh"; cf.write_text(FAKE_CF); cf.chmod(cf.stat().st_mode | stat.S_IEXEC)
     env = {k: v for k, v in os.environ.items() if k not in ("WLED_BOT_TOKEN", "ALLOWED_USERS", "OPENAI_API_KEY", "WLED_IP", "ACCESS_PASSWORD", "TUNNEL")}
     env.update(WEB_PORT="0", INTELLECT_WEB_PORT=str(_free_port()), PYTHONIOENCODING="utf-8", CLOUDFLARED_PATH=str(cf))
+    env.update(extra_env or {})
     pr = subprocess.Popen([sys.executable, "-c", PRE, str(work / "wled_bot.py")], cwd=work, env=env,
                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace")
     time.sleep(seconds); (work / "STOP").write_text("1")
@@ -111,9 +117,16 @@ def test_old_env_stays_local():
     check("diag: доступ — только домашняя сеть", "только домашняя сеть" in diag)
 
 
+def test_no_internet_at_start():
+    env = f"WLED_BOT_TOKEN={FAKE_TOK}\nALLOWED_USERS=42\nWLED_IP=127.0.0.1\nACCESS_PASSWORD=aZ3kQ9mT2p\n"
+    out, log, diag = _run_bot(env, seconds=16, extra_env={"FAIL_GETME": "2"})
+    check("Telegram недоступен при старте — бот ждал сеть", out.count("GETME_FAIL") == 2)
+    check("…и затем запустился, а не упал", "Бот запущен" in log)
+
+
 if __name__ == "__main__":
     print("=== Панель только дома: /panel, старый .env с TUNNEL=1 ===")
-    for t in (test_panel_message, test_old_env_stays_local):
+    for t in (test_panel_message, test_old_env_stays_local, test_no_internet_at_start):
         print(f"\n[{t.__name__}]"); t()
     print(f"\nИТОГ: {_ok} ok, {_fail} fail")
     sys.exit(1 if _fail else 0)

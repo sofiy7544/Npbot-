@@ -123,7 +123,7 @@ def interpret(text: str):
         return None
     try:
         from openai import OpenAI
-        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"], timeout=30, max_retries=1)
         resp = client.chat.completions.create(
             model=MODEL,
             temperature=0.3,

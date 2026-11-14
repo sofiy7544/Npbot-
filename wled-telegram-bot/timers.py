@@ -45,8 +45,9 @@ def _tv_off():
     if not cfg.get("ip"):
         return
     try:
-        tvremote.send_key(cfg["ip"], "KEY_POWER", cfg.get("method") or None)
-        log.info("Таймер: телевизор выключен")
+        # KEY_POWEROFF, а не KEY_POWER: toggle включал уже выключенный ТВ среди ночи
+        if tvremote.power(False):
+            log.info("Таймер: телевизор выключен")
     except Exception as e:
         log.warning(f"timer tv off: {e}")
 
