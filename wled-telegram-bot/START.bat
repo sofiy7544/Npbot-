@@ -4,6 +4,17 @@ setlocal enabledelayedexpansion
 title INTELLECT - smart light and TV
 cd /d "%~dp0"
 
+REM Trap: if anything below exits abnormally, pause so the user sees what happened.
+if /i "%~1" NEQ "nopause" (
+  cmd /c ""%~f0" nopause"
+  echo.
+  echo ==================================================
+  echo [i] Window will stay open. Press any key to close.
+  echo ==================================================
+  pause >nul
+  exit /b %ERRORLEVEL%
+)
+
 echo ==================================================
 echo    INTELLECT - everything installs itself.
 echo    Please wait (first run takes a couple of minutes).
@@ -45,8 +56,18 @@ if exist ".deps_ok" (
 
 REM ---------- 3) Config check ----------
 if not exist ".env" (
-  echo [!] Missing .env config file. Run SETUP.bat to create it.
-  pause & exit /b 1
+  echo [!] Missing .env config file.
+  if exist ".env.example" (
+    echo [*] Creating .env from .env.example, opening it in Notepad...
+    copy /y ".env.example" ".env" >nul
+    echo [i] Fill in WLED_BOT_TOKEN and ALLOWED_USERS (and OPENAI_API_KEY),
+    echo     save the file, close Notepad, then run START.bat again.
+    start /wait notepad ".env"
+    exit /b 0
+  ) else (
+    echo [!] .env.example is also missing. Reinstall from the archive.
+    pause & exit /b 1
+  )
 )
 
 REM ---------- 4) First-run PC optimization (ONCE) ----------
