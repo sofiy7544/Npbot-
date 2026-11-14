@@ -39,6 +39,7 @@ class BrainResult:
     model: str | None = None
     source: str = "ai"                 # ai | fallback
     pending_confirmation: list[str] = field(default_factory=list)
+    pending_calls: list = field(default_factory=list)   # ToolCall, ждущие подтверждения
 
     @property
     def did_actions(self) -> bool:
@@ -77,11 +78,12 @@ class Brain:
             reply = (resp.get("text") or "").strip() or "Готово."
             return BrainResult(reply=reply, model=model, source="ai")
 
-        results, pending = [], []
+        results, pending, pending_calls = [], [], []
         for call in calls:
             tool = self.registry.get(call.name)
             if tool and tool.dangerous and not self._confirmed(call.name):
                 pending.append(call.name)
+                pending_calls.append(call)     # запоминаем САМ вызов, не фразу
                 results.append({"ok": False, "name": call.name,
                                 "error": "нужно подтверждение"})
                 continue
@@ -89,7 +91,14 @@ class Brain:
 
         reply = self._compose_reply(resp.get("text") or "", results, pending)
         return BrainResult(reply=reply, tool_results=results, model=model,
-                           source="ai", pending_confirmation=pending)
+                           source="ai", pending_confirmation=pending,
+                           pending_calls=pending_calls)
+
+    def run_calls(self, calls: list) -> BrainResult:
+        """Выполнить конкретные подтверждённые вызовы (без обращения к модели)."""
+        results = [self.registry.dispatch(c) for c in calls]
+        reply = self._compose_reply("", results, [])
+        return BrainResult(reply=reply, tool_results=results, source="ai")
 
     def chat(self, text: str, *, history: list[ChatMessage] | None = None) -> str:
         """Простой разговор без инструментов."""

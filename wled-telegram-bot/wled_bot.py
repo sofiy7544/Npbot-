@@ -915,11 +915,20 @@ async def on_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data.startswith("cfm:"):
         await q.answer()
         uid = q.from_user.id
-        text = _pending_confirm.pop(uid, None)
-        if data == "cfm:yes" and text and INTELLECT is not None:
-            await _intellect_reply(q.message.reply_text, uid,
-                                   q.from_user.full_name, text, confirm=True)
+        _pending_confirm.pop(uid, None)
+        if data == "cfm:yes" and INTELLECT is not None:
+            # выполняем РОВНО то действие, что ждало подтверждения (без перезапроса GPT)
+            loop = asyncio.get_running_loop()
+            out = await loop.run_in_executor(None, lambda: INTELLECT.confirm_pending(uid))
+            await q.message.reply_text(out.get("reply") or "Готово.")
+            if out.get("did_actions"):
+                try:
+                    await wled_sync()
+                except Exception:
+                    pass
         else:
+            if INTELLECT is not None:
+                INTELLECT.cancel_pending(uid)
             await q.message.reply_text("Отменено ✖️")
         return
 

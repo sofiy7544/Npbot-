@@ -29,6 +29,7 @@ class IntellectApp:
         self.db = db or get_db(self.settings.db_path)
         self.log = log
         self._ctx = threading.local()          # контекст текущего запроса (user, confirm)
+        self._pending: dict[int, list] = {}    # user_id → вызовы, ждущие подтверждения
 
         key = self.settings.openai_api_key.get()
         self.provider = make_provider(key)
@@ -90,12 +91,29 @@ class IntellectApp:
         if result.did_actions:
             audit(self.db, "brain.actions", user_id=user_id,
                   detail={"text": text, "tools": [r.get("name") for r in result.tool_results]})
+        # запоминаем ИМЕННО вызовы, ждущие подтверждения (не фразу)
+        if result.pending_calls:
+            self._pending[user_id] = result.pending_calls
         return {
             "reply": result.reply,
             "pending_confirmation": result.pending_confirmation,
             "did_actions": result.did_actions,
             "source": result.source,
         }
+
+    def confirm_pending(self, user_id: int) -> dict:
+        """Выполнить ровно то опасное действие, что ждало подтверждения."""
+        self._ctx.user_id = user_id
+        calls = self._pending.pop(user_id, None)
+        if not calls:
+            return {"reply": "Нечего подтверждать 🤔", "did_actions": False}
+        result = self.brain.run_calls(calls)
+        audit(self.db, "brain.confirmed", user_id=user_id,
+              detail={"tools": [getattr(c, "name", "?") for c in calls]})
+        return {"reply": result.reply, "did_actions": result.did_actions}
+
+    def cancel_pending(self, user_id: int) -> None:
+        self._pending.pop(user_id, None)
 
     def handle_voice(self, user_id: int, audio_path: str, *, name: str | None = None) -> dict:
         """Голосовое → распознать → обработать как текст."""
