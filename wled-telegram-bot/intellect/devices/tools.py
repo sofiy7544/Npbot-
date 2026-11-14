@@ -76,6 +76,48 @@ def _register_wled(reg: ToolRegistry, lamp) -> None:
     reg.add("lamp_status", "Узнать текущее состояние лампы.", dict(_OBJ),
             lambda a: _lamp_status(lamp))
 
+    reg.add("lamp_scene",
+            "Готовая сцена света по настроению. Используй для «спать/спокойно/"
+            "ночник/вечер/чтение/работа/кино/дискотека/вечеринка/романтика/релакс». "
+            "ВАЖНО: спокойные сцены (сон/ночник/вечер/чтение) выключают любой "
+            "мигающий эффект.",
+            {"type": "object",
+             "properties": {"name": {"type": "string",
+                 "enum": list(LAMP_SCENES.keys())}},
+             "required": ["name"]},
+            lambda a: _apply_scene(lamp, str(a.get("name", "")).lower().strip()))
+
+
+# Сцены лампы: список команд WLED. fx=0 (Solid) гарантированно гасит мигание.
+# Динамические эффекты 8 (Colorloop) и 9 (Rainbow) есть в любой сборке WLED.
+LAMP_SCENES = {
+    "сон":        [{"action": "effect", "index": 0}, {"action": "color", "rgb": [255, 150, 60]}, {"action": "brightness", "percent": 6}],
+    "спокойно":   [{"action": "effect", "index": 0}, {"action": "color", "rgb": [255, 150, 60]}, {"action": "brightness", "percent": 8}],
+    "ночник":     [{"action": "effect", "index": 0}, {"action": "color", "rgb": [255, 120, 40]}, {"action": "brightness", "percent": 5}],
+    "вечер":      [{"action": "effect", "index": 0}, {"action": "color", "rgb": [255, 170, 80]}, {"action": "brightness", "percent": 45}],
+    "чтение":     [{"action": "effect", "index": 0}, {"action": "color", "rgb": [255, 240, 220]}, {"action": "brightness", "percent": 95}],
+    "работа":     [{"action": "effect", "index": 0}, {"action": "color", "rgb": [255, 255, 255]}, {"action": "brightness", "percent": 100}],
+    "кино":       [{"action": "effect", "index": 0}, {"action": "color", "rgb": [40, 20, 90]}, {"action": "brightness", "percent": 20}],
+    "романтика":  [{"action": "effect", "index": 0}, {"action": "color", "rgb": [200, 30, 60]}, {"action": "brightness", "percent": 25}],
+    "релакс":     [{"action": "effect", "index": 2}, {"action": "color", "rgb": [30, 120, 160]}, {"action": "brightness", "percent": 35}],
+    "дискотека":  [{"action": "brightness", "percent": 100}, {"action": "effect", "index": 8}],
+    "вечеринка":  [{"action": "brightness", "percent": 100}, {"action": "effect", "index": 8}],
+    "радуга":     [{"action": "brightness", "percent": 100}, {"action": "effect", "index": 9}],
+}
+_SCENE_ALIASES = {"спать": "сон", "ночь": "сон", "party": "вечеринка",
+                  "диско": "дискотека", "отдых": "релакс", "фильм": "кино"}
+
+
+def _apply_scene(lamp, name: str) -> dict:
+    name = _SCENE_ALIASES.get(name, name)
+    cmds = LAMP_SCENES.get(name)
+    if not cmds:
+        return {"message": f"Нет сцены «{name}»"}
+    ok = True
+    for c in cmds:
+        ok = lamp.apply(c) and ok
+    return {"message": f"✨ Сцена «{name}»" if ok else "⚠️ Лампа недоступна"}
+
 
 def _lamp_status(lamp) -> dict:
     st = lamp.get_state()
