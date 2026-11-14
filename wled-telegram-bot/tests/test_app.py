@@ -81,10 +81,27 @@ def test_status_structure():
     check("статус: счётчики", "automations_active" in st and "tasks_open" in st)
 
 
+def test_pending_ttl_expires():
+    """Подтверждение опасного действия протухает через TTL."""
+    from intellect.core.interfaces import ToolCall as _TC
+    app = _app(scripted=lambda m: {"text": "", "tool_calls": [_TC("computer_kill", {"name": "chrome"})]})
+    # computer_kill помечен dangerous → brain потребует подтверждение
+    out = app.handle_text(42, "убей chrome")
+    check("ожидает подтверждения", bool(out.get("pending_confirmation")))
+    check("в _pending лежит запись", 42 in app._pending)
+    # искусственно протухаем
+    calls, _exp = app._pending[42]
+    app._pending[42] = (calls, 0.0)   # expires_at в прошлом
+    res = app.confirm_pending(42)
+    check("протухшее подтверждение отклонено", res["did_actions"] is False)
+    check("сообщение про устарело", "устарел" in res["reply"].lower())
+
+
 if __name__ == "__main__":
     print("=== Оркестратор: сквозные тесты ===")
     for t in (test_text_controls_device, test_memory_tool_via_brain,
-              test_automation_uses_tools, test_status_structure):
+              test_automation_uses_tools, test_status_structure,
+              test_pending_ttl_expires):
         print(f"\n[{t.__name__}]"); t()
     print(f"\nИТОГ: {_ok} ok, {_fail} fail")
     sys.exit(1 if _fail else 0)

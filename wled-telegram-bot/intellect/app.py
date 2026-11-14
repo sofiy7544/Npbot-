@@ -29,7 +29,8 @@ class IntellectApp:
         self.db = db or get_db(self.settings.db_path)
         self.log = log
         self._ctx = threading.local()          # контекст текущего запроса (user, confirm)
-        self._pending: dict[int, list] = {}    # user_id → вызовы, ждущие подтверждения
+        self._pending: dict[int, tuple[list, float]] = {}  # user_id → (вызовы, expires_at)
+        self._pending_ttl = 300.0              # сек: подтверждение «протухает» через 5 минут
 
         key = self.settings.openai_api_key.get()
         self.provider = make_provider(key)
@@ -93,7 +94,8 @@ class IntellectApp:
                   detail={"text": text, "tools": [r.get("name") for r in result.tool_results]})
         # запоминаем ИМЕННО вызовы, ждущие подтверждения (не фразу)
         if result.pending_calls:
-            self._pending[user_id] = result.pending_calls
+            import time as _t
+            self._pending[user_id] = (result.pending_calls, _t.monotonic() + self._pending_ttl)
         return {
             "reply": result.reply,
             "pending_confirmation": result.pending_confirmation,
@@ -104,9 +106,14 @@ class IntellectApp:
     def confirm_pending(self, user_id: int) -> dict:
         """Выполнить ровно то опасное действие, что ждало подтверждения."""
         self._ctx.user_id = user_id
-        calls = self._pending.pop(user_id, None)
-        if not calls:
+        import time as _t
+        entry = self._pending.pop(user_id, None)
+        if not entry:
             return {"reply": "Нечего подтверждать 🤔", "did_actions": False}
+        calls, expires_at = entry
+        if _t.monotonic() > expires_at:
+            return {"reply": "Подтверждение устарело (прошло больше 5 минут). "
+                             "Повтори команду, если ещё нужно.", "did_actions": False}
         result = self.brain.run_calls(calls)
         audit(self.db, "brain.confirmed", user_id=user_id,
               detail={"tools": [getattr(c, "name", "?") for c in calls]})

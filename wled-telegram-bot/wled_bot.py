@@ -721,11 +721,12 @@ async def on_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if INTELLECT is None or not INTELLECT.voice.can_listen:
         await msg.reply_text("🎤 Голос недоступен: нужен ключ OpenAI в .env (OPENAI_API_KEY).")
         return
-    import os as _os, tempfile
+    import os as _os, tempfile, uuid as _uuid
     await context.bot.send_chat_action(msg.chat.id, "typing")
     src = msg.voice or msg.audio
     tgfile = await src.get_file()
-    path = _os.path.join(tempfile.gettempdir(), f"voice_{uid}.oga")
+    # уникальное имя: два подряд голосовых от одного юзера не затирают друг друга
+    path = _os.path.join(tempfile.gettempdir(), f"voice_{uid}_{_uuid.uuid4().hex[:8]}.oga")
     await tgfile.download_to_drive(path)
     loop = asyncio.get_running_loop()
     out = await loop.run_in_executor(
