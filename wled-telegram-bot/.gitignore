@@ -9,3 +9,5 @@ venv/
 *.log
 setup/pc-reports/
 .optimized
+/intellect.db
+/intellect.db-*
