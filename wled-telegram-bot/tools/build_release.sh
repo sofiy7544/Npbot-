@@ -21,6 +21,7 @@
 # и tools/test_bats.sh <вывод>/INTELLECT-2.0 — см. HANDOFF.md.
 # =============================================================================
 set -euo pipefail
+export PYTHONDONTWRITEBYTECODE=1   # не тащить __pycache__ в архив
 SRC="$(cd "$(dirname "$0")/.." && pwd)"
 mkdir -p "$1"
 OUT="$(cd "$1" && pwd)"
