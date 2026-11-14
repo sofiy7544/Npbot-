@@ -327,6 +327,30 @@ def main():
         page.goto(same_url + "/")
         page.wait_for_function("document.querySelector('#lampStatus').textContent !== '—'", timeout=10000)
         check("API найден по своему origin (без api.json)", page.text_content("#lampStatus") in ("включена", "выключена"))
+
+        print("\n[адрес API из служебной ветки GitHub (config.js → raw api.json)]")
+        # сайт без api.json рядом; config.js указывает на «raw.githubusercontent» — наш локальный сервер
+        raw_dir = Path(tempfile.mkdtemp()) / "raw"; raw_dir.mkdir()
+        (raw_dir / "api.json").write_text(json.dumps({"api": api_url}), encoding="utf-8")
+        class RawCORS(Quiet):                     # raw.githubusercontent.com отдаёт Allow-Origin: *
+            def end_headers(self):
+                self.send_header("Access-Control-Allow-Origin", "*"); super().end_headers()
+        raw_srv, raw_url = serve(partial(RawCORS, directory=str(raw_dir)))
+        remote_dir = Path(tempfile.mkdtemp()) / "remote"
+        shutil.copytree(SITE, remote_dir)
+        (remote_dir / "config.js").write_text(
+            "window.INTELLECT_CONFIG={apiSources:['api.json','https://127.0.0.1:9/nope.json','" + raw_url + "/api.json']};",
+            encoding="utf-8")
+        remote_srv, remote_url = serve(partial(Quiet, directory=str(remote_dir)))
+        ctx, page = new_page()
+        page.add_init_script(f"localStorage.setItem('intellect_token', {json.dumps(PASSWORD)})")
+        page.goto(remote_url + "/")
+        page.wait_for_function("document.querySelector('#lampStatus').textContent !== '—'", timeout=15000)
+        check("адрес API взят из удалённого api.json (ветка intellect-api), недоступный источник пропущен",
+              page.text_content("#lampStatus") in ("включена", "выключена"))
+        check("в config.js проекта указан raw-адрес ветки intellect-api этого репозитория",
+              "raw.githubusercontent.com/sofiy7544/Npbot-/intellect-api/api.json" in (SITE / "config.js").read_text(encoding="utf-8"))
+        raw_srv.shutdown(); remote_srv.shutdown()
         ctx.close()
 
         print("\n[десктоп: сайдбар]")

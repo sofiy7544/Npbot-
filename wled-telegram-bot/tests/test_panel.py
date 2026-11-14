@@ -39,11 +39,32 @@ class FakeGitHub(BaseHTTPRequestHandler):
         self.send_response(code); self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
 
+    branches = {"main": "abc123"}
+
+    def do_POST(self):
+        FakeGitHub.calls.append(("POST", self.path))
+        if self.headers.get("Authorization") != f"Bearer {FakeGitHub.token}":
+            return self._send(401, {"message": "Bad credentials"})
+        n = int(self.headers.get("Content-Length", 0))
+        body = json.loads(self.rfile.read(n) or b"{}")
+        if self.path.endswith("/git/refs"):
+            name = body["ref"].split("refs/heads/")[1]
+            FakeGitHub.branches[name] = body["sha"]
+            return self._send(201, {"ref": body["ref"]})
+        self._send(404, {})
+
     def do_GET(self):
         FakeGitHub.calls.append(("GET", self.path))
         if self.headers.get("Authorization") != f"Bearer {FakeGitHub.token}":
             return self._send(401, {"message": "Bad credentials"})
         p = self.path.split("?")[0]
+        if p.endswith("/repos/user/intellect"):
+            return self._send(200, {"default_branch": "main"})
+        if "/git/ref/heads/" in p:
+            b = p.split("/git/ref/heads/")[1]
+            if b in FakeGitHub.branches:
+                return self._send(200, {"object": {"sha": FakeGitHub.branches[b]}})
+            return self._send(404, {"message": "Not Found"})
         if p in FakeGitHub.store:
             sha, content = FakeGitHub.store[p]
             return self._send(200, {"sha": sha, "content": content})
@@ -79,6 +100,14 @@ def test_publish_api_url():
     ok = panel_link.publish_api_url("user/intellect", "ghp_testtoken", "https://b2.trycloudflare.com")
     saved = json.loads(base64.b64decode(FakeGitHub.store["/repos/user/intellect/contents/api.json"][1]))
     check("новый адрес → перезаписан с правильным sha", ok and saved["api"] == "https://b2.trycloudflare.com")
+    # служебная ветка: нет → создаётся от default, api.json пишется в неё
+    FakeGitHub.calls.clear(); FakeGitHub.branches = {"main": "abc123"}
+    ok = panel_link.publish_api_url("user/intellect", "ghp_testtoken", "https://e5.trycloudflare.com", branch="intellect-api")
+    check("ветки intellect-api не было → создана от default и api.json записан",
+          ok and FakeGitHub.branches.get("intellect-api") == "abc123" and ("POST", "/repos/user/intellect/git/refs") in FakeGitHub.calls)
+    FakeGitHub.calls.clear()
+    ok = panel_link.publish_api_url("user/intellect", "ghp_testtoken", "https://e6.trycloudflare.com", branch="intellect-api")
+    check("ветка есть → без POST, только обновление файла", ok and not any(c[0] == "POST" for c in FakeGitHub.calls))
     ok = panel_link.publish_api_url("user/intellect", "wrong", "https://c3.trycloudflare.com")
     check("неверный токен → False, без исключения", ok is False)
     check("пустые параметры → False", panel_link.publish_api_url("", "", "") is False)

@@ -75,17 +75,21 @@
     },
   };
 
-  /** Найти адрес API: сохранённый → api.json рядом → свой origin → спросить. */
+  /** Найти адрес API: сохранённый → api.json (рядом и из config.js) → свой origin → спросить. */
   async function discoverBase() {
     const saved = store.get('intellect_api');
     if (saved) { API.base = saved.replace(/\/+$/, ''); return 'saved'; }
-    try {
-      const r = await fetch('api.json', { cache: 'no-store' });
-      if (r.ok) {
+    const cfg = (window.INTELLECT_CONFIG && window.INTELLECT_CONFIG.apiSources) || ['api.json'];
+    for (const src of cfg) {
+      try {
+        // raw.githubusercontent кэширует до 5 минут — добавляем метку времени
+        const url = src + (src.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000);
+        const r = await fetch(url, { cache: 'no-store' });
+        if (!r.ok) continue;
         const j = await r.json();
         if (j && j.api && await API.probe(j.api)) { API.base = j.api.replace(/\/+$/, ''); return 'api.json'; }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
     if (/^https?:/.test(location.origin) && await API.probe(location.origin)) { API.base = location.origin; return 'origin'; }
     return null;
   }

@@ -741,6 +741,7 @@ def _start_tunnel(app_ref):
         return
     port = int(os.getenv("INTELLECT_WEB_PORT", "8090"))
     repo, token = os.getenv("GITHUB_PAGES_REPO", "").strip(), os.getenv("GITHUB_TOKEN", "").strip()
+    branch = os.getenv("GITHUB_PAGES_BRANCH", "intellect-api").strip() or None
     owners = sorted(ALLOWED_USERS)
 
     def _on_url(url):
@@ -751,7 +752,7 @@ def _start_tunnel(app_ref):
         log.info(f"🌐 Панель доступна из интернета: {url}")
         if repo and token:
             threading.Thread(target=panel_link.publish_api_url, args=(repo, token, url),
-                             daemon=True, name="publish-api-url").start()
+                             kwargs={"branch": branch}, daemon=True, name="publish-api-url").start()
         if owners and app_ref is not None:
             async def _notify():
                 for uid in owners[:3]:

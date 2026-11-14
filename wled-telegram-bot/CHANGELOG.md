@@ -3,6 +3,15 @@
 > Версия сборки — в файле `VERSION`; паспорт сборки — `BUILD_INFO.txt`.
 > Передача дел и протокол работы — `HANDOFF.md`.
 
+## 2.3.1 — 2026-11-14
+
+- Сайт панели размещён в этом же репозитории: `docs/intellect/` (+ зеркало `intellect/`)
+  → **https://stanleybrand.com.ua/intellect/** (деплой — существующим ручным workflow Pages).
+- `site/config.js`: список источников адреса API; второй источник — `api.json` в служебной
+  ветке `intellect-api` (читается с raw.githubusercontent.com, без передеплоя сайта).
+- `panel_link.ensure_branch`: бот сам создаёт ветку `intellect-api` и пишет туда адрес
+  туннеля (`GITHUB_PAGES_BRANCH`, нужен `GITHUB_TOKEN` с правом Contents: Read and write).
+
 ## 2.3.0 — 2026-11-14
 
 - **Один сайт вместо двух** (`site/`): свет (колесо, эффекты, сцены, таймер), пульт ТВ

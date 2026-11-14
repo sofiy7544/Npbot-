@@ -40,10 +40,39 @@ def _gh(method: str, url: str, token: str, payload: dict | None = None):
         return r.status, json.loads(r.read() or b"{}")
 
 
+def ensure_branch(repo: str, token: str, branch: str) -> bool:
+    """Служебная ветка для api.json: если её нет — создать от головы ветки по умолчанию.
+    Так адрес туннеля не засоряет историю основной ветки и не требует передеплоя сайта."""
+    try:
+        _gh("GET", f"{GITHUB_API}/repos/{repo}/git/ref/heads/{branch}", token)
+        return True
+    except urllib.error.HTTPError as e:
+        if e.code != 404:
+            log.warning(f"GitHub: ветка {branch}: HTTP {e.code}")
+            return False
+    except Exception as e:
+        log.warning(f"GitHub недоступен: {type(e).__name__}")
+        return False
+    try:
+        _, info = _gh("GET", f"{GITHUB_API}/repos/{repo}", token)
+        default = info.get("default_branch") or "main"
+        _, ref = _gh("GET", f"{GITHUB_API}/repos/{repo}/git/ref/heads/{default}", token)
+        sha = (ref.get("object") or {}).get("sha")
+        st, _ = _gh("POST", f"{GITHUB_API}/repos/{repo}/git/refs", token,
+                    {"ref": f"refs/heads/{branch}", "sha": sha})
+        log.info(f"GitHub: создана ветка {branch}")
+        return st in (200, 201)
+    except Exception as e:
+        log.warning(f"GitHub: не смог создать ветку {branch}: {type(e).__name__}")
+        return False
+
+
 def publish_api_url(repo: str, token: str, api_url: str, *, branch: str | None = None,
                     path: str = API_JSON_PATH) -> bool:
     """Записать {"api": api_url} в <repo>/<path>. True — записано (или уже такое)."""
     if not (repo and token and api_url):
+        return False
+    if branch and not ensure_branch(repo, token, branch):
         return False
     base = f"{GITHUB_API}/repos/{repo}/contents/{path}"
     q = f"?ref={branch}" if branch else ""

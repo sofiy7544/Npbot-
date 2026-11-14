@@ -5,7 +5,7 @@
 > переписки. Обновлять при КАЖДОЙ сборке архива (см. §8).
 
 - **Версия:** см. файл `VERSION` (и `BUILD_INFO.txt` — дата сборки, коммит, контрольные суммы)
-- **Обновлено:** 2026-11-14 (2.3.0)
+- **Обновлено:** 2026-11-14 (2.3.1)
 
 ---
 
@@ -181,14 +181,21 @@ tools/test_bats.sh /tmp/out/INTELLECT-2.0
 - Дома: `http://<ip ПК>:8090/` (ссылка в `/panel`).
 - Откуда угодно: ссылка туннеля `https://….trycloudflare.com` — меняется при перезапуске
   ПК, бот присылает новую в Telegram (`/panel`).
-- Постоянный адрес: сайт на **GitHub Pages в ОТДЕЛЬНОМ репозитории** (Pages этого репо
-  занят магазином `stanleybrand.com.ua`, деплой из `docs/` по ручному workflow — НЕ трогать).
-  Нужно от пользователя: создать пустой публичный репозиторий (например `intellect`),
-  залить туда содержимое `site/`, включить Pages (Settings → Pages → Deploy from branch →
-  main / root). Затем в `.env`: `PAGES_URL=https://<логин>.github.io/intellect/`,
-  `GITHUB_PAGES_REPO=<логин>/intellect`, `GITHUB_TOKEN=<fine-grained token: Contents
-  Read&Write только на этот репозиторий>` — и бот сам будет обновлять `api.json`.
-  Без токена сайт на Pages попросит адрес API один раз после каждого перезапуска ПК.
+- Постоянный адрес (решение пользователя 14.11): сайт в ЭТОМ репозитории, рядом с магазином —
+  `docs/intellect/` (публикуемая папка Pages) + зеркало `intellect/` в корне →
+  **https://stanleybrand.com.ua/intellect/**. Деплой — существующий ручной workflow
+  `.github/workflows/deploy-pages.yml` (Actions → «Deploy site to GitHub Pages (manual)» →
+  Run workflow) из ветки по умолчанию `claude/claude-md-docs-tkeav6`. Магазин при этом
+  переопубликовывается без изменений. Файлы магазина НЕ трогать.
+- Адрес туннеля сайт берёт из `api.json` служебной ветки `intellect-api`
+  (`site/config.js` → raw.githubusercontent.com, кэш до 5 мин). Бот пишет его туда сам
+  (`panel_link.publish_api_url(branch="intellect-api")`, ветка создаётся автоматически),
+  если в `.env` есть `GITHUB_TOKEN` (fine-grained: только репозиторий `Npbot-`, право
+  **Contents: Read and write**). Пользователь согласился сделать токен — на момент
+  2.3.1 ещё не прислал: без него сайт на Pages попросит адрес API вручную, а бот шлёт
+  ссылку в Telegram (`/panel`).
+- При обновлении `site/` копировать его в `docs/intellect/` и `intellect/` (кроме
+  `api.json` — там остаётся `{"api": ""}`) и запускать workflow Pages.
 - Пароль панели: `ACCESS_PASSWORD` в `.env` (в архиве пользователя задан случайный, 10
   символов; показывается в `/panel`). При слабом пароле туннель не поднимается.
 Проверено: тесты (браузер Playwright против фейкового API и против настоящего сервера);
