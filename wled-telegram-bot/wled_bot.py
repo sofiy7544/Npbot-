@@ -626,6 +626,12 @@ async def cmd_find(update, context):
             webapp_mod._IP = WLED_IP
         except Exception:
             pass
+        # Обновить лампу и у ядра INTELLECT (иначе мозг слал бы на старый IP)
+        if INTELLECT is not None:
+            try:
+                INTELLECT.wled.ip = WLED_IP
+            except Exception:
+                pass
         _persist_wled_ip(WLED_IP)
         META["loaded"] = False
         await wled_meta()
@@ -688,6 +694,8 @@ async def _intellect_reply(reply_func, uid, name, text, confirm=False):
     loop = asyncio.get_running_loop()
     out = await loop.run_in_executor(
         None, lambda: INTELLECT.handle_text(uid, text, name=name, confirm=confirm))
+    if not (out.get("reply") or "").strip():
+        out["reply"] = "Готово."
     if out.get("pending_confirmation") and not confirm:
         _pending_confirm[uid] = text
         kb = InlineKeyboardMarkup([[

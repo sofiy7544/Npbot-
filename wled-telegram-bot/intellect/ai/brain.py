@@ -66,7 +66,8 @@ class Brain:
 
         calls: list[ToolCall] = resp.get("tool_calls") or []
         if not calls:
-            return BrainResult(reply=resp.get("text") or "", model=model, source="ai")
+            reply = (resp.get("text") or "").strip() or "Готово."
+            return BrainResult(reply=reply, model=model, source="ai")
 
         results, pending = [], []
         for call in calls:
