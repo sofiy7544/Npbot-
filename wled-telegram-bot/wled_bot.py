@@ -525,9 +525,11 @@ async def _web_hint(msg):
     """Отдельным сообщением — ссылка на веб-пульт (лампа + ТВ)."""
     if not WEB_URL:
         return
+    extra = (f"\n\n🧠 <b>Панель INTELLECT 2.0</b> (AI, память, авто, ПК):\n{INTELLECT_WEB_URL}"
+             if INTELLECT_WEB_URL else "")
     await msg.reply_text(
-        f"📱 <b>Веб-пульт</b> (лампа + телевизор):\n{WEB_URL}\n\n"
-        "Открой эту ссылку в <b>Safari</b> на телефоне → «Поделиться» → "
+        f"📱 <b>Веб-пульт</b> (лампа + телевизор):\n{WEB_URL}{extra}\n\n"
+        "Открой ссылку в <b>Safari</b> на телефоне → «Поделиться» → "
         "«На экран „Домой\"» — будет как приложение.",
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -661,6 +663,7 @@ async def cmd_fxlist(update, context):
 # ----------------------- Кнопки -----------------------
 # ===================== INTELLECT 2.0 (ядро) =====================
 INTELLECT = None                 # экземпляр IntellectApp (или None → базовый режим)
+INTELLECT_WEB_URL = None         # URL новой панели INTELLECT 2.0
 _pending_confirm: dict[int, str] = {}   # uid → фраза, ждущая подтверждения
 
 
@@ -1124,6 +1127,17 @@ def main():
     timers.init(WLED_IP)    # таймеры авто-выключения лампы/ТВ
     voice.init(WLED_IP)     # текстовые/голосовые команды (базовый режим)
     _build_intellect()      # ядро INTELLECT 2.0 (AI/память/голос/автоматизации)
+
+    # Новая мобильная панель INTELLECT 2.0 (отдельный порт; старый пульт остаётся)
+    global INTELLECT_WEB_URL
+    if INTELLECT is not None:
+        try:
+            from intellect.web import start_web
+            intel_port = int(os.getenv("INTELLECT_WEB_PORT", "8090"))
+            INTELLECT_WEB_URL = start_web(INTELLECT, intel_port)
+            log.info(f"🧠 Панель INTELLECT 2.0: {INTELLECT_WEB_URL}")
+        except Exception as e:
+            log.warning(f"Панель INTELLECT не запустилась: {e}")
 
     # Веб-приложение для телефона (айфон/андроид). WEB_PORT=0 — отключить.
     web_port = int(os.getenv("WEB_PORT", "8080"))
