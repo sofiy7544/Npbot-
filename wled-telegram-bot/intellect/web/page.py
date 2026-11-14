@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """HTML современной мобильной панели INTELLECT (single-page, без зависимостей)."""
 
-PAGE = r"""<!DOCTYPE html>
+CLASSIC_PAGE = r"""<!DOCTYPE html>
 <html lang="ru"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
@@ -243,3 +243,12 @@ async function loadSys(){try{const {data:d}=await api('/system');
 
 if(TOKEN) showApp();
 </script></body></html>"""
+
+
+# Новый премиальный визуал (дизайн-доработка) — лежит в panel.html рядом.
+# Если файла нет, панель откатывается на классическую функциональную страницу.
+from pathlib import Path as _P
+try:
+    PAGE = (_P(__file__).parent / "panel.html").read_text("utf-8")
+except Exception:
+    PAGE = CLASSIC_PAGE

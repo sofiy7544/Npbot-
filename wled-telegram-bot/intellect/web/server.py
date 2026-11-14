@@ -13,7 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from .api import WebAPI
-from .page import PAGE
+from .page import PAGE, CLASSIC_PAGE
 
 _ASSETS = Path(__file__).resolve().parent.parent.parent / "assets"
 
@@ -85,6 +85,8 @@ class IntellectWeb:
                 p = self.path.split("?")[0]
                 if p in ("/", "/index.html"):
                     return self._send(200, PAGE, "text/html; charset=utf-8")
+                if p == "/classic":
+                    return self._send(200, CLASSIC_PAGE, "text/html; charset=utf-8")
                 if p == "/manifest.json":
                     return self._send(200, _MANIFEST, "application/manifest+json; charset=utf-8")
                 if p in ("/icon.png", "/apple-touch-icon.png"):
