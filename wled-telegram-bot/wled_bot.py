@@ -1138,7 +1138,7 @@ def main():
                 _persist_wled_ip(WLED_IP)
             else:
                 log.warning("Лампа WLED не найдена. Проверь, что она переподключена "
-                            "к новому Wi-Fi «INTELLECT» и включена (НАЙТИ_ЛАМПУ.bat).")
+                            "к новому Wi-Fi «INTELLECT» и включена. В Telegram можно отправить /find — бот поищет снова.")
         except Exception as e:
             log.warning(f"Автопоиск лампы не удался: {e}")
 

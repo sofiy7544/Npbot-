@@ -20,25 +20,12 @@ REM Step 1: delete the Run entry (same as before).
 for %%A in ("OneDrive" "CCleaner Smart Cleaning" "uTorrentWeb" "uTorrent Web" "uTorrent") do (
   reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v %%~A /f >nul 2>&1
 )
-REM Step 2: write a "disabled" flag to StartupApproved — survives if the app
-REM re-adds its Run entry (CCleaner Smart Cleaning does that at every launch).
-REM REG_BINARY value starting with 03 00 00 00 = disabled in Task Manager Startup.
-for %%A in ("OneDrive" "CCleaner Smart Cleaning" "uTorrentWeb" "uTorrent Web" "uTorrent") do (
-  reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run" /v %%~A /t REG_BINARY /d 03000000000000000000000000000000 /f >nul 2>&1
-)
-REM Step 3: also apply it under StartupApproved\Run32 (32-bit CCleaner path on x64).
-for %%A in ("CCleaner Smart Cleaning") do (
-  reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32" /v %%~A /t REG_BINARY /d 03000000000000000000000000000000 /f >nul 2>&1
-)
-REM Step 4: register a daily task that re-disables them, so CCleaner's
-REM self-reinstallation of its Run key doesn't bring the autostart back.
-set "GUARD=%~dp0startup_guard.bat"
-> "%GUARD%" echo @echo off
->>"%GUARD%" echo for %%%%A in ("OneDrive" "CCleaner Smart Cleaning" "uTorrentWeb" "uTorrent Web" "uTorrent"^) do (
->>"%GUARD%" echo   reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v %%%%~A /f ^>nul 2^>^&1
->>"%GUARD%" echo   reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run" /v %%%%~A /t REG_BINARY /d 03000000000000000000000000000000 /f ^>nul 2^>^&1
->>"%GUARD%" echo ^)
-schtasks /Create /TN "INTELLECT_StartupGuard" /TR "\"%GUARD%\"" /SC DAILY /ST 09:15 /RL LIMITED /F >nul 2>&1
+REM Step 2: mark them DISABLED in StartupApproved, so the autostart stays off
+REM even if the app re-adds its Run entry - CCleaner does that on every launch.
+REM REG_BINARY starting with 03 = disabled, same as Task Manager - Startup tab.
+call "%~dp0startup_guard.bat"
+REM Step 3: daily task re-applies the same, in case something re-enables it.
+schtasks /Create /TN "INTELLECT_StartupGuard" /TR "\"%~dp0startup_guard.bat\"" /SC DAILY /ST 09:15 /RL LIMITED /F >nul 2>&1
 
 REM ---- Clear Windows Update cache (admin; ~hundreds of MB) ----
 net stop wuauserv >nul 2>&1
