@@ -83,13 +83,9 @@ class Brain:
 
         results, pending, pending_calls = [], [], []
         substituted: set[str] = set()
-        # Явную просьбу ищем в текущей фразе И в паре последних реплик пользователя:
-        # «можешь выключить телик?» → «выключить?» → «да» — это тоже явная просьба.
-        recent_user = [m.content for m in (history or []) if m.role == "user"][-2:]
-        intent_text = " ".join(recent_user + [text])
         for call in calls:
             tool = self.registry.get(call.name)
-            if tool and not tool.wanted(intent_text):
+            if tool and not tool.wanted(text, history):
                 # Модель сама потянулась к действию, о котором не просили (tv_power
                 # на «что идёт по телеку») — не выполняем, отвечаем через instead.
                 alt = tool.instead

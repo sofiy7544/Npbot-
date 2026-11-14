@@ -69,6 +69,13 @@ class _RateLimiter:
             return False
 
 _ASSETS = Path(__file__).resolve().parent.parent.parent / "assets"
+# Единый сайт панели (2.3.0): та же папка публикуется на GitHub Pages.
+_SITE = Path(__file__).resolve().parent.parent.parent / "site"
+_SITE_TYPES = {".html": "text/html; charset=utf-8", ".js": "application/javascript; charset=utf-8",
+               ".css": "text/css; charset=utf-8", ".json": "application/json; charset=utf-8",
+               ".webmanifest": "application/manifest+json; charset=utf-8",
+               ".png": "image/png", ".svg": "image/svg+xml", ".ico": "image/x-icon",
+               ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8"}
 
 _MANIFEST = json.dumps({
     "name": "INTELLECT", "short_name": "INTELLECT", "display": "standalone",
@@ -91,19 +98,36 @@ def lan_ip() -> str:
 
 
 class IntellectWeb:
-    def __init__(self, app, port: int = 8090):
+    def __init__(self, app, port: int = 8090, *, allowed_origins: list[str] | None = None):
         self.api = WebAPI(app)
         self.port = port
         self._httpd = None
         self._rl = _RateLimiter()
+        # Откуда разрешены запросы из браузера (сайт панели на GitHub Pages и т.п.).
+        # Пусто → любой origin: авторизация идёт заголовком-токеном, cookies нет,
+        # поэтому это безопасно; список нужен лишь чтобы сузить при желании.
+        self.allowed_origins = [o.rstrip("/") for o in (allowed_origins or []) if o]
 
     def start(self) -> str:
         api = self.api
         rl = self._rl
+        allowed_origins = self.allowed_origins
 
         class H(BaseHTTPRequestHandler):
             def log_message(self, *a):
                 pass
+
+            def _cors(self):
+                origin = (self.headers.get("Origin") or "").rstrip("/")
+                if not origin:
+                    return
+                if allowed_origins and origin not in allowed_origins:
+                    return
+                self.send_header("Access-Control-Allow-Origin", origin if allowed_origins else "*")
+                self.send_header("Vary", "Origin")
+                self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+                self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Intellect-Token")
+                self.send_header("Access-Control-Max-Age", "86400")
 
             def _ip(self) -> str:
                 # X-Forwarded-For корректен только за доверенным прокси, здесь
@@ -132,8 +156,16 @@ class IntellectWeb:
                 self.send_header("Content-Type", ctype)
                 self.send_header("Content-Length", str(len(body)))
                 self.send_header("Cache-Control", "no-store")
+                self._cors()
                 self.end_headers()
                 self.wfile.write(body)
+
+            # ---------- OPTIONS (CORS preflight браузера) ----------
+            def do_OPTIONS(self):
+                self.send_response(204)
+                self.send_header("Content-Length", "0")
+                self._cors()
+                self.end_headers()
 
             def _asset(self, name, ctype):
                 try:
@@ -159,9 +191,30 @@ class IntellectWeb:
                     rl.note_auth_fail(ip)
                 return ok
 
+            def _site_file(self, p: str) -> bool:
+                """Отдать файл единого сайта из site/ (без выхода за папку).
+                api.json НЕ отдаём: сайт тогда сам поймёт, что API — этот же адрес."""
+                if not _SITE.is_dir():
+                    return False
+                name = "index.html" if p in ("/", "/index.html") else p.lstrip("/")
+                if name == "api.json" or ".." in name or name.startswith("/"):
+                    return False
+                f = (_SITE / name)
+                try:
+                    f.resolve().relative_to(_SITE.resolve())
+                except ValueError:
+                    return False
+                if not f.is_file():
+                    return False
+                ctype = _SITE_TYPES.get(f.suffix.lower(), "application/octet-stream")
+                self._send(200, f.read_bytes(), ctype)
+                return True
+
             # ---------- GET ----------
             def do_GET(self):
                 p = self.path.split("?")[0]
+                if not p.startswith("/api/") and self._site_file(p):
+                    return
                 if p in ("/", "/index.html"):
                     return self._send(200, PAGE, "text/html; charset=utf-8")
                 if p == "/classic":
@@ -172,6 +225,9 @@ class IntellectWeb:
                     return self._asset("icon-512.png", "image/png")
                 if p in ("/icon-192.png", "/icon-512.png"):
                     return self._asset(p.lstrip("/"), "image/png")
+                if p == "/api/ping":
+                    # без пароля: сайту нужно понять, что ПК на связи и нужен ли пароль
+                    return self._send(200, api.ping())
                 if p.startswith("/api/"):
                     # общий лимит на все GET-API: 60 запросов в минуту с IP
                     if not self._rate_ok("api_get", 60, 60.0):
@@ -181,7 +237,11 @@ class IntellectWeb:
                     routes = {
                         "/api/status": api.status, "/api/devices": api.devices,
                         "/api/memory": api.memory_list, "/api/automations": api.automations,
-                        "/api/tasks": api.tasks, "/api/system": api.system}
+                        "/api/tasks": api.tasks, "/api/system": api.system,
+                        # 2.3.0 — единый сайт
+                        "/api/lamp/state": api.lamp_state, "/api/timer": api.timer_get,
+                        "/api/tv/config": api.tv_config, "/api/tv/scan": api.tv_scan,
+                        "/api/tv/apps": api.tv_apps, "/api/panel": api.panel}
                     fn = routes.get(p)
                     if fn:
                         code, data = fn()
@@ -203,12 +263,19 @@ class IntellectWeb:
                 body = self._body()
                 routes = {
                     "/api/chat": api.chat,
+                    "/api/chat/confirm": api.chat_confirm,
+                    "/api/chat/cancel": api.chat_cancel,
                     "/api/devices/command": api.device_command,
                     "/api/memory": api.memory_add,
                     "/api/automations/toggle": api.automation_toggle,
                     "/api/automations/delete": api.automation_delete,
                     "/api/tasks/add": api.task_add,
-                    "/api/tasks/done": api.task_done}
+                    "/api/tasks/done": api.task_done,
+                    # 2.3.0 — единый сайт
+                    "/api/lamp/raw": api.lamp_raw, "/api/timer": api.timer_set,
+                    "/api/tv/config": api.tv_config_set, "/api/tv/key": api.tv_key,
+                    "/api/tv/power": api.tv_power, "/api/tv/app": api.tv_app,
+                    "/api/tv/browser": api.tv_browser}
                 fn = routes.get(p)
                 if fn:
                     code, data = fn(body)
@@ -235,6 +302,7 @@ class IntellectWeb:
             self._httpd.shutdown()
 
 
-def start_web(app, port: int = 8090) -> str:
-    """Запустить панель, вернуть URL для телефона."""
-    return IntellectWeb(app, port).start()
+def start_web(app, port: int = 8090, *, allowed_origins: list[str] | None = None):
+    """Запустить панель. Возвращает (URL в домашней сети, объект IntellectWeb)."""
+    web = IntellectWeb(app, port, allowed_origins=allowed_origins)
+    return web.start(), web

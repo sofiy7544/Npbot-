@@ -73,6 +73,22 @@ def test_ai_uses_button_config_live():
     check("ответ про клавишу", "KEY_PAUSE" in res.reply)
 
 
+def test_app_wiring():
+    """Сборка IntellectApp: ТВ у ИИ — тот же tvremote.config, что у кнопок пульта."""
+    from intellect.config import load_settings
+    from intellect.db.database import Database
+    from intellect.app import IntellectApp
+    _fresh()
+    os.environ.setdefault("OPENAI_API_KEY", "sk-test-fake")
+    app = IntellectApp(load_settings(), db=Database(os.path.join(tempfile.mkdtemp(), "t.db")))
+    check("до настройки: ИИ честно «не настроен»",
+          "не настроен" in app.registry.dispatch(ToolCall("tv_key", {"key": "KEY_PAUSE"}))["result"]["message"])
+    _pick()                                 # кнопки «Найти телевизор», без перезапуска
+    app.registry.dispatch(ToolCall("tv_key", {"key": "KEY_PAUSE"}))
+    check("после настройки кнопками ИИ шлёт туда же", SENT and SENT[-1] == ("192.168.1.106", "KEY_PAUSE", "ws-token"))
+    check("id() = IP из tv.json", app.tv.id() == "192.168.1.106")
+
+
 def test_tv_json_changed_on_the_fly():
     _fresh()
     _pick()
@@ -85,6 +101,24 @@ def test_tv_json_changed_on_the_fly():
     tv.apply({"action": "key", "key": "KEY_PLAY"})
     check("новый tv.json подхвачен без перезапуска", SENT[-1][:3] == ("192.168.1.200", "KEY_PLAY", "ws"))
     check("кнопки видят то же", tvremote.config["ip"] == "192.168.1.200")
+    check("MAC/модель старого ТВ не остались", tvremote.config["mac"] == ""
+          and tvremote.config["model"] == "")
+
+
+def test_half_written_tv_json():
+    _fresh()
+    _pick()
+    t = time.time() + 5
+    with open(tvremote.CONFIG_FILE, "w", encoding="utf-8") as f:
+        f.write('{"ip": "192.168.1.2')          # недописан (читаем во время записи)
+    os.utime(tvremote.CONFIG_FILE, (t, t))
+    tvremote.current()
+    check("битый tv.json не стирает рабочий конфиг", tvremote.config["ip"] == "192.168.1.106")
+    with open(tvremote.CONFIG_FILE, "w", encoding="utf-8") as f:
+        json.dump({"ip": "192.168.1.200", "method": "ws"}, f)
+    os.utime(tvremote.CONFIG_FILE, (t, t))      # тот же mtime, что у недописанного
+    tvremote.current()
+    check("дописанный tv.json подхвачен (тот же mtime)", tvremote.config["ip"] == "192.168.1.200")
 
 
 def test_env_ip_read_after_dotenv():
@@ -132,11 +166,82 @@ def test_explicit_power_still_works():
     _pick()
     for q, on, key in (("выключи телевизор", False, "KEY_POWEROFF"),
                        ("вимкни телевізор", False, "KEY_POWEROFF"),
-                       ("вруби телек", True, "KEY_POWERON")):
+                       ("выключи свет и телек", False, "KEY_POWEROFF"),
+                       ("телек выключи", False, "KEY_POWEROFF"),
+                       ("вруби телек", True, "KEY_POWERON"),
+                       ("запусти телик", True, "KEY_POWERON")):
         SENT.clear()
         brain, _ = _brain([ToolCall("tv_power", {"on": on})])
         brain.understand(q)
         check(f"«{q}» → {key}", any(k == key for _, k, _ in SENT))
+
+
+def test_status_questions_never_power():
+    """Вопросы о состоянии и смешанные фразы: глагол есть, но просьбы про питание ТВ нет."""
+    _fresh()
+    _pick()
+    for q in ("телек включен?", "Телевизор выключен?", "Лампу выключи. Что по телеку?",
+              "Выключи лампу и скажи что идёт по телеку", "выключи звук на телеке",
+              "телек вырубился, почему?"):
+        for on in (False, True):
+            SENT.clear()
+            brain, _ = _brain([ToolCall("tv_power", {"on": on})])
+            brain.understand(q)
+            check(f"«{q}» + tv_power(on={on}) → питание не тронуто",
+                  not any(k.startswith("KEY_POWER") for _, k, _ in SENT))
+
+
+def test_power_in_dialog():
+    """«да» засчитывается только как ответ на ТОЛЬКО ЧТО заданный вопрос бота о питании ТВ;
+    старая команда лампе («Лампу выключи») просьбой выключить ТВ не считается."""
+    from intellect.core.interfaces import ChatMessage as M
+    _fresh()
+    _pick()
+    cases = (
+        ([M("user", "Лампу выключи"), M("assistant", "💡 Свет выключен")],
+         "Что щас идет по телеку", False),
+        ([M("user", "включи свет"), M("assistant", "💡 Свет включён"),
+          M("user", "что по телеку?"), M("assistant", "Показать состояние телевизора?")], "да", False),
+        ([M("user", "телек мешает спать"), M("assistant", "Выключить телевизор?")], "да", True),
+        ([M("user", "телек мешает спать"), M("assistant", "Выключить телевизор?")], "нет, не надо", False),
+    )
+    for hist, q, want in cases:
+        SENT.clear()
+        brain, _ = _brain([ToolCall("tv_power", {"on": False})])
+        brain.understand(q, history=hist)
+        got = any(k == "KEY_POWEROFF" for _, k, _ in SENT)
+        check(f"[{hist[-1].content}] → «{q}»: {'выключает' if want else 'питание не трогает'}",
+              got == want)
+
+
+def test_power_confirmed_in_dialog():
+    """«можешь выключить телик?» → бот уточнил → «да»: это явная просьба, выполнить.
+    А «да» без такой просьбы раньше в разговоре — питание не трогать."""
+    from intellect.core.interfaces import ChatMessage
+    _fresh()
+    _pick()
+    brain, _ = _brain([ToolCall("tv_power", {"on": False})])
+    hist = [ChatMessage("user", "можешь выключить телик?"),
+            ChatMessage("assistant", "Выключить телевизор?")]
+    SENT.clear()
+    brain.understand("да", history=hist)
+    check("«да» после «выключить телик?» → KEY_POWEROFF", any(k == "KEY_POWEROFF" for _, k, _ in SENT))
+    SENT.clear()
+    hist2 = [ChatMessage("user", "что по телеку?"), ChatMessage("assistant", "Не вижу экран.")]
+    brain.understand("да", history=hist2)
+    check("«да» без просьбы о питании → питание НЕ трогаем",
+          not any(k.startswith("KEY_POWER") for _, k, _ in SENT))
+
+
+def test_no_link_hint():
+    _fresh()
+    _pick()
+    def down(ip, key, m):
+        raise TimeoutError("ТВ ждёт «Разрешить?»")
+    tvremote._dispatch = down
+    brain, _ = _brain([ToolCall("tv_key", {"key": "KEY_PAUSE"})])
+    res = brain.understand("пауза")
+    check("нет связи → подсказка про «Разрешить»", "Нет связи" in res.reply and "Разрешить" in res.reply)
 
 
 def test_no_double_status():
@@ -168,36 +273,15 @@ def test_prompt_and_schema():
           reg.dispatch(ToolCall("tv_power", {"on": True}))["ok"])
 
 
-def test_power_confirmed_in_dialog():
-    """«можешь выключить телик?» → бот уточнил → «да»: это явная просьба, выполнить.
-    А «да» без такой просьбы раньше в разговоре — питание не трогать."""
-    from intellect.core.interfaces import ChatMessage
-    _fresh()
-    _pick()
-    brain, _ = _brain([ToolCall("tv_power", {"on": False})])
-    hist = [ChatMessage("user", "можешь выключить телик?"),
-            ChatMessage("assistant", "Выключить телевизор?")]
-    SENT.clear()
-    brain.understand("да", history=hist)
-    check("«да» после «выключить телик?» → KEY_POWEROFF", any(k == "KEY_POWEROFF" for _, k, _ in SENT))
-    SENT.clear()
-    hist2 = [ChatMessage("user", "что по телеку?"), ChatMessage("assistant", "Не вижу экран.")]
-    brain.understand("да", history=hist2)
-    check("«да» без просьбы о питании → питание НЕ трогаем",
-          not any(k.startswith("KEY_POWER") for _, k, _ in SENT))
-    SENT.clear()
-    brain2, _ = _brain([ToolCall("tv_power", {"on": True})])
-    brain2.understand("запусти телик")
-    check("«запусти телик» → KEY_POWERON", any(k == "KEY_POWERON" for _, k, _ in SENT))
-
-
 if __name__ == "__main__":
     print("=== Телевизор: единый конфиг + без случайного питания ===")
-    for t in (test_not_configured_is_honest, test_ai_uses_button_config_live,
-              test_tv_json_changed_on_the_fly, test_env_ip_read_after_dotenv,
-              test_working_method_is_saved, test_whats_on_tv_never_powers,
-              test_explicit_power_still_works, test_no_double_status,
-              test_status_when_off, test_prompt_and_schema, test_power_confirmed_in_dialog):
+    for t in (test_not_configured_is_honest, test_ai_uses_button_config_live, test_app_wiring,
+              test_tv_json_changed_on_the_fly, test_half_written_tv_json,
+              test_env_ip_read_after_dotenv, test_working_method_is_saved,
+              test_whats_on_tv_never_powers, test_explicit_power_still_works,
+              test_status_questions_never_power, test_power_in_dialog,
+              test_power_confirmed_in_dialog, test_no_link_hint,
+              test_no_double_status, test_status_when_off, test_prompt_and_schema):
         print(f"\n[{t.__name__}]"); t()
     print(f"\nИТОГ: {_ok} ok, {_fail} fail")
     sys.exit(1 if _fail else 0)

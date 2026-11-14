@@ -223,6 +223,7 @@ def test_cli_exit_code():
     import subprocess
     run = ("import sys; sys.path.insert(0, sys.argv[1]); import find_lamp\n"
            "find_lamp._subnets_to_scan = lambda: []\n"
+           "find_lamp.env_ip = lambda: ''\n"
            "find_lamp.discover = (lambda *a, **k: [{'ip': '192.168.1.110', 'name': 'Lamp', 'ver': '0.14', 'leds': 60}])"
            " if sys.argv[2] == 'found' else (lambda *a, **k: [])\n"
            "src = open(find_lamp.__file__, encoding='utf-8').read()\n"
@@ -233,6 +234,33 @@ def test_cli_exit_code():
                                text=True, encoding="utf-8", timeout=60) for m in ("found", "none")}
     check("python find_lamp.py: нашёл → код 0", codes["found"].returncode == 0 and "WLED_IP=192.168.1.110" in codes["found"].stdout)
     check("python find_lamp.py: не нашёл → код 1 (виден в start.log)", codes["none"].returncode == 1)
+    check("…и без пугающего «не найдена.» — только «пока не найдена»",
+          "пока не найдена" in codes["none"].stdout and "❌" not in codes["none"].stdout)
+    # START.bat: лампа по IP из .env отвечает → без скана всей сети
+    run2 = ("import sys; sys.path.insert(0, sys.argv[1]); import find_lamp\n"
+            "find_lamp.env_ip = lambda: '192.168.1.110'\n"
+            "find_lamp.check = lambda ip, *a, **k: ({'ip': ip, 'name': 'Lamp'}, '') if sys.argv[2] == 'ok' else (None, 'TimeoutError: timed out')\n"
+            "find_lamp.discover = lambda *a, **k: (print('DISCOVER_CALLED'), [])[1]\n"
+            "src = open(find_lamp.__file__, encoding='utf-8').read()\n"
+            "g = dict(find_lamp.__dict__, __name__='__main__')\n"
+            "exec(src[src.index('if __name__ == \"__main__\":'):], g)\n")
+    r = {m: subprocess.run([sys.executable, "-c", run2, str(ROOT), m], env=env, capture_output=True,
+                           text=True, encoding="utf-8", timeout=60) for m in ("ok", "silent")}
+    check("лампа из .env отвечает → код 0, сеть не сканируется",
+          r["ok"].returncode == 0 and "Лампа на связи: 192.168.1.110" in r["ok"].stdout and "DISCOVER_CALLED" not in r["ok"].stdout)
+    check("лампа из .env молчит → причина, затем скан, код 1",
+          r["silent"].returncode == 1 and "TimeoutError" in r["silent"].stdout and "DISCOVER_CALLED" in r["silent"].stdout)
+    import tempfile
+    d = Path(tempfile.mkdtemp())
+    (d / ".env").write_text("\ufeffWLED_BOT_TOKEN=x\nWLED_IP = 192.168.1.110\n", encoding="utf-8")
+    saved = find_lamp.__file__
+    try:
+        find_lamp.__file__ = str(d / "find_lamp.py")
+        check("env_ip читает WLED_IP из .env (BOM, пробелы)", find_lamp.env_ip() == "192.168.1.110")
+        (d / ".env").unlink()
+        check("env_ip без .env → пусто", find_lamp.env_ip() == "")
+    finally:
+        find_lamp.__file__ = saved
 
 
 # ---------- 4) запуск бота: лампа при старте молчит ----------

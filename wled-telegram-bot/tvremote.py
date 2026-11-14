@@ -48,7 +48,7 @@ LEGACY = "legacy"
 # приоритет над файлом tv.json.
 CONFIG_FILE = os.path.join(_DIR, "tv.json")
 config = {"ip": os.getenv("SAMSUNG_TV_IP", ""), "method": "", "mac": "", "name": "", "model": ""}
-_mtime = -1.0   # mtime прочитанного tv.json (-1 — ещё не читали)
+_mtime = -1.0   # mtime прочитанного/записанного tv.json (-1 — ещё не читали, None — файла нет)
 
 
 def _env_ip() -> str:
@@ -58,30 +58,32 @@ def _env_ip() -> str:
 
 
 def load_config():
+    """tv.json → общий config (на месте: этот словарь держат кнопки, веб-пульт и ИИ).
+    Значения из файла ЗАМЕНЯЮТ прежние — иначе после смены ТВ остались бы MAC/модель/
+    протокол старого. Нет файла или он битый/недописанный — config не трогаем."""
     global _mtime
+    data = None
+    try:
+        m = os.path.getmtime(CONFIG_FILE)
+        with open(CONFIG_FILE, encoding="utf-8") as f:
+            data = json.load(f)
+        _mtime = m                 # только после удачного чтения: недописанный перечитаем
+    except FileNotFoundError:
+        _mtime = None              # tv.json ещё нет (ТВ не настроен)
+    except Exception:
+        pass
+    if isinstance(data, dict):
+        for k in config:
+            config[k] = str(data.get(k) or "")
     env_ip = _env_ip()
     if env_ip:
         config["ip"] = env_ip
-    try:
-        _mtime = os.path.getmtime(CONFIG_FILE)
-    except OSError:
-        _mtime = None          # tv.json ещё нет (ТВ не настроен)
-        return
-    try:
-        with open(CONFIG_FILE, encoding="utf-8") as f:
-            data = json.load(f)
-        for k in config:
-            if k == "ip" and env_ip:
-                continue
-            if data.get(k):
-                config[k] = data[k]
-    except Exception:
-        pass
 
 
 def current() -> dict:
-    """Актуальный общий конфиг. Если tv.json поменяли на ходу (кнопки, веб-пульт,
-    руками) — перечитываем, без перезапуска бота. Возвращает тот же словарь config."""
+    """Актуальный общий конфиг. Если tv.json поменяли не через этот словарь (руками,
+    отдельно запущенный webapp.py) — перечитываем без перезапуска бота.
+    Возвращает тот же словарь config."""
     try:
         m = os.path.getmtime(CONFIG_FILE)
     except OSError:

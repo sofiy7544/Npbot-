@@ -166,14 +166,38 @@ def find_one(timeout: float = 2.0) -> str | None:
     return hits[0]["ip"] if hits else None
 
 
+def env_ip() -> str:
+    """WLED_IP из .env рядом с этим файлом (или "" — если не задан)."""
+    import os
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    try:
+        with open(path, encoding="utf-8-sig", errors="replace") as f:
+            for line in f:
+                k, _, v = line.strip().partition("=")
+                if k.strip() == "WLED_IP":
+                    return v.strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return ""
+
+
 if __name__ == "__main__":
     import sys
+    # START.bat: сначала адрес из .env (с повторами) — если лампа там, скан не нужен
+    ip = env_ip()
+    if ip:
+        print(f"Проверяю лампу из .env: {ip}…")
+        hit, why = check(ip)
+        if hit:
+            print(f"✅ Лампа на связи: {ip}  —  {hit['name']}")
+            sys.exit(0)
+        print(f"Лампа по {ip} пока не отвечает ({why}).")
     print("Ищу лампы WLED в локальной сети… (несколько секунд)")
     print("Сканирую подсети:", ", ".join(str(n) for n in _subnets_to_scan()) or "—")
     hits = discover()
     if not hits:
-        print("\n❌ Лампа WLED не найдена.")
-        print("Проверь:")
+        print("\nЛампа WLED пока не найдена — бот проверит её ещё раз после запуска.")
+        print("Если так и не появится, проверь:")
         print("  1) ПК и лампа в одной Wi-Fi (сейчас это «INTELLECT»).")
         print("  2) Лампа переподключена к НОВОМУ Wi-Fi (см. режим WLED-AP).")
         print("  3) Лампа включена в розетку.")
@@ -182,7 +206,7 @@ if __name__ == "__main__":
         for h in hits:
             leds = f", {h['leds']} LED" if h.get("leds") else ""
             print(f"   • {h['ip']}  —  {h['name']}  (WLED {h['ver']}{leds})")
-        print(f"\nВпиши в .env:  WLED_IP={hits[0]['ip']}")
+        print(f"\nВпиши в .env:  WLED_IP={hits[0]['ip']}  (бот при запуске делает это сам)")
     # START.bat пишет код в logs\start.log: 0 — лампа найдена, 1 — нет
     # (раньше всегда было 0, и по журналу нельзя было понять, нашёл ли он её).
     sys.exit(0 if hits else 1)

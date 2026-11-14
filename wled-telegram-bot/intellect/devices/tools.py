@@ -7,6 +7,8 @@ tools.py — регистрация инструментов устройств 
 """
 from __future__ import annotations
 
+import re
+
 from ..ai.tools import ToolRegistry
 
 COLOR_NAMES = {
@@ -130,13 +132,48 @@ def _lamp_status(lamp) -> dict:
 
 TV_NOT_SET = ("📺 Телевизор ещё не настроен. Открой /menu → «📺 Телевизор» → "
               "«🔍 Найти телевизор» — пульт не нужен, найду по сети.")
-TV_NO_LINK = "⚠️ Нет связи с телевизором — он включён и в той же Wi-Fi?"
+TV_NO_LINK = ("⚠️ Нет связи с телевизором. Он включён и в той же Wi-Fi? Если на экране "
+              "ТВ спрашивает «Разрешить?» — нажми «Разрешить».")
 TV_CANT_SEE = ("Что сейчас идёт на экране, я не вижу — телевизор по сети этого "
                "не сообщает.")
-# Явная просьба про питание ТВ. Без неё мозг не выполнит tv_power (вопрос
-# «что идёт по телеку» не должен выключать телевизор) — вместо него tv_status.
-TV_POWER_INTENT = (r"вкл|выкл|откл|вруб|выруб|отруб|гаси|погас|туши|вимк|вімк|"
-                   r"запуст|разбуд|розбуд|питани|power|\b(?:on|off)\b")
+
+# Явная просьба про ПИТАНИЕ ТВ. Без неё мозг не выполнит tv_power, а вызовет
+# tv_status: модель «проверяла» телевизор через tv_power («Что щас идет по телеку»).
+# Глагол — без состояний («включён», «вимкнений») и без «-ся» («вырубился»).
+_PWR = re.compile(r"(?:в|вы|от)ключ(?![её]н)|\b(?:вкл|выкл)\b|вруб|выруб|отруб|гаси|туши|"
+                  r"вимк(?!нен)|вімк(?!нен)|запуст|разбуд|розбуд|питани|power|"
+                  r"\b(?:on|off)\b", re.I)
+_TVN = re.compile(r"телев|телек|телик|телік|\bтв\b|\btv\b", re.I)
+_YES = re.compile(r"\b(?:да|ага|угу|давай|ок|окей|конечно|можно|так|yes)\b", re.I)
+_NO = re.compile(r"\b(?:не|нет|ні|no)\b|отмен|стоп", re.I)
+
+
+def _asks_tv_power(text: str) -> bool:
+    """Глагол питания и телевизор рядом, в одном предложении: «выключи телек»,
+    «телек выключи», «выключи свет и телек». Не просьба: «телек включён?»,
+    «выключи звук на телеке» (это mute), «выключи лампу и скажи, что идёт по телеку»."""
+    for sent in re.split(r"[.;:!?\n]+", text or ""):
+        w = re.findall(r"[\w-]+", sent)
+        for i, word in enumerate(w):
+            if (not _PWR.search(word) or word.lower().endswith(("ся", "сь"))
+                    or (i + 1 < len(w) and w[i + 1].lower().startswith("звук"))):
+                continue
+            if any(_TVN.search(x) for x in w[max(0, i - 1):i + 4]):
+                return True
+    return False
+
+
+def tv_power_requested(text: str, history=None) -> bool:
+    """Просили ли ЯВНО включить/выключить ТВ: в этой фразе — или коротким «да» в ответ
+    на только что заданный ботом вопрос «Выключить телевизор?». Старые реплики
+    («Лампу выключи» парой сообщений раньше) не считаются."""
+    if _asks_tv_power(text):
+        return True
+    last = history[-1] if history else None
+    t = (text or "").strip()
+    return bool(last is not None and getattr(last, "role", "") == "assistant"
+                and _asks_tv_power(getattr(last, "content", "")) and len(t.split()) <= 3
+                and not _NO.search(t) and (_YES.search(t) or _PWR.search(t) or _TVN.search(t)))
 
 
 def _tv_status(tv) -> dict:
@@ -172,7 +209,7 @@ def _register_tv(reg: ToolRegistry, tv) -> None:
             lambda a: do({"action": "power", "on": bool(a.get("on", True))},
                          "📺 Включаю телевизор" if a.get("on", True)
                          else "📺 Выключаю телевизор"),
-            intent=TV_POWER_INTENT, instead="tv_status")
+            intent=tv_power_requested, instead="tv_status")
 
     reg.add("tv_volume", "Громкость телевизора: dir=up|down, steps=1..10.",
             {"type": "object", "properties": {

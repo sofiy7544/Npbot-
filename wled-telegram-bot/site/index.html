@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>INTELLECT</title>
+<meta name="theme-color" content="#0b0b12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="INTELLECT">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><span class="dot" id="dot"></span>INTELLECT</div>
+    <div class="title" id="topTitle"></div>
+    <button class="iconbtn" id="btnSettings" title="Настройки" aria-label="Настройки">⚙️</button>
+  </header>
+  <div class="banner hidden" id="banner"></div>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar"></nav>
+    <main class="content">
+
+      <!-- ================= СВЕТ ================= -->
+      <section class="screen" data-screen="light">
+        <h2>Свет</h2>
+        <div class="card">
+          <div class="row between">
+            <div class="grow">
+              <div id="lampName" style="font-weight:600">Лампа</div>
+              <div class="muted" id="lampStatus">—</div>
+            </div>
+            <button class="power" id="lampPower" aria-label="Питание лампы">⏻</button>
+          </div>
+          <h3>Яркость <span id="briVal" class="muted" style="text-transform:none;letter-spacing:0"></span></h3>
+          <input type="range" id="bri" min="1" max="255" value="128" aria-label="Яркость">
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">Цвет</h3>
+          <canvas id="wheel" width="260" height="260"></canvas>
+          <div class="swatches" id="swatches" style="margin-top:14px"></div>
+          <h3>Белый свет</h3>
+          <div class="row"><span class="muted small">тёплый</span>
+            <input type="range" id="kelvin" min="2000" max="6500" step="100" value="3000" aria-label="Температура">
+            <span class="muted small">холодный</span></div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">Сцены</h3>
+          <div class="grid c3" id="scenes"></div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">Эффекты</h3>
+          <input class="field" id="fxSearch" placeholder="Поиск эффекта…" autocomplete="off">
+          <div class="list effects" id="effects" style="margin-top:10px"><div class="empty">Загружаю…</div></div>
+          <h3>Скорость</h3><input type="range" id="sx" min="0" max="255" value="128" aria-label="Скорость">
+          <h3>Интенсивность</h3><input type="range" id="ix" min="0" max="255" value="128" aria-label="Интенсивность">
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">Таймер выключения <span class="muted" id="lampTimer" style="text-transform:none;letter-spacing:0"></span></h3>
+          <div class="grid c5" id="lampTimerBtns"></div>
+        </div>
+      </section>
+
+      <!-- ================= ТВ ================= -->
+      <section class="screen" data-screen="tv">
+        <h2>Телевизор</h2>
+        <div class="card">
+          <div class="row between">
+            <div class="grow">
+              <div id="tvName" style="font-weight:600">Телевизор</div>
+              <div class="muted" id="tvStatus">не настроен</div>
+            </div>
+            <button class="power" id="tvPower" aria-label="Питание ТВ">⏻</button>
+          </div>
+        </div>
+        <div class="card" id="tvNotSet">
+          <div>📺 Телевизор ещё не настроен.</div>
+          <div class="muted small" style="margin:6px 0 12px">Найду сам по сети — пульт не нужен.</div>
+          <button class="btn primary block" data-act="tvscan">🔍 Найти телевизор</button>
+        </div>
+
+        <div class="card">
+          <div class="dpad">
+            <button class="k" data-key="KEY_MENU" title="Меню">☰</button>
+            <button class="k" data-key="KEY_UP">▲</button>
+            <button class="k" data-key="KEY_HOME" title="Домой">⌂</button>
+            <button class="k" data-key="KEY_LEFT">◀</button>
+            <button class="k ok" data-key="KEY_ENTER">OK</button>
+            <button class="k" data-key="KEY_RIGHT">▶</button>
+            <button class="k" data-key="KEY_RETURN" title="Назад">↩</button>
+            <button class="k" data-key="KEY_DOWN">▼</button>
+            <button class="k" data-key="KEY_EXIT" title="Выход">✕</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="keys">
+            <button class="btn" data-key="KEY_VOLDOWN">🔉 −</button>
+            <button class="btn" data-key="KEY_MUTE">🔇</button>
+            <button class="btn" data-key="KEY_VOLUP">🔊 +</button>
+            <button class="btn" data-key="KEY_CHDOWN">📺 −</button>
+            <button class="btn" data-key="KEY_SOURCE">⇄ Источник</button>
+            <button class="btn" data-key="KEY_CHUP">📺 +</button>
+            <button class="btn" data-key="KEY_REWIND">⏪</button>
+            <button class="btn" data-key="KEY_PLAY">▶︎</button>
+            <button class="btn" data-key="KEY_FF">⏩</button>
+            <button class="btn" data-key="KEY_PAUSE">⏸</button>
+            <button class="btn" data-key="KEY_STOP">⏹</button>
+            <button class="btn" data-key="KEY_INFO">ℹ︎</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">Приложения</h3>
+          <div class="apps" id="apps">
+            <button class="app yt" data-app="111299001912">▶ YouTube</button>
+            <button class="app nf" data-app="3201907018807">N Netflix</button>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <input class="field grow" id="ytQuery" placeholder="Найти на YouTube…">
+            <button class="btn primary" id="ytGo">Искать</button>
+          </div>
+          <button class="btn ghost sm" id="tvAppsLoad" style="margin-top:8px">Показать все приложения с ТВ</button>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">Цифры</h3>
+          <div class="grid c3" id="numpad"></div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">Таймер выключения ТВ <span class="muted" id="tvTimer" style="text-transform:none;letter-spacing:0"></span></h3>
+          <div class="grid c5" id="tvTimerBtns"></div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">Настройка телевизора</h3>
+          <div class="muted small" id="tvCfgInfo">—</div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn grow" data-act="tvscan">🔍 Найти телевизор</button>
+          </div>
+          <div class="list" id="tvScanList" style="margin-top:10px"></div>
+          <div class="row" style="margin-top:10px">
+            <input class="field grow" id="tvIp" placeholder="IP вручную, напр. 192.168.1.106" inputmode="decimal">
+            <button class="btn" id="tvIpSave">Сохранить</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= АССИСТЕНТ ================= -->
+      <section class="screen" data-screen="chat">
+        <h2>Ассистент</h2>
+        <div class="chat" id="chat">
+          <div class="msg sys">Напиши или скажи: «сделай уютно», «выключи телек через час», «что с компом»</div>
+        </div>
+        <div class="confirm hidden" id="confirmBox">
+          <button class="btn primary grow" id="btnConfirm">✅ Подтвердить</button>
+          <button class="btn danger grow" id="btnCancel">❌ Отмена</button>
+        </div>
+        <div class="composer">
+          <textarea class="field grow" id="chatText" rows="1" placeholder="Сообщение…"></textarea>
+          <button class="iconbtn hidden" id="btnMic" aria-label="Голос">🎤</button>
+          <button class="iconbtn" id="btnSend" aria-label="Отправить">➤</button>
+        </div>
+      </section>
+
+      <!-- ================= ДОМ ================= -->
+      <section class="screen" data-screen="home">
+        <h2>Дом</h2>
+        <h3>Автоматизации</h3>
+        <div class="list" id="autos"><div class="empty">Загружаю…</div></div>
+        <h3>Задачи</h3>
+        <div class="row" style="margin-bottom:10px">
+          <input class="field grow" id="taskText" placeholder="Новая задача…">
+          <button class="btn primary" id="taskAdd">＋</button>
+        </div>
+        <div class="list" id="tasks"></div>
+        <h3>Память</h3>
+        <div class="row" style="margin-bottom:10px">
+          <input class="field grow" id="memText" placeholder="Запомнить: …">
+          <button class="btn primary" id="memAdd">＋</button>
+        </div>
+        <div class="list" id="mems"></div>
+      </section>
+
+      <!-- ================= ПК ================= -->
+      <section class="screen" data-screen="pc">
+        <div class="row between"><h2 style="margin:6px 0 14px">Компьютер</h2>
+          <button class="btn sm" id="pcRefresh">Обновить</button></div>
+        <div id="pcCards"><div class="empty">Загружаю…</div></div>
+      </section>
+
+    </main>
+  </div>
+
+  <nav class="tabbar" id="tabbar"></nav>
+</div>
+
+<!-- ---------- шторка настроек / вход ---------- -->
+<div class="sheet-bg hidden" id="sheetBg">
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="row between">
+      <h2 id="sheetTitle">Настройки</h2>
+      <button class="iconbtn" id="sheetClose" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="muted small" id="sheetHint"></div>
+    <label for="apiInput">Адрес бота (API)</label>
+    <input class="field" id="apiInput" placeholder="https://… или http://192.168.1.107:8090" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url">
+    <label for="pwdInput">Пароль</label>
+    <input class="field" id="pwdInput" type="password" placeholder="пароль из Telegram (/panel)" autocomplete="current-password">
+    <div class="err" id="sheetErr"></div>
+    <button class="btn primary block" id="btnLogin" style="margin-top:6px">Подключиться</button>
+    <div class="row" style="margin-top:12px; flex-wrap:wrap; gap:8px">
+      <span class="chip" id="chipVer">версия —</span>
+      <span class="chip" id="chipPing">нет связи</span>
+    </div>
+    <div class="muted small" id="panelLinks" style="margin-top:12px"></div>
+    <button class="btn ghost sm" id="btnLogout" style="margin-top:14px">Выйти (забыть пароль)</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>

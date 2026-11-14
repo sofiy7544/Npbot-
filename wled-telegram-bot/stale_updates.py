@@ -8,19 +8,24 @@ Telegram хранит непрочитанные апдейты до 24 часо
 + 13 ссылок, плюс ответ ИИ на каждое «Ку»/«Ау» — «Ого ты заспамил».
 
 Правила:
-  • Сообщение (и правка сообщения) старше «момента запуска минус GRACE_SEC» —
-    устаревшее: не обрабатываем. Сообщение, отправленное во время 5-секундного
-    перезапуска START.bat или пока бот грузится, моложе — обрабатывается как обычно.
-    Порог фиксирован (BOOT_TS берётся при импорте), поэтому даже если часы ПК
-    спешат, это задевает лишь первые минуты после запуска, а не всё время работы.
+  • Старым может быть ТОЛЬКО то, что уже лежало в очереди Telegram при запуске
+    (первые pending_update_count апдейтов из getWebhookInfo). Всё, что пришло
+    после, обрабатывается всегда — даже если часы ПК спешат.
+  • Сообщение из этой очереди (и правка сообщения) старше «момента запуска минус
+    GRACE_SEC» — устаревшее: не обрабатываем. Сообщение, отправленное во время
+    5-секундного перезапуска START.bat или пока бот грузится, моложе — обрабатывается.
   • Нажатие кнопки (callback_query) в Telegram НЕ имеет времени нажатия, а
     callback_query.message.date — это время, когда бот прислал панель (по нему
     судить нельзя: сломались бы все кнопки на вчерашней панели). Поэтому старым
-    считаем нажатие, которое уже лежало в очереди при запуске (первые
-    pending_update_count апдейтов из getWebhookInfo): к моменту запуска оно
-    старше времени загрузки бота, а кнопки делают реальные действия (ТВ, лампа).
+    считаем нажатие из очереди при запуске: кнопки делают реальные действия (ТВ, лампа).
     Кнопки старых панелей, нажатые ПОСЛЕ запуска, работают как обычно.
-  • На все пропущенные апдейты чата — ОДНО уведомление «повтори, если нужно».
+  • Размер очереди неизвестен (getWebhookInfo не ответил) — судим только по дате
+    и только первые WINDOW_SEC после запуска: врущие часы ПК не сделают бота «глухим».
+  • На все пропущенные апдейты чата — ОДНО уведомление «повтори, если нужно»:
+    его шлют, когда очередь разобрана целиком (или перед ответом на свежее сообщение
+    этого чата), и не больше одного раза на чат.
+  • Не покрыто: долгий обрыв интернета при РАБОТАЮЩЕМ боте — накопленное после
+    восстановления связи не «стартовая» очередь, на него бот ответит как раньше.
 
 Модуль — только стандартная библиотека (подключается до telegram/httpx).
 """
@@ -35,6 +40,11 @@ BOOT_TS = time.time()
 # Запас на перезапуск: пауза START.bat (5 с) + старт Python, а при ручном
 # запуске START.bat — ещё автозапуск/поиск лампы (~40 с по logs\start.log).
 GRACE_SEC = 120.0
+
+# Очередь простоя Telegram отдаёт сразу после запуска опроса; дольше этого
+# окна (от arm()) «старым» не считаем ничего — страховка от неверного
+# pending_update_count и от неизвестного размера очереди.
+WINDOW_SEC = 60.0
 
 
 def plural(n: int, one: str, few: str, many: str) -> str:
@@ -84,18 +94,35 @@ def notice_text(msgs: int, taps: int, first: float | None, last: float | None,
 class StaleGate:
     """Решает, устарел ли апдейт, и копит пропущенное по чатам."""
 
-    def __init__(self, boot_ts: float | None = None, grace: float = GRACE_SEC):
+    def __init__(self, boot_ts: float | None = None, grace: float = GRACE_SEC,
+                 window: float = WINDOW_SEC, clock=time.monotonic):
         self.cutoff = (BOOT_TS if boot_ts is None else boot_ts) - grace
         # Сколько первых апдейтов лежало в очереди Telegram до запуска (getWebhookInfo).
         # None — неизвестно (запрос не удался): тогда судим только по дате.
         self.backlog: int | None = None
+        self.window = window
+        self._clock = clock
+        self._t0: float | None = None          # начало опроса (arm) — отсчёт окна
         self._chats: dict[int, dict] = {}
+        self._notified: set[int] = set()       # уже уведомлённые чаты (второго не будет)
 
     def set_backlog(self, pending_update_count) -> None:
         try:
             self.backlog = max(0, int(pending_update_count or 0))
         except (TypeError, ValueError):
             self.backlog = None
+
+    def arm(self) -> None:
+        """Опрос Telegram вот-вот начнётся (конец post_init): с этого момента — окно."""
+        self._t0 = self._clock()
+
+    def _window_over(self) -> bool:
+        return self._t0 is not None and self._clock() - self._t0 > self.window
+
+    @property
+    def backlog_done(self) -> bool:
+        """Очередь простоя разобрана: всё, что лежало при запуске, уже прошло (или вышло окно)."""
+        return self.backlog == 0 or self._window_over()
 
     def is_stale(self, update) -> bool:
         """Вызывать РОВНО ОДИН раз на каждый апдейт (по порядку, как их отдаёт PTB).
@@ -104,6 +131,11 @@ class StaleGate:
         всё, что пришло после, обрабатывается всегда — даже если часы ПК
         спешат (иначе бот первые минуты игнорировал бы свежие сообщения).
         """
+        if self._t0 is None:
+            self.arm()
+        if self._window_over():
+            self.backlog = 0                    # очередь давно отдана — дальше только живое
+            return False
         known = self.backlog is not None
         in_backlog = known and self.backlog > 0
         if in_backlog:
@@ -121,14 +153,16 @@ class StaleGate:
         return ts is not None and ts < self.cutoff
 
     def record(self, update) -> bool:
-        """Учесть пропущенный апдейт. True — первый в этом чате (пора планировать уведомление)."""
+        """Учесть пропущенный апдейт. True — первый в этом чате (пора планировать уведомление).
+        Чат, которому уведомление уже ушло, второго не получит: апдейт просто пропускаем."""
         chat = getattr(update, "effective_chat", None)
-        if chat is None:
+        if chat is None or chat.id in self._notified:
             return False
         st = self._chats.get(chat.id)
         is_first = st is None
         if is_first:
             st = self._chats[chat.id] = {"msgs": 0, "taps": 0, "first": None, "last": None}
+        st["touched"] = self._clock()
         if getattr(update, "callback_query", None) is not None:
             st["taps"] += 1
         else:
@@ -143,9 +177,23 @@ class StaleGate:
     def has_pending(self, chat_id: int) -> bool:
         return chat_id in self._chats
 
+    def pending_chats(self) -> list[int]:
+        return list(self._chats)
+
+    def ready(self, chat_id: int, quiet: float) -> bool:
+        """Запасной путь для таймера: пора уведомлять чат? Да — если очередь разобрана,
+        а при неизвестном размере очереди — если старые апдейты чата не приходят quiet сек."""
+        st = self._chats.get(chat_id)
+        if st is None:
+            return False
+        if self.backlog_done:
+            return True
+        return self.backlog is None and self._clock() - st["touched"] >= quiet
+
     def pop_notice(self, chat_id: int, now: float | None = None) -> str | None:
         """Забрать текст уведомления для чата (один раз) или None."""
         st = self._chats.pop(chat_id, None)
         if not st or not (st["msgs"] or st["taps"]):
             return None
+        self._notified.add(chat_id)
         return notice_text(st["msgs"], st["taps"], st["first"], st["last"], now)

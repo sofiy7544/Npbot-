@@ -29,6 +29,7 @@ import os
 import json
 import html
 import asyncio
+import threading
 import logging
 import urllib.request
 from datetime import datetime
@@ -533,18 +534,13 @@ async def _send_dashboard(msg):
 
 
 async def _web_hint(msg):
-    """Отдельным сообщением — ссылка на веб-пульт (лампа + ТВ)."""
-    if not WEB_URL:
+    """Отдельным сообщением — ссылка на единый сайт панели (лампа, ТВ, ИИ, ПК)."""
+    if not (INTELLECT_WEB_URL or TUNNEL_URL or PAGES_URL):
         return
-    extra = (f"\n\n🧠 <b>Панель INTELLECT 2.0</b> (AI, память, авто, ПК):\n{INTELLECT_WEB_URL}"
-             if INTELLECT_WEB_URL else "")
     await msg.reply_text(
-        f"📱 <b>Веб-пульт</b> (лампа + телевизор):\n{WEB_URL}{extra}\n\n"
-        "Открой ссылку в <b>Safari</b> на телефоне → «Поделиться» → "
-        "«На экран „Домой\"» — будет как приложение.",
-        parse_mode=ParseMode.HTML,
-        disable_web_page_preview=True,
-    )
+        _panel_text() + "\n\nОткрой ссылку в <b>Safari</b> → «Поделиться» → "
+        "«На экран „Домой\"» — будет как приложение. Подробнее: /panel",
+        parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
 
 _BANNER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "cover.png")
@@ -699,7 +695,82 @@ async def cmd_fxlist(update, context):
 # ----------------------- Кнопки -----------------------
 # ===================== INTELLECT 2.0 (ядро) =====================
 INTELLECT = None                 # экземпляр IntellectApp (или None → базовый режим)
-INTELLECT_WEB_URL = None         # URL новой панели INTELLECT 2.0
+INTELLECT_WEB_URL = None         # URL панели в домашней сети (единый сайт, :8090)
+INTELLECT_WEB = None             # объект IntellectWeb (API сайта)
+TUNNEL = None                    # tunnel.Tunnel — выход панели в интернет (2.3.0)
+TUNNEL_URL = None                # текущий публичный адрес туннеля (меняется при перезапуске)
+PAGES_URL = (os.getenv("PAGES_URL") or "").strip().rstrip("/") or None
+
+
+def _panel_info() -> dict:
+    """Где сейчас живёт панель — для /panel, сайта (/api/panel) и уведомлений."""
+    from intellect.web.api import WebAPI
+    pw = os.getenv("ACCESS_PASSWORD", "5750")
+    return {"lan_url": INTELLECT_WEB_URL, "tunnel_url": TUNNEL_URL, "pages_url": PAGES_URL,
+            "password_required": bool(pw), "password": pw,
+            "tunnel_enabled": os.getenv("TUNNEL", "0").strip() not in ("0", "", "no", "off"),
+            "weak_password": WebAPI.password_is_weak(pw)}
+
+
+def _panel_text() -> str:
+    import panel_link
+    i = _panel_info()
+    return panel_link.panel_message(lan_url=i["lan_url"], tunnel_url=i["tunnel_url"],
+                                    pages_url=i["pages_url"], password=i["password"],
+                                    tunnel_enabled=i["tunnel_enabled"], weak_password=i["weak_password"])
+
+
+async def cmd_panel(update, context):
+    """/panel — ссылка на сайт панели и пароль."""
+    if not allowed(update):
+        await _prompt_password(update.message, update.effective_user.id); return
+    await update.message.reply_text(_panel_text(), parse_mode=ParseMode.HTML,
+                                    disable_web_page_preview=True)
+
+
+def _start_tunnel(app_ref):
+    """Поднять туннель Cloudflare к панели; при появлении адреса — опубликовать
+    его на GitHub Pages (если есть токен) и прислать владельцу в Telegram."""
+    global TUNNEL
+    from intellect.web.api import WebAPI
+    import panel_link
+    import tunnel as _tunnel
+    pw = os.getenv("ACCESS_PASSWORD", "5750")
+    if WebAPI.password_is_weak(pw):
+        log.warning("🌐 Туннель НЕ поднимаю: пароль панели слабый (ACCESS_PASSWORD от 6 символов).")
+        return
+    port = int(os.getenv("INTELLECT_WEB_PORT", "8090"))
+    repo, token = os.getenv("GITHUB_PAGES_REPO", "").strip(), os.getenv("GITHUB_TOKEN", "").strip()
+    owners = sorted(ALLOWED_USERS)
+
+    def _on_url(url):
+        global TUNNEL_URL
+        TUNNEL_URL = url
+        if not url:
+            return
+        log.info(f"🌐 Панель доступна из интернета: {url}")
+        if repo and token:
+            threading.Thread(target=panel_link.publish_api_url, args=(repo, token, url),
+                             daemon=True, name="publish-api-url").start()
+        if owners and app_ref is not None:
+            async def _notify():
+                for uid in owners[:3]:
+                    try:
+                        await app_ref.bot.send_message(uid, _panel_text(), parse_mode=ParseMode.HTML,
+                                                       disable_web_page_preview=True)
+                    except Exception as e:
+                        log.warning(f"не смог прислать адрес панели {uid}: {e}")
+            try:
+                asyncio.run_coroutine_threadsafe(_notify(), _MAIN_LOOP[0]) if _MAIN_LOOP[0] else None
+            except Exception as e:
+                log.warning(f"уведомление о панели: {e}")
+
+    TUNNEL = _tunnel.Tunnel()
+    TUNNEL.on_url(_on_url)
+    TUNNEL.start(port)
+
+
+_MAIN_LOOP = [None]   # event loop бота — чтобы слать сообщения из потока туннеля
 _pending_confirm: dict[int, str] = {}   # uid → фраза, ждущая подтверждения
 
 
@@ -1091,7 +1162,10 @@ async def on_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ----------------------- Пропущенное, пока бот был выключен -----------------------
 STALE = stale_updates.StaleGate()
-_STALE_NOTICE_DELAY = 2.0   # сек: дождаться, пока PTB раздаст весь накопленный пакет
+# Уведомление уходит, когда разобрана вся очередь простоя (или перед ответом на
+# свежее сообщение этого чата). Таймер — только если размер очереди неизвестен:
+# столько секунд тишины в потоке старых апдейтов чата.
+_STALE_NOTICE_DELAY = 2.0
 
 
 async def _send_stale_notice(bot, chat_id: int):
@@ -1108,9 +1182,18 @@ async def _send_stale_notice(bot, chat_id: int):
         log.warning(f"Уведомление о пропущенном не отправилось: {e}")
 
 
+async def _flush_stale_notices(bot):
+    """Очередь простоя разобрана — по одному уведомлению в каждый чат с пропущенным."""
+    for chat_id in STALE.pending_chats():
+        await _send_stale_notice(bot, chat_id)
+
+
 async def _send_stale_notice_later(bot, chat_id: int):
-    await asyncio.sleep(_STALE_NOTICE_DELAY)
-    await _send_stale_notice(bot, chat_id)
+    """Запасной путь, если конец очереди не виден (getWebhookInfo не ответил)."""
+    while STALE.has_pending(chat_id):
+        await asyncio.sleep(_STALE_NOTICE_DELAY)
+        if STALE.ready(chat_id, _STALE_NOTICE_DELAY):
+            await _send_stale_notice(bot, chat_id)
 
 
 async def _stale_gate(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1120,30 +1203,41 @@ async def _stale_gate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not STALE.is_stale(update):
         if chat is not None and STALE.has_pending(chat.id):
             await _send_stale_notice(context.bot, chat.id)   # уведомление — раньше ответа на свежее
+        if STALE.backlog_done:
+            await _flush_stale_notices(context.bot)
         return
     q = update.callback_query
+    answered = False
     if q is not None:
         try:
             # нажатие во время запуска ещё можно «ответить» — пусть просто нажмёт снова
             await q.answer("⏸ Я был выключен — нажми кнопку ещё раз.", show_alert=True)
             answered = True
         except Exception:
-            answered = False   # нажатие слишком старое — сообщим в чате вместе с остальным
+            pass   # нажатие слишком старое — сообщим в чате вместе с остальным
         log.info(f"⏭ Пропускаю нажатие кнопки «{q.data}» из очереди простоя")
-        if answered:
-            raise ApplicationHandlerStop
     else:
         m = update.effective_message
         when = f"{m.date.astimezone():%H:%M}" if m is not None and m.date else "?"
         text = ((m.text or m.caption or "") if m is not None else "")[:60]
         log.info(f"⏭ Пропускаю старое сообщение ({when}): «{text}»")
-    if STALE.record(update) and chat is not None:
+    if not answered and STALE.record(update) and chat is not None and STALE.backlog is None:
         context.application.create_task(_send_stale_notice_later(context.bot, chat.id))
+    if STALE.backlog_done:
+        # последний апдейт очереди простоя — одно уведомление на чат, с полным счётом
+        await _flush_stale_notices(context.bot)
     raise ApplicationHandlerStop
+
 
 
 # ----------------------- Жизненный цикл -----------------------
 async def _post_init(app):
+    _MAIN_LOOP[0] = asyncio.get_running_loop()
+    if INTELLECT_WEB is not None and os.getenv("TUNNEL", "0").strip() not in ("0", "", "no", "off"):
+        try:
+            _start_tunnel(app)
+        except Exception as e:
+            log.warning(f"Туннель не запустился: {type(e).__name__}: {e}")
     # Прогреть кэш: имя/эффекты и текущее состояние (не критично, если лампа спит).
     await wled_meta()
     await wled_sync()
@@ -1164,6 +1258,7 @@ async def _post_init(app):
             BotCommand("find", "Найти лампу в сети"),
             BotCommand("fxlist", "Список эффектов с лампы"),
             BotCommand("cancel", "Отменить перезагрузку/выключение ПК"),
+            BotCommand("panel", "Сайт панели и пароль"),
         ])
     except Exception as e:
         log.warning(f"set_my_commands: {e}")
@@ -1175,6 +1270,7 @@ async def _post_init(app):
             log.info(f"📬 Пока бот был выключен, накопилось апдейтов: {info.pending_update_count}")
     except Exception as e:
         log.warning(f"getWebhookInfo: {e}")
+    STALE.arm()   # дальше сразу опрос: с этого момента отсчёт окна очереди простоя
 
 
 async def _post_shutdown(app):
@@ -1281,19 +1377,21 @@ def main():
     if INTELLECT is not None and INTELLECT.wled.ip != WLED_IP:
         INTELLECT.wled.ip = WLED_IP   # тот же IP лампы, что нашёл автопоиск
 
-    # Новая мобильная панель INTELLECT 2.0 (отдельный порт; старый пульт остаётся)
-    global INTELLECT_WEB_URL
+    # Единый сайт панели (site/) + API на :8090; наружу — через туннель (2.3.0)
+    global INTELLECT_WEB_URL, INTELLECT_WEB
     if INTELLECT is not None:
         try:
             from intellect.web import start_web
             intel_port = int(os.getenv("INTELLECT_WEB_PORT", "8090"))
-            INTELLECT_WEB_URL = start_web(INTELLECT, intel_port)
-            log.info(f"🧠 Панель INTELLECT 2.0: {INTELLECT_WEB_URL}")
+            origins = [o.strip() for o in os.getenv("WEB_ALLOWED_ORIGINS", "").split(",") if o.strip()]
+            INTELLECT_WEB_URL, INTELLECT_WEB = start_web(INTELLECT, intel_port, allowed_origins=origins)
+            INTELLECT_WEB.api.panel_provider = _panel_info
+            log.info(f"🖥 Панель INTELLECT (дома): {INTELLECT_WEB_URL}")
         except Exception as e:
             log.warning(f"Панель INTELLECT не запустилась: {e}")
 
-    # Веб-приложение для телефона (айфон/андроид). WEB_PORT=0 — отключить.
-    web_port = int(os.getenv("WEB_PORT", "8080"))
+    # Старый веб-пульт :8080 — заменён единым сайтом; включается только WEB_PORT=8080.
+    web_port = int(os.getenv("WEB_PORT", "0") or 0)
     if web_port:
         try:
             import webapp as _webapp_mod
@@ -1335,6 +1433,7 @@ def main():
     app.add_handler(CommandHandler("fxlist", cmd_fxlist))
     app.add_handler(CommandHandler("find", cmd_find))
     app.add_handler(CommandHandler("cancel", cmd_cancel))
+    app.add_handler(CommandHandler("panel", cmd_panel))
     app.add_handler(CallbackQueryHandler(on_button))
     # только НОВЫЕ сообщения: правка старого (edited_message) раньше роняла on_text
     # (update.message там None → AttributeError)
@@ -1348,7 +1447,9 @@ def main():
                           if INTELLECT is not None else "ВЫКЛ",
         "Ядро: IP лампы": getattr(getattr(INTELLECT, "wled", None), "ip", "—"),
         "Панель INTELLECT": INTELLECT_WEB_URL or "—",
-        "Приложение для телефона": globals().get("WEB_URL") or "—",
+        "Приложение для телефона": globals().get("WEB_URL") or "— (заменено единым сайтом)",
+        "Туннель (TUNNEL)": os.getenv("TUNNEL", "0"),
+        "Сайт на GitHub Pages": PAGES_URL or "—",
         "Запуск": "до подключения к Telegram дошли",
     })
     diaglog.write_diag(_diag)

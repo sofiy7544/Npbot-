@@ -140,64 +140,137 @@ def test_clock_skew_is_bounded():
     check("очередь пуста → даже «старое» по дате не трогаем (это не накопленное)", g4.is_stale(msg(real_boot - 3600)) is False)
 
 
+def test_window_and_single_notice():
+    """Конец очереди виден по счётчику; окно страхует неверный/неизвестный размер
+    очереди; второго уведомления чату не бывает."""
+    now = [1000.0]
+    clock = lambda: now[0]
+    t_old = BOOT - 3 * 3600
+    # размер очереди неизвестен + часы ПК спешат на 10 мин: по дате судим только в окне
+    g = su.StaleGate(boot_ts=BOOT + 600, clock=clock)
+    g.arm()
+    # (цена неизвестности: в окне живое при спешащих часах ещё может счесться старым)
+    g.is_stale(msg(BOOT + 5))
+    now[0] += su.WINDOW_SEC + 1
+    check("…но после окна — обработано (бот не «глохнет» надолго)", g.is_stale(msg(BOOT + 70)) is False)
+    check("после окна очередь считается разобранной", g.backlog_done)
+    # Telegram пообещал 5, отдал 2 (часть устарела): после окна кнопки снова работают
+    g2 = su.StaleGate(boot_ts=BOOT, clock=clock)
+    g2.set_backlog(5); g2.arm()
+    g2.is_stale(msg(t_old)); g2.is_stale(msg(t_old))
+    check("pending_update_count больше, чем пришло: в окне нажатие ещё считается старым",
+          g2.is_stale(press(BOOT)) is True and not g2.backlog_done)
+    now[0] += su.WINDOW_SEC + 1
+    check("…после окна — работает", g2.is_stale(press(BOOT)) is False and g2.backlog_done)
+    # конец очереди известен: готовность уведомлять — только когда очередь разобрана
+    g3 = su.StaleGate(boot_ts=BOOT, clock=clock)
+    g3.set_backlog(3); g3.arm()
+    for _ in range(2):
+        u = msg(t_old)
+        g3.is_stale(u); g3.record(u)
+    now[0] += 30                                     # долгая пауза ВНУТРИ очереди (медленная сеть)
+    check("очередь ещё не разобрана → таймер не шлёт (не будет «половинного» уведомления)",
+          not g3.ready(42, 2.0) and not g3.backlog_done)
+    u = press(BOOT); g3.is_stale(u); g3.record(u)
+    check("последний апдейт очереди → очередь разобрана, уведомлять пора", g3.backlog_done and g3.ready(42, 2.0))
+    text = g3.pop_notice(42, now=BOOT)
+    check("в уведомлении полный счёт: 2 сообщения и 1 нажатие", "2 сообщения и 1 нажатие кнопки" in text)
+    late = msg(t_old)
+    check("старое, пришедшее ПОСЛЕ уведомления, второго уведомления не вызывает",
+          g3.record(late) is False and not g3.has_pending(42) and g3.pop_notice(42) is None)
+    # очередь неизвестна: таймер ждёт тишины в потоке старых апдейтов
+    g4 = su.StaleGate(boot_ts=BOOT, clock=clock)
+    g4.arm()
+    u = msg(t_old); g4.is_stale(u); g4.record(u)
+    check("очередь неизвестна: сразу после старого — не готов", not g4.ready(42, 2.0))
+    now[0] += 2.5
+    check("…после 2 с тишины — готов", g4.ready(42, 2.0))
+
+
 # ---------- сквозной: настоящий wled_bot.py + поддельный Telegram ----------
 PRE_BACKLOG = r'''
 import sys, os, json, asyncio, runpy, time
+_real_time = time.time                      # часы Telegram (верные)
+SCEN = os.environ.get("E2E_SCEN", "downtime")
+SKEW = float(os.environ.get("E2E_SKEW", "0"))
+if SKEW:
+    time.time = lambda: _real_time() + SKEW   # часы ПК врут
 import telegram.request._httpxrequest as hx
 CHAT = {"id": 42, "type": "private", "first_name": "Stanley"}
 USER = {"id": 42, "is_bot": False, "first_name": "Stanley"}
 BOT = {"id": 1, "is_bot": True, "first_name": "INTELLECT", "username": "x_bot"}
-n = {"gu": 0, "msg": 1000}; ST = {}
-def _msg(uid, ts, text):
+n = {"gu": 0, "msg": 1000, "uid": 100}; ST = {}; LAST = [_real_time()]
+def _msg(ts, text):
+    n["uid"] += 1; uid = n["uid"]
     m = {"message_id": uid, "date": int(ts), "chat": CHAT, "from": USER, "text": text}
     if text.startswith("/"):
         m["entities"] = [{"type": "bot_command", "offset": 0, "length": len(text)}]
     return {"update_id": uid, "message": m}
-def _cb(uid, cid, data, dash_ts):
+def _cb(cid, data, dash_ts):
+    n["uid"] += 1; uid = n["uid"]
     return {"update_id": uid, "callback_query": {"id": cid, "from": USER, "chat_instance": "ci", "data": data,
             "message": {"message_id": 7, "date": int(dash_ts), "chat": CHAT, "from": BOT, "text": "panel"}}}
 def backlog(now):
     t0 = now - 3 * 3600
+    ups = []
+    if SCEN == "slowcb":                    # много старых нажатий, сеть/ПК медленные
+        ups += [_msg(t0 + i * 60, "Ку") for i in range(5)]
+        ups += [_cb("cbOLD%d" % i, "toggle", t0 - 600) for i in range(6)]
+        ups += [_msg(t0 + 600 + i * 60, "Ау") for i in range(5)]
+        return ups
+    if SCEN in ("fastclock", "noinfo"):
+        return [_msg(t0 + i * 60, "Ку") for i in range(3)]
     texts = ["И как?", "Ворк?", "Не запустился получается", "Ау", "Ку", "Ку", "Ну", "И шо"]
-    ups, uid = [], 100
     for i in range(13):
-        ups.append(_msg(uid, t0 + i * 800, "/start")); uid += 1
+        ups.append(_msg(t0 + i * 800, "/start"))
         if i < len(texts):
-            ups.append(_msg(uid, t0 + i * 800 + 60, texts[i])); uid += 1
-    ups.append(_cb(uid, "cbOLD", "toggle", t0 - 600)); uid += 1        # нажата часы назад
-    ups.append(_msg(uid, now - 8, "Лампу выключи")); uid += 1           # во время перезапуска
-    ups.append(_cb(uid, "cbBOOT", "toggle", t0 - 600)); uid += 1       # нажата, пока бот грузился
+            ups.append(_msg(t0 + i * 800 + 60, texts[i]))
+    ups.append(_cb("cbOLD", "toggle", t0 - 600))        # нажата часы назад
+    ups.append(_msg(now - 8, "Лампу выключи"))           # во время перезапуска
+    ups.append(_cb("cbBOOT", "toggle", t0 - 600))       # нажата, пока бот грузился
     return ups
 async def fake(self, url, method, request_data=None, read_timeout=None, write_timeout=None,
                connect_timeout=None, pool_timeout=None):
     m = url.rsplit("/", 1)[-1]
     p = request_data.parameters if request_data else {}
     ok = lambda r: (200, json.dumps({"ok": True, "result": r}).encode())
+    now = _real_time()
+    if m != "getUpdates":
+        LAST[0] = now
     if m == "getMe":
         return ok(BOT)
     if m == "getWebhookInfo":
-        ST["bl"] = backlog(time.time())
+        ST["bl"] = backlog(now)
+        if SCEN == "noinfo":                    # Telegram не ответил — размер очереди неизвестен
+            return 502, json.dumps({"ok": False, "error_code": 502, "description": "Bad Gateway"}).encode()
         return ok({"url": "", "has_custom_certificate": False, "pending_update_count": len(ST["bl"])})
     if m == "getUpdates":
         n["gu"] += 1
         if n["gu"] == 1:
-            return ok(ST.get("bl") or backlog(time.time()))
-        if n["gu"] == 2:
+            return ok(ST.get("bl") or backlog(now))
+        if n["gu"] == 2 and SCEN == "downtime":
             await asyncio.sleep(5)
-            return ok([_cb(900, "cbLIVE", "refresh", time.time() - 3 * 3600)])   # старая панель, живое нажатие
+            return ok([_cb("cbLIVE", "refresh", now - 3 * 3600)])   # старая панель, живое нажатие
+        if n["gu"] == 2 and SCEN == "fastclock":
+            await asyncio.sleep(1)
+            return ok([_msg(_real_time() - 1, "Лампу выключи")])    # набрано только что
+        if n["gu"] == 6 and SCEN == "noinfo":
+            return ok([_msg(_real_time() - 1, "Лампу выключи")])    # живое — уже после уведомления
         await asyncio.sleep(1)
-        if n["gu"] >= 5:
+        if n["gu"] >= 5 and _real_time() - LAST[0] > 3:
             print("E2E_DONE", flush=True)
         return ok([])
     if m in ("sendMessage", "sendPhoto", "editMessageText"):
         n["msg"] += 1
         txt = str(p.get("text") or p.get("caption") or "")
         print("API %s %s" % (m, txt.replace("\n", " / ")[:160]), flush=True)
-        return ok({"message_id": n["msg"], "date": int(time.time()), "chat": CHAT, "from": BOT, "text": txt})
+        return ok({"message_id": n["msg"], "date": int(now), "chat": CHAT, "from": BOT, "text": txt})
     if m == "answerCallbackQuery":
-        cid = p.get("callback_query_id")
+        cid = str(p.get("callback_query_id"))
+        if SCEN == "slowcb":
+            await asyncio.sleep(0.6)
         print("API answerCallbackQuery %s %s" % (cid, p.get("text") or ""), flush=True)
-        if cid == "cbOLD":
+        if cid.startswith("cbOLD"):
             return 400, json.dumps({"ok": False, "error_code": 400, "description":
                 "Bad Request: query is too old and response timeout expired or query ID is invalid"}).encode()
         return ok(True)
@@ -208,26 +281,43 @@ runpy.run_path(sys.argv[0], run_name="__main__")
 '''
 
 
-def test_backlog_after_downtime_e2e():
+def _free_port():
+    import socket as _s
+    with _s.socket() as t:
+        t.bind(("127.0.0.1", 0))
+        return t.getsockname()[1]
+
+
+def _run_e2e(scen="downtime", skew=0.0, limit=150):
+    """Настоящий wled_bot.py в копии проекта; вернуть (строки вывода, вызовы API)."""
+    import threading
     work = Path(tempfile.mkdtemp()) / "bot"
     shutil.copytree(ROOT, work, ignore=shutil.ignore_patterns(
         ".env", "__pycache__", "*.db", "*.log", "pc-reports", ".git", "logs"))
     (work / ".env").write_text("WLED_BOT_TOKEN=5550001112:AAFakeFakeFakeFakeFakeFakeFakeFake12\n"
                                "ALLOWED_USERS=42\nWLED_IP=127.0.0.1\nOPENAI_API_KEY=\n", encoding="utf-8")
     env = {k: v for k, v in os.environ.items() if k not in ("WLED_BOT_TOKEN", "ALLOWED_USERS", "OPENAI_API_KEY")}
-    env.update(WEB_PORT="0", INTELLECT_WEB_PORT="0", PYTHONIOENCODING="utf-8", INTELLECT_LOCK_PORT="47913")
+    env.update(WEB_PORT="0", INTELLECT_WEB_PORT="0", PYTHONIOENCODING="utf-8",
+               INTELLECT_LOCK_PORT=str(_free_port()), E2E_SCEN=scen, E2E_SKEW=str(skew))
     pr = subprocess.Popen([sys.executable, "-c", PRE_BACKLOG, str(work / "wled_bot.py")], cwd=work, env=env,
                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace")
-    lines, deadline = [], time.time() + 150
+    killer = threading.Timer(limit, pr.kill)       # зависший бот не повесит весь прогон тестов
+    killer.start()
+    lines = []
     try:
         for line in pr.stdout:
             lines.append(line.rstrip())
-            if "E2E_DONE" in line or time.time() > deadline:
+            if "E2E_DONE" in line:
                 break
     finally:
+        killer.cancel()
         pr.kill(); pr.wait()
         shutil.rmtree(work.parent, ignore_errors=True)
-    api = [l[4:] for l in lines if l.startswith("API ")]
+    return lines, [l[4:] for l in lines if l.startswith("API ")]
+
+
+def test_backlog_after_downtime_e2e():
+    lines, api = _run_e2e()
     sends = [a for a in api if a.startswith("sendMessage")]
     notices = [a for a in sends if "пропустил" in a]
     check("бот дошёл до живого опроса", any("E2E_DONE" in l for l in lines))
@@ -244,6 +334,48 @@ def test_backlog_after_downtime_e2e():
     check("живое нажатие на панели 3-часовой давности — работает (панель обновлена)",
           any(a.startswith("answerCallbackQuery cbLIVE") for a in api)
           and sum(a.startswith("editMessageText") for a in api) == 1)
+    if _fail:
+        print("\n".join(lines[-60:]))
+
+
+def test_slow_backlog_one_notice_e2e():
+    """Старые нажатия: каждое — запрос answerCallbackQuery (0,6 с на слабом ПК).
+    Разбор очереди дольше 2 с — раньше чат получал ДВА уведомления с половинным счётом."""
+    lines, api = _run_e2e("slowcb")
+    notices = [a for a in api if a.startswith("sendMessage") and "пропустил" in a]
+    check("медленная очередь: бот дошёл до живого опроса", any("E2E_DONE" in l for l in lines))
+    check("медленная очередь: ровно одно уведомление", len(notices) == 1)
+    check("…и в нём полный счёт: 10 сообщений и 6 нажатий",
+          bool(notices) and "10 сообщений и 6 нажатий кнопок" in notices[0])
+    check("…и оно после разбора всей очереди (после последнего нажатия)",
+          bool(notices) and api.index(notices[0]) >
+          max((i for i, a in enumerate(api) if a.startswith("answerCallbackQuery")), default=len(api)))
+    if _fail:
+        print("\n".join(lines[-60:]))
+
+
+def test_fast_pc_clock_live_message_e2e():
+    """Часы ПК спешат на 10 мин: живое сообщение сразу после запуска НЕ должно
+    считаться старым (раньше порог по дате действовал на все сообщения)."""
+    lines, api = _run_e2e("fastclock", skew=600)
+    sends = [a for a in api if a.startswith("sendMessage")]
+    notices = [a for a in sends if "пропустил" in a]
+    check("часы спешат: одно уведомление о 3 старых", len(notices) == 1 and "3 сообщения" in notices[0])
+    check("часы спешат: живое «Лампу выключи» обработано (есть ответ)", len(sends) == 2)
+    if _fail:
+        print("\n".join(lines[-60:]))
+
+
+def test_unknown_backlog_e2e():
+    """getWebhookInfo не ответил: старое всё равно пропущено (по дате), уведомление —
+    одно (по таймеру тишины), живое после него — обработано."""
+    lines, api = _run_e2e("noinfo")
+    sends = [a for a in api if a.startswith("sendMessage")]
+    notices = [a for a in sends if "пропустил" in a]
+    check("без getWebhookInfo: бот дошёл до живого опроса", any("E2E_DONE" in l for l in lines))
+    check("без getWebhookInfo: одно уведомление о 3 старых", len(notices) == 1 and "3 сообщения" in notices[0])
+    check("без getWebhookInfo: живое сообщение обработано, уведомление — раньше",
+          len(sends) == 2 and sends[0] in notices)
     if _fail:
         print("\n".join(lines[-60:]))
 
@@ -271,7 +403,9 @@ def test_edited_message_does_not_crash_handlers():
 if __name__ == "__main__":
     print("=== Старые апдейты после простоя: без спама, одно уведомление ===")
     for t in (test_messages, test_callbacks, test_one_notice_per_chat, test_plural,
-              test_clock_skew_is_bounded, test_backlog_after_downtime_e2e,
+              test_clock_skew_is_bounded, test_window_and_single_notice,
+              test_backlog_after_downtime_e2e, test_slow_backlog_one_notice_e2e,
+              test_fast_pc_clock_live_message_e2e, test_unknown_backlog_e2e,
               test_edited_message_does_not_crash_handlers):
         print(f"\n[{t.__name__}]"); t()
     print(f"\nИТОГ: {_ok} ok, {_fail} fail")
