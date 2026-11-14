@@ -90,9 +90,37 @@ class Brain:
             results.append(self.registry.dispatch(call))
 
         reply = self._compose_reply(resp.get("text") or "", results, pending)
+        # Второй проход: если инструмент вернул ДАННЫЕ (статус/поиск, а не просто
+        # подтверждение) — дать модели осмыслить их и ответить по-человечески.
+        if not pending:
+            info = any(isinstance(r.get("result"), dict)
+                       and (set(r["result"].keys()) - {"message"})
+                       for r in results if r.get("ok"))
+            if info:
+                follow = self._summarize_results(text, results)
+                if follow:
+                    reply = follow
         return BrainResult(reply=reply, tool_results=results, model=model,
                            source="ai", pending_confirmation=pending,
                            pending_calls=pending_calls)
+
+    def _summarize_results(self, text: str, results: list[dict]) -> str:
+        """Короткий естественный ответ по результатам инструментов (fast-модель)."""
+        import json
+        payload = [{"tool": r.get("name"), "result": r.get("result")}
+                   for r in results if r.get("ok")]
+        msgs = [
+            ChatMessage("system", "Ты ассистент умного дома. Ниже результаты "
+                        "инструментов в JSON. Дай пользователю короткий понятный "
+                        "ответ по-русски на основе этих данных. Не выдумывай."),
+            ChatMessage("user", f"Запрос: {text}\nДанные: "
+                        f"{json.dumps(payload, ensure_ascii=False, default=str)[:3000]}"),
+        ]
+        try:
+            r = self.provider.chat(msgs, model=self.router.fast, tools=None, temperature=0.3)
+            return (r.get("text") or "").strip()
+        except Exception:
+            return ""
 
     def run_calls(self, calls: list) -> BrainResult:
         """Выполнить конкретные подтверждённые вызовы (без обращения к модели)."""
