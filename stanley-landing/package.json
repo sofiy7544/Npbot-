@@ -1,0 +1,10 @@
+{
+  "name": "stanley-landing",
+  "private": true,
+  "description": "TikTok landing page for Stanley Quencher 40oz + zero-dependency order server",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "node server/test.js"
+  },
+  "engines": { "node": ">=18" }
+}

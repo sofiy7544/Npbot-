@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stanley Quencher 40oz — замовити в Україні</title>
+<meta name="description" content="Stanley Quencher 40oz: 1180 мл, тримає холод до 11 годин. Оформлення замовлення за 30 секунд.">
+<meta name="theme-color" content="#F5F0E8">
+<meta name="format-detection" content="telephone=no">
+<meta property="og:type" content="product">
+<meta property="og:title" content="Stanley Quencher 40oz">
+<meta property="og:description" content="1180 мл, холод до 11 годин. Замовлення за 30 секунд.">
+<meta property="og:image" content="img/hero-stanley-pastel.webp">
+
+<!-- Головне фото першого екрана: якщо міняєте перший колір у config.js — змініть і тут -->
+<link rel="preload" as="image" href="img/q40-cream-front.webp" fetchpriority="high">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+<link rel="stylesheet" href="assets/landing.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar__in">
+    <a class="logo" href="#top" data-brand-name>stanley_brand_ua</a>
+    <a class="topbar__cta" href="#order" data-buy>Замовити</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============ 1. ПЕРШИЙ ЕКРАН ============ -->
+  <section class="hero">
+    <div class="wrap hero__grid">
+      <div class="hero__media" id="heroMedia">
+        <div class="hero__tags"><span class="tag tag--dark" id="heroOff" hidden></span><span class="tag" id="badge" hidden></span></div>
+        <img id="heroImg" src="img/q40-cream-front.webp" alt="" width="640" height="640" fetchpriority="high" decoding="async">
+      </div>
+
+      <div class="hero__info">
+        <h1 class="hero__title" id="productName"></h1>
+        <p class="hero__tagline" id="tagline"></p>
+
+        <div class="price" aria-live="polite">
+          <span class="price__now" id="priceNow"></span>
+          <s class="price__old" id="priceOld" hidden></s>
+        </div>
+
+        <div class="pick">
+          <div class="swatches" role="radiogroup" aria-label="Колір" id="heroSwatches"></div>
+          <p class="swatch-name" id="heroColorName"></p>
+        </div>
+
+        <a class="btn btn--primary btn--xl" href="#order" data-buy id="heroBuy">КУПИТИ</a>
+        <ul class="trust" id="trust"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. ПЕРЕВАГИ ============ -->
+  <section class="section" id="highlightsSec">
+    <div class="wrap">
+      <h2 class="h2" id="highlightsTitle"></h2>
+      <ul class="highlights" id="highlights"></ul>
+    </div>
+  </section>
+
+  <!-- ============ 3. ГАЛЕРЕЯ ============ -->
+  <section class="section section--tight" id="gallerySec">
+    <div class="wrap">
+      <h2 class="h2" id="galleryTitle"></h2>
+      <div class="gallery" id="gallery" tabindex="0" aria-label="Фото товару"></div>
+      <div class="dots" id="galleryDots" aria-hidden="true"></div>
+      <p class="desc" id="description"></p>
+    </div>
+    <div class="wrap">
+      <figure class="lifestyle" id="lifestyle" hidden>
+        <img id="lifestyleImg" alt="" loading="lazy" decoding="async">
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============ 4. ХАРАКТЕРИСТИКИ ============ -->
+  <section class="section" id="specsSec">
+    <div class="wrap wrap--narrow">
+      <h2 class="h2" id="specsTitle"></h2>
+      <dl class="specs" id="specs"></dl>
+      <div id="inBoxWrap" hidden>
+        <h3 class="h3" id="inBoxTitle"></h3>
+        <ul class="inbox" id="inBox"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5. ЗАМОВЛЕННЯ ============ -->
+  <section class="section order" id="order" tabindex="-1">
+    <div class="wrap wrap--narrow">
+      <div class="card" id="orderCard">
+        <h2 class="h2 h2--left" id="orderTitle"></h2>
+        <p class="lead" id="orderLead"></p>
+
+        <form id="orderForm" novalidate autocomplete="on">
+          <div class="order-product">
+            <img id="formImg" alt="" width="72" height="72">
+            <div>
+              <div class="order-product__name" id="formName"></div>
+              <div class="order-product__price" id="formPrice"></div>
+            </div>
+          </div>
+
+          <fieldset class="field">
+            <legend class="label" id="colorLabel"></legend>
+            <div class="swatches swatches--form" role="radiogroup" id="formSwatches"></div>
+            <p class="swatch-name" id="formColorName"></p>
+          </fieldset>
+
+          <div class="field">
+            <span class="label" id="qtyLabel"></span>
+            <div class="stepper">
+              <button type="button" class="stepper__btn" id="qtyMinus" aria-label="Менше">−</button>
+              <output id="qtyVal" aria-live="polite">1</output>
+              <button type="button" class="stepper__btn" id="qtyPlus" aria-label="Більше">+</button>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label class="label" for="firstName" data-t="firstName"></label>
+              <input class="input" id="firstName" name="firstName" type="text" autocomplete="given-name"
+                     autocapitalize="words" maxlength="40" required enterkeyhint="next">
+              <p class="err" id="firstNameErr" aria-live="polite"></p>
+            </div>
+            <div class="field">
+              <label class="label" for="lastName" data-t="lastName"></label>
+              <input class="input" id="lastName" name="lastName" type="text" autocomplete="family-name"
+                     autocapitalize="words" maxlength="40" required enterkeyhint="next">
+              <p class="err" id="lastNameErr" aria-live="polite"></p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="phone" data-t="phone"></label>
+            <input class="input input--phone" id="phone" name="phone" type="tel" inputmode="tel"
+                   autocomplete="tel" placeholder="+380 __ ___ __ __" maxlength="19" required enterkeyhint="done">
+            <p class="err" id="phoneErr" aria-live="polite"></p>
+          </div>
+
+          <!-- пастка для ботів: люди це поле не бачать -->
+          <div class="hp" aria-hidden="true">
+            <label>Website <input type="text" name="website" id="website" tabindex="-1" autocomplete="off"></label>
+          </div>
+
+          <div class="summary" aria-live="polite">
+            <div class="summary__title" id="summaryTitle"></div>
+            <div class="summary__row"><span id="sumLine"></span><span id="sumLinePrice"></span></div>
+            <div class="summary__row summary__row--save" id="sumSaveRow" hidden><span id="sumSaveLbl"></span><span id="sumSave"></span></div>
+            <div class="summary__row summary__total"><span id="totalLbl"></span><span id="sumTotal"></span></div>
+          </div>
+
+          <div class="alert" id="formAlert" role="alert" hidden></div>
+
+          <button class="btn btn--primary btn--xl" type="submit" id="submitBtn">
+            <span class="btn__label" id="submitLabel"></span>
+            <span class="spinner" aria-hidden="true"></span>
+          </button>
+          <p class="note" id="note"></p>
+        </form>
+
+        <div class="success" id="success" hidden tabindex="-1">
+          <div class="success__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="28" height="28"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h2 class="h2" id="successTitle"></h2>
+          <p class="lead" id="successText"></p>
+          <p class="success__no"><span id="orderNoLbl"></span>: <b id="orderNo"></b></p>
+          <p class="success__sum" id="successSum"></p>
+          <button type="button" class="btn btn--ghost" id="newOrderBtn"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__in">
+    <span data-brand-name>stanley_brand_ua</span>
+    <nav class="footer__links" id="contacts"></nav>
+  </div>
+</footer>
+
+<!-- Липка кнопка на смартфоні -->
+<div class="sticky" id="sticky" aria-hidden="true">
+  <div class="sticky__price"><span id="stickyPrice"></span><s id="stickyOld" hidden></s></div>
+  <a class="btn btn--primary" href="#order" data-buy tabindex="-1" id="stickyBuy">КУПИТИ</a>
+</div>
+
+<noscript><p style="padding:16px;text-align:center">Увімкніть JavaScript, щоб оформити замовлення.</p></noscript>
+
+<script src="config.js"></script>
+<script src="assets/landing.js"></script>
+</body>
+</html>

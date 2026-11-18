@@ -16,6 +16,11 @@ Monorepo with two cooperating projects for a Stanley-thermos dropshipping shop
 The site **produces** order text in Telegram; the bot **consumes** it and makes
 the TTN. They are independent — each runs and is tested on its own.
 
+- **`stanley-landing/`** — standalone one-page TikTok landing for Stanley Quencher 40oz
+  (vanilla HTML/CSS/JS, all editable data in `config.js`) + zero-dependency Node order
+  server (`server/server.js` → Telegram + `server/data/orders.jsonl`). Tests: `npm test`
+  (server) inside that folder. See its `README.md`. Independent of the main site.
+
 A third, unrelated project lives here too:
 
 - **`wled-telegram-bot/`** — **INTELLECT**: Telegram bot + AI assistant for the
