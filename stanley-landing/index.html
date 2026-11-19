@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Stanley Quencher 40oz — замовити в Україні</title>
-<meta name="description" content="Stanley Quencher 40oz: 1180 мл, тримає холод до 11 годин. Оформлення замовлення за 30 секунд.">
+<title>Stanley Quencher та ProTour — замовити в Україні</title>
+<meta name="description" content="Оригінальні термокружки Stanley Quencher та ProTour. Оформлення замовлення за 30 секунд.">
 <meta name="theme-color" content="#F5F0E8">
 <meta name="format-detection" content="telephone=no">
 <meta property="og:type" content="product">
-<meta property="og:title" content="Stanley Quencher 40oz">
-<meta property="og:description" content="1180 мл, холод до 11 годин. Замовлення за 30 секунд.">
+<meta property="og:title" content="Stanley Quencher та ProTour">
+<meta property="og:description" content="Термокружки Stanley. Замовлення за 30 секунд.">
 <meta property="og:image" content="img/hero-stanley-pastel.webp">
 
 <!-- Головне фото першого екрана: якщо міняєте перший колір у config.js — змініть і тут -->
@@ -54,6 +54,10 @@
 
         <a class="btn btn--primary btn--xl" href="#order" data-buy id="heroBuy">КУПИТИ</a>
         <ul class="trust" id="trust"></ul>
+        <div class="models-block">
+          <p class="models-title" id="heroModelsTitle"></p>
+          <div class="models" role="radiogroup" id="heroModels"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -108,6 +112,11 @@
               <div class="order-product__price" id="formPrice"></div>
             </div>
           </div>
+
+          <fieldset class="field" id="formModelsField">
+            <legend class="label" id="modelLabel"></legend>
+            <div class="models models--form" role="radiogroup" id="formModels"></div>
+          </fieldset>
 
           <fieldset class="field">
             <legend class="label" id="colorLabel"></legend>

@@ -37,10 +37,13 @@ const post = (base, body) => fetch(base + "/api/order", { method: "POST", header
   let r = await post(s.base, order({ orderId: "PRICE-TEST-1" }));
   const saved = JSON.parse(fs.readFileSync(file, "utf8").trim().split("\n").pop());
   check(r.status === 200 && r.data.ok, "валідне замовлення приймається");
-  check(saved.total === 5000 && saved.unitPrice === 2500, "сума перерахована з config.js (клієнт прислав total=2)");
+  check(saved.total === 4400 && saved.unitPrice === 2200, "сума перерахована з config.js (клієнт прислав total=2)");
+  r = await post(s.base, order({ product: { id: "stanley-protour-20" }, color: { id: "peach" }, qty: 1 }));
+  const pt = JSON.parse(fs.readFileSync(file, "utf8").trim().split("\n").pop());
+  check(r.status === 200 && pt.total === 2500 && pt.product.name === "Stanley ProTour 20 oz" && pt.color.name === "Персик", "інша модель: ProTour 20 oz · Персик → 2500");
 
   r = await post(s.base, order({ orderId: "PRICE-TEST-1" }));
-  const lines = fs.readFileSync(file, "utf8").trim().split("\n").length;
+  const lines = fs.readFileSync(file, "utf8").split("PRICE-TEST-1").length - 1;
   check(r.status === 200 && r.data.duplicate && lines === 1, "повтор того самого orderId не створює дубль");
 
   for (const [field, patch] of [
@@ -48,6 +51,8 @@ const post = (base, body) => fetch(base + "/api/order", { method: "POST", header
     ["phone", { customer: { firstName: "Олена", lastName: "Коваль", phone: "+380071234567" } }],
     ["firstName", { customer: { firstName: "<script>", lastName: "Коваль", phone: "+380671234567" } }],
     ["color", { color: { id: "gold" } }],
+    ["color", { product: { id: "stanley-quencher-30" }, color: { id: "cream" } }],
+    ["product", { product: { id: "fake" } }],
     ["qty", { qty: 0 }],
     ["qty", { qty: 999 }],
   ]) {
@@ -63,7 +68,7 @@ const post = (base, body) => fetch(base + "/api/order", { method: "POST", header
   r = await post(s.base, order({ website: "http://spam" }));
   check(r.status === 200 && fs.readFileSync(file, "utf8").trim().split("\n").length === before, "honeypot: бот не потрапляє в замовлення");
 
-  await post(s.base, order()); await post(s.base, order());
+  await post(s.base, order());
   r = await post(s.base, order());
   check(r.status === 429, "ліміт: 4-те нове замовлення з IP за 10 хв → 429");
 

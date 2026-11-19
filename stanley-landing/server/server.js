@@ -42,7 +42,10 @@ function loadConfig() {
   const sandbox = { window: {} };
   vm.runInNewContext(src, sandbox, { filename: "config.js", timeout: 500 });
   const cfg = sandbox.window.LANDING_CONFIG;
-  if (!cfg || !cfg.product || !Array.isArray(cfg.colors)) throw new Error("config.js: LANDING_CONFIG некоректний");
+  if (!cfg || !Array.isArray(cfg.products) || !cfg.products.length) throw new Error("config.js: LANDING_CONFIG.products порожній");
+  for (const p of cfg.products) {
+    if (!p.id || !(p.price > 0) || !Array.isArray(p.colors) || !p.colors.length) throw new Error("config.js: модель без id/ціни/кольорів: " + (p.id || p.name));
+  }
   return cfg;
 }
 let CFG = loadConfig();
@@ -91,11 +94,11 @@ function validate(body) {
   if (!validName(lastName)) return { error: "invalid", field: "lastName" };
   if (!/^\+380[1-9]\d{8}$/.test(phone)) return { error: "invalid", field: "phone" };
 
-  const P = CFG.product;
-  if (body.product && body.product.id && body.product.id !== P.id) return { error: "unknown_product" };
-  const color = CFG.colors.find(x => x.id === (body.color && body.color.id));
+  const P = CFG.products.find(x => x.id === (body.product && body.product.id));
+  if (!P) return { error: "invalid", field: "product" };
+  const color = P.colors.find(x => x.id === (body.color && body.color.id));
   if (!color) return { error: "invalid", field: "color" };
-  const maxQty = Math.max(1, P.maxQty || 10);
+  const maxQty = Math.max(1, CFG.maxQty || 10);
   const qty = Number(body.qty);
   if (!Number.isInteger(qty) || qty < 1 || qty > maxQty) return { error: "invalid", field: "qty" };
 
@@ -113,7 +116,7 @@ function validate(body) {
       qty,
       unitPrice: P.price,
       total: P.price * qty,
-      currency: P.currency || "₴",
+      currency: CFG.currency || "₴",
       customer: { firstName, lastName, phone },
       source,
     },

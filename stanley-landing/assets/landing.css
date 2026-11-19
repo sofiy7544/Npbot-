@@ -66,9 +66,9 @@ button,input{font:inherit;color:inherit}
   background:
     radial-gradient(120% 80% at 50% 100%, color-mix(in srgb,var(--tint) 70%, #fff) 0%, transparent 70%),
     linear-gradient(180deg,#FBF8F3 0%, color-mix(in srgb,var(--tint) 35%, #FBF8F3) 100%);
-  aspect-ratio:1/1;max-height:min(40vh,520px);width:100%;
+  aspect-ratio:1/1;max-height:min(42vh,520px);width:100%;
   display:flex;align-items:center;justify-content:center;
-  padding:46px 0 10px;
+  padding:40px 0 8px;
   transition:background .4s ease;
 }
 @supports not (color: color-mix(in srgb, red, blue)){
@@ -92,13 +92,31 @@ button,input{font:inherit;color:inherit}
 }
 .hero__title{
   font-family:var(--serif);font-weight:500;letter-spacing:-.02em;
-  font-size:clamp(30px,8.6vw,56px);line-height:1.04;margin:0 0 8px;
+  font-size:clamp(30px,8.6vw,50px);line-height:1.04;margin:0 0 8px;
 }
 .hero__tagline{margin:0 0 16px;color:var(--muted);font-size:16px;line-height:1.45;max-width:34ch}
 
 .price{display:flex;align-items:baseline;gap:12px;margin:0 0 16px;flex-wrap:wrap}
 .price__now{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1}
 .price__old{font-size:19px;color:var(--muted);text-decoration-thickness:1.5px}
+
+/* ---------- Model picker ---------- */
+.models-block{width:100%;margin-top:22px}
+.models-title{margin:0 0 10px;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.models{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%}
+.model{
+  border:1.5px solid rgba(31,31,31,.12);background:rgba(255,255,255,.7);
+  border-radius:16px;min-height:56px;padding:8px 4px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  -webkit-tap-highlight-color:transparent;transition:background .15s,border-color .15s,color .15s;line-height:1.15;
+}
+.model small{font-size:12px;font-weight:500;color:var(--muted)}
+.model b{font-size:16px;font-weight:700;white-space:nowrap}
+.model[aria-checked="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.model[aria-checked="true"] small{color:rgba(255,255,255,.75)}
+.model:disabled{opacity:.6}
+.models--form{margin:0}
+@media (max-width:359px){.model b{font-size:14px}.model small{font-size:11px}}
 
 /* ---------- Swatches ---------- */
 .swatches{display:flex;gap:12px;flex-wrap:wrap;margin:0}
@@ -114,6 +132,7 @@ button,input{font:inherit;color:inherit}
 }
 .swatch[aria-checked="true"]::after{border-color:var(--accent)}
 .pick{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;margin:0 0 20px;width:100%}
+@media (max-width:439px){ .pick .swatch-name{display:none} .pick .swatches{gap:10px} }
 .swatch-name{margin:0;font-size:14px;color:var(--muted)}
 .swatch-name b{color:var(--text);font-weight:600}
 
@@ -322,6 +341,7 @@ body.has-sticky .footer{padding-bottom:96px}
   .h2--left{text-align:left;margin-bottom:22px}
   .gallery{grid-auto-flow:row;grid-template-columns:repeat(3,1fr);overflow:visible;margin:0;padding:0}
   .dots{display:none}
+  .gallery--few{grid-template-columns:repeat(auto-fit,minmax(0,340px));justify-content:center}
   .desc{margin:28px auto 0;text-align:center}
   .lifestyle{aspect-ratio:21/9;margin-top:36px}
   .sticky{display:none}
