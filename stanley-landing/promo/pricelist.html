@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="uk"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=block">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1350px}
+body{
+  font-family:"DM Sans",sans-serif;color:#1F1F1F;
+  background:
+    radial-gradient(900px 600px at 85% -10%, #FFFFFF 0%, transparent 60%),
+    radial-gradient(800px 700px at 0% 110%, #E9DFCF 0%, transparent 60%),
+    #F3ECE1;
+  padding:64px 64px 56px;display:flex;flex-direction:column;
+}
+.head{display:flex;justify-content:space-between;align-items:flex-end}
+.brand{font-weight:800;font-size:66px;letter-spacing:.16em;line-height:1}
+.sub{font-family:"Playfair Display",serif;font-style:italic;font-size:30px;color:#6B6B5E;margin-top:14px}
+.handle{font-size:22px;font-weight:600;color:#1C3A2E;background:#fff;border-radius:999px;padding:12px 22px}
+.feats{display:flex;gap:12px;margin:34px 0 30px}
+.feat{flex:1;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.7);border-radius:18px;padding:14px 16px;font-size:20px;font-weight:600;line-height:1.15}
+.feat svg{flex:none;width:30px;height:30px;color:#1C3A2E}
+.grid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:22px}
+.card{background:radial-gradient(70% 45% at 50% 66%, var(--tint) 0%, transparent 80%),#FBF8F3;border-radius:30px;position:relative;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 1px 0 rgba(31,31,31,.05),0 20px 40px -24px rgba(28,58,46,.25)}
+.stage{position:relative;flex:1;overflow:hidden}
+.stage::after{content:"";position:absolute;left:50%;bottom:16px;width:62%;height:26px;transform:translateX(-50%);
+  background:radial-gradient(closest-side,rgba(60,45,30,.22),transparent);z-index:0}
+.stage img{position:absolute;left:var(--x,50%);bottom:24px;transform:translateX(-50%);height:var(--h);z-index:1;
+  filter:drop-shadow(0 14px 14px rgba(28,58,46,.14))}
+.info{padding:6px 26px 24px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.name{font-family:"Playfair Display",serif;font-variant-numeric:lining-nums;font-size:34px;font-weight:500;line-height:1.05;letter-spacing:-.01em}
+.name b{font-weight:600}
+.meta{font-size:18px;color:#6B6B5E;margin-top:6px;line-height:1.3}
+.price{flex:none;background:#1C3A2E;color:#fff;border-radius:999px;padding:12px 20px;font-size:28px;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
+.price small{font-size:18px;font-weight:600;opacity:.85;margin-left:4px}
+.tag{position:absolute;top:20px;left:20px;z-index:2;background:#fff;border-radius:999px;padding:8px 14px;font-size:16px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#1C3A2E}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:28px;font-size:21px;color:#6B6B5E}
+.foot b{color:#1F1F1F;font-weight:600}
+</style></head>
+<body>
+  <div class="head">
+    <div>
+      <div class="brand">STANLEY</div>
+      <div class="sub">Оригінальні термокружки — прайс</div>
+    </div>
+    <div class="handle">@stanley_brand_ua</div>
+  </div>
+
+  <div class="feats">
+    <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 2v20M4.9 6.5l14.2 11M4.9 17.5l14.2-11"/><path d="M9 3.5l3 2.5 3-2.5M9 20.5l3-2.5 3 2.5"/></svg>Тримає<br>холод</div>
+    <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3c0 2 2 2 2 4s-2 2-2 4M14 3c0 2 2 2 2 4s-2 2-2 4"/><path d="M4 14h16v1a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/></svg>Тримає<br>тепло</div>
+    <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>Сталь<br>18/8</div>
+    <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15"/><path d="M5 19l8-8"/></svg>Без<br>BPA</div>
+  </div>
+
+  <div class="grid">
+    <div class="card" style="--tint:#EADFCB">
+      <span class="tag">Хіт</span>
+      <div class="stage"><img src="img/q40-cream-front.png" style="--h:104%;--x:53%" alt=""></div>
+      <div class="info"><div><div class="name">Quencher <b>40 oz</b></div><div class="meta">1180 мл · з трубочкою</div></div><div class="price">2 200<small>грн</small></div></div>
+    </div>
+    <div class="card" style="--tint:#DCE0E6">
+      <div class="stage"><img src="img/q30-navy.png" style="--h:108%;--x:54%" alt=""></div>
+      <div class="info"><div><div class="name">Quencher <b>30 oz</b></div><div class="meta">887 мл · з трубочкою</div></div><div class="price">1 999<small>грн</small></div></div>
+    </div>
+    <div class="card" style="--tint:#E9DCEB">
+      <span class="tag">Flip Straw</span>
+      <div class="stage"><img src="img/pt30-orchid-front.png" style="--h:84%;--x:54%" alt=""></div>
+      <div class="info"><div><div class="name">ProTour <b>30 oz</b></div><div class="meta">887 мл · кришка Flip Straw</div></div><div class="price">3 200<small>грн</small></div></div>
+    </div>
+    <div class="card" style="--tint:#F3D9CC">
+      <span class="tag">Flip Straw</span>
+      <div class="stage"><img src="img/pt20-peach-front.png" style="--h:68%;--x:52%" alt=""></div>
+      <div class="info"><div><div class="name">ProTour <b>20 oz</b></div><div class="meta">591 мл · кришка Flip Straw</div></div><div class="price">2 500<small>грн</small></div></div>
+    </div>
+  </div>
+
+  <div class="foot"><span>Доставка <b>Новою Поштою</b> по всій Україні</span><span>Пишіть у Direct</span></div>
+</body></html>
