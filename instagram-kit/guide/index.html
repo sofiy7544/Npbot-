@@ -1,0 +1,473 @@
+<title>Instagram Stanley UA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+<style>
+/* Layout: одна колонка-інструкція по кроках; картинки — сітками, тексти — у блоках з кнопкою «Копіювати». Палітра — як у магазину. */
+:root{
+  --bg:#F5F0E8; --surface:#FFFFFF; --soft:#EDE6DA; --ink:#1F1F1F; --muted:#6B6B5E;
+  --line:rgba(31,31,31,.10); --accent:#1C3A2E; --accent-ink:#FFFFFF; --warn-bg:#FBF1DC; --warn-ink:#7A5310;
+  --serif:"Playfair Display",Georgia,"Times New Roman",serif;
+  --sans:"DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141714; --surface:#1D211E; --soft:#262B27; --ink:#EDEAE3; --muted:#A7A89C;
+  --line:rgba(237,234,227,.12); --accent:#9CC7AF; --accent-ink:#0F1A14; --warn-bg:#3A2F1A; --warn-ink:#F1D29A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141714; --surface:#1D211E; --soft:#262B27; --ink:#EDEAE3; --muted:#A7A89C;
+  --line:rgba(237,234,227,.12); --accent:#9CC7AF; --accent-ink:#0F1A14; --warn-bg:#3A2F1A; --warn-ink:#F1D29A; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 64px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{text-wrap:balance}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(34px,7vw,52px);line-height:1.05;margin:6px 0 12px;letter-spacing:-.015em}
+h2{font-family:var(--serif);font-weight:500;font-size:clamp(26px,5vw,34px);line-height:1.15;margin:0;letter-spacing:-.01em}
+h3{font-size:16px;font-weight:700;margin:22px 0 8px}
+p{margin:0 0 10px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.lead{color:var(--muted);font-size:17px;max-width:62ch}
+a{color:var(--accent)}
+.muted{color:var(--muted)}
+small{font-size:13px}
+
+/* шапка */
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:22px 0 8px}
+.sum{background:var(--surface);border-radius:16px;padding:16px 18px;min-width:0}
+.sum b{display:block;font-size:15px;margin-bottom:4px}
+.sum span{color:var(--muted);font-size:14px}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0;padding:0;list-style:none}
+.toc a{display:inline-flex;min-height:40px;align-items:center;padding:0 14px;border-radius:999px;background:var(--surface);color:var(--ink);text-decoration:none;font-size:14px;font-weight:600;border:1px solid var(--line)}
+
+/* кроки */
+section{margin-top:44px;scroll-margin-top:16px}
+.step-hd{display:flex;gap:14px;align-items:baseline;margin-bottom:14px}
+.num{flex:none;font-family:var(--serif);font-size:20px;color:var(--accent);font-variant-numeric:lining-nums}
+ol.todo{margin:6px 0 14px;padding-left:22px}
+ol.todo li{margin:6px 0}
+
+/* тексти для копіювання */
+.copy{background:var(--surface);border-radius:16px;margin:10px 0;overflow:hidden;border:1px solid var(--line)}
+.copy-hd{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px 10px 16px;border-bottom:1px solid var(--line)}
+.copy-hd span{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.04em;min-width:0}
+.btn{flex:none;border:0;cursor:pointer;background:var(--accent);color:var(--accent-ink);font:600 14px var(--sans);min-height:38px;padding:0 14px;border-radius:999px}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.done{background:var(--soft);color:var(--ink)}
+pre{margin:0;padding:14px 16px;white-space:pre-wrap;word-break:break-word;font:400 15px/1.55 var(--sans);color:var(--ink)}
+
+/* картинки */
+.grid{display:grid;gap:10px}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g6{grid-template-columns:repeat(6,minmax(0,1fr))}
+.fig{margin:0;min-width:0}
+.fig img{display:block;width:100%;height:auto;border-radius:12px;background:var(--soft)}
+.fig figcaption{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.3}
+.round img{border-radius:50%;aspect-ratio:1;object-fit:cover}
+.cover img{border-radius:50%;aspect-ratio:1;object-fit:cover;object-position:center}
+.profile{display:grid;grid-template-columns:120px minmax(0,1fr);gap:18px;align-items:center;background:var(--surface);border-radius:20px;padding:18px}
+.profile img{width:120px;height:120px;border-radius:50%;display:block}
+.pf-name{font-weight:700}
+.pf-bio{white-space:pre-line;font-size:15px;margin-top:4px}
+.pf-link{color:var(--accent);font-weight:600;font-size:15px;word-break:break-all}
+
+/* пости з підписами */
+.post{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;align-items:start;margin:16px 0}
+.post .fig img{border-radius:10px}
+
+.table-wrap{overflow-x:auto;background:var(--surface);border-radius:16px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:15px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td:first-child{white-space:nowrap;font-weight:600}
+
+.note{background:var(--warn-bg);color:var(--warn-ink);border-radius:14px;padding:14px 16px;font-size:15px}
+.note b{color:inherit}
+.check{list-style:none;padding:0;margin:8px 0}
+.check li{padding:10px 0 10px 30px;border-bottom:1px solid var(--line);position:relative}
+.check li::before{content:"";position:absolute;left:4px;top:15px;width:14px;height:14px;border:2px solid var(--accent);border-radius:4px}
+
+@media (max-width:560px){
+  .g6{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .post{grid-template-columns:1fr}
+  .post .fig{max-width:260px}
+  .profile{grid-template-columns:84px minmax(0,1fr)}
+  .profile img{width:84px;height:84px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">@stanley_brand_ua · набір для запуску</div>
+  <h1>Instagram-магазин Stanley</h1>
+  <p class="lead">Усе, щоб оформити профіль і почати приймати замовлення: аватарка, 10 постів, 3 сторіс, 6 обкладинок «Актуального», тексти й відповіді для Direct. Ціни та характеристики — ті самі, що на лендингу.</p>
+
+  <div class="summary">
+    <div class="sum"><b>Готово</b><span>20 картинок із реальних фото, підписи до постів, шаблони відповідей, шаблон замовлення під бота ТТН.</span></div>
+    <div class="sum"><b>Робите ви</b><span>Завантажуєте в Instagram за кроками нижче — приблизно 40 хвилин з телефона.</span></div>
+    <div class="sum"><b>Перевірте до публікації</b><span>Ціни, умови доставки й оплати, наявність кольорів. Деталі — в останньому розділі.</span></div>
+  </div>
+  <p class="muted"><small>Як зберегти картинку на телефон: натисніть і утримуйте її → «Зберегти зображення». Тексти копіюються кнопкою.</small></p>
+
+  <ul class="toc">
+    <li><a href="#profile">1. Профіль</a></li>
+    <li><a href="#highlights">2. Актуальне</a></li>
+    <li><a href="#posts">3. Пости</a></li>
+    <li><a href="#stories">4. Сторіс</a></li>
+    <li><a href="#direct">5. Direct і замовлення</a></li>
+    <li><a href="#plan">6. Перші 2 тижні</a></li>
+    <li><a href="#check">7. Перевірити</a></li>
+  </ul>
+
+  <!-- ================= 1. ПРОФІЛЬ ================= -->
+  <section id="profile">
+    <div class="step-hd"><span class="num">1</span><h2>Профіль</h2></div>
+
+    <div class="profile">
+      <img src="i/avatar.jpg" alt="Аватарка: кремова термокружка на зеленому фоні">
+      <div style="min-width:0">
+        <div class="pf-name">Термокружки Stanley | Україна</div>
+        <div class="pf-bio">Термокружки Stanley · доставка по Україні
+Quencher і ProTour — від 1 999 грн
+Нова Пошта 2–3 дні · накладений платіж
+Замовлення в Direct або тут ↓</div>
+        <div class="pf-link">посилання на лендинг</div>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:8px"><small>Так профіль виглядатиме після налаштування.</small></p>
+
+    <h3>Що натискати</h3>
+    <ol class="todo">
+      <li><b>Професійний акаунт.</b> Профіль → ☰ → «Налаштування» → «Тип облікового запису та інструменти» → «Перейти на професійний акаунт» → «Бізнес». Категорія: <b>«Інтернет-магазин»</b>.</li>
+      <li><b>Аватарка.</b> «Редагувати профіль» → «Змінити фото» → картинка вище.</li>
+      <li><b>Імʼя</b> (за ним шукають в Instagram) і <b>біо</b> — скопіюйте нижче.</li>
+      <li><b>Посилання.</b> «Посилання» → «Додати зовнішнє посилання». Поки лендинг не викладено, поставте Telegram.</li>
+      <li><b>Контакти.</b> «Параметри контактів» → телефон для звʼязку. Кнопку «Написати» Instagram додає сам.</li>
+    </ol>
+    <p class="muted"><small>Назви пунктів у застосунку можуть трохи відрізнятися залежно від версії.</small></p>
+
+    <div class="copy"><div class="copy-hd"><span>Імʼя (до 30 символів)</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Термокружки Stanley | Україна</pre></div>
+
+    <div class="copy"><div class="copy-hd"><span>Біо (до 150 символів)</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Термокружки Stanley · доставка по Україні
+Quencher і ProTour — від 1 999 грн
+Нова Пошта 2–3 дні · накладений платіж
+Замовлення в Direct або тут ↓</pre></div>
+
+    <div class="copy"><div class="copy-hd"><span>Посилання на лендинг (коли сайт буде викладено)</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>https://ВАШ-САЙТ/?utm_source=instagram&amp;utm_medium=bio</pre></div>
+
+    <div class="copy"><div class="copy-hd"><span>Посилання поки що</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>https://t.me/stanley_brand_ua</pre></div>
+  </section>
+
+  <!-- ================= 2. АКТУАЛЬНЕ ================= -->
+  <section id="highlights">
+    <div class="step-hd"><span class="num">2</span><h2>Актуальне</h2></div>
+    <p>Шість кружечків під біо. Спочатку викладіть у сторіс те, що має бути всередині, потім: сторіс → «Додати в актуальне» → назва → «Редагувати обкладинку» → картинка нижче.</p>
+    <div class="grid g6">
+      <figure class="fig cover"><img src="i/highlight-1-prices.jpg" alt="Обкладинка Ціни" loading="lazy"><figcaption><b>Ціни</b><br>сторіс «Ціни сьогодні»</figcaption></figure>
+      <figure class="fig cover"><img src="i/highlight-2-models.jpg" alt="Обкладинка Моделі" loading="lazy"><figcaption><b>Моделі</b><br>пости 4–8 у сторіс</figcaption></figure>
+      <figure class="fig cover"><img src="i/highlight-3-order.jpg" alt="Обкладинка Замовити" loading="lazy"><figcaption><b>Замовити</b><br>пост «Як замовити» + сторіс «Direct»</figcaption></figure>
+      <figure class="fig cover"><img src="i/highlight-4-delivery.jpg" alt="Обкладинка Доставка" loading="lazy"><figcaption><b>Доставка</b><br>пост «Доставка та оплата»</figcaption></figure>
+      <figure class="fig cover"><img src="i/highlight-5-payment.jpg" alt="Обкладинка Оплата" loading="lazy"><figcaption><b>Оплата</b><br>пост «Доставка та оплата»</figcaption></figure>
+      <figure class="fig cover"><img src="i/highlight-6-reviews.jpg" alt="Обкладинка Відгуки" loading="lazy"><figcaption><b>Відгуки</b><br>лише справжні скріни від покупців</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ================= 3. ПОСТИ ================= -->
+  <section id="posts">
+    <div class="step-hd"><span class="num">3</span><h2>Пости</h2></div>
+    <p>Новий пост стає першим у сітці, тому публікуйте <b>з кінця: від 10 до 1</b>. Тоді «Привіт» опиниться вгорі зліва. Після цього закріпіть три пости (⋯ → «Закріпити»): <b>1 «Привіт»</b>, <b>2 «Ціни»</b>, <b>9 «Як замовити»</b>.</p>
+    <p class="muted"><small>Формат картинок 4:5 (1080×1350) — Instagram показує їх повністю, без обрізання.</small></p>
+
+    <div class="grid g3" aria-label="Сітка профілю після публікації">
+      <figure class="fig"><img src="i/01-welcome.jpg" alt="Пост 1: привітання" loading="lazy"><figcaption>1 · Привіт</figcaption></figure>
+      <figure class="fig"><img src="i/02-prices.jpg" alt="Пост 2: ціни" loading="lazy"><figcaption>2 · Ціни</figcaption></figure>
+      <figure class="fig"><img src="i/03-compare.jpg" alt="Пост 3: порівняння моделей" loading="lazy"><figcaption>3 · Яку обрати</figcaption></figure>
+      <figure class="fig"><img src="i/04-q40.jpg" alt="Пост 4: Quencher 40 oz" loading="lazy"><figcaption>4 · Quencher 40 oz</figcaption></figure>
+      <figure class="fig"><img src="i/05-q30.jpg" alt="Пост 5: Quencher 30 oz" loading="lazy"><figcaption>5 · Quencher 30 oz</figcaption></figure>
+      <figure class="fig"><img src="i/06-pt30.jpg" alt="Пост 6: ProTour 30 oz" loading="lazy"><figcaption>6 · ProTour 30 oz</figcaption></figure>
+      <figure class="fig"><img src="i/07-pt20.jpg" alt="Пост 7: ProTour 20 oz" loading="lazy"><figcaption>7 · ProTour 20 oz</figcaption></figure>
+      <figure class="fig"><img src="i/08-colors.jpg" alt="Пост 8: усі кольори" loading="lazy"><figcaption>8 · Кольори</figcaption></figure>
+      <figure class="fig"><img src="i/09-how-to-order.jpg" alt="Пост 9: як замовити" loading="lazy"><figcaption>9 · Як замовити</figcaption></figure>
+      <figure class="fig"><img src="i/10-delivery.jpg" alt="Пост 10: доставка та оплата" loading="lazy"><figcaption>10 · Доставка та оплата</figcaption></figure>
+    </div>
+
+    <h3>Підписи до постів</h3>
+    <p class="muted"><small>Хештеги вже в кінці кожного підпису. Їх небагато навмисно: 5–8 точних працюють краще за 30 випадкових.</small></p>
+
+    <div class="post"><figure class="fig"><img src="i/01-welcome.jpg" alt="" loading="lazy"></figure>
+      <div class="copy" style="margin:0"><div class="copy-hd"><span>Пост 1 · Привіт</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Привіт! Це stanley_brand_ua — термокружки Stanley з доставкою по Україні.
+
+У нас 4 моделі та 16 кольорів:
+• Quencher 40 oz і 30 oz — класика з трубочкою
+• ProTour 30 oz і 20 oz — відкидна трубочка, не протікає в сумці
+
+Як замовити: напишіть у Direct модель і колір або оформіть за посиланням у профілі. Відправляємо Новою Поштою за 2–3 дні.
+
+#stanley #stanleyquencher #stanleyprotour #термокружка #термочашка #stanleyukraine</pre></div></div>
+
+    <div class="post"><figure class="fig"><img src="i/02-prices.jpg" alt="" loading="lazy"></figure>
+      <div class="copy" style="margin:0"><div class="copy-hd"><span>Пост 2 · Ціни</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Актуальні ціни:
+
+Quencher 40 oz · 1180 мл — 2 200 грн
+Quencher 30 oz · 887 мл — 1 999 грн
+ProTour 30 oz · 887 мл — 3 200 грн
+ProTour 20 oz · 591 мл — 2 500 грн
+
+Безкоштовна доставка від 5 000 грн — тобто від двох кружок.
+Не знаєте, яку обрати? Напишіть у Direct — підкажемо.
+
+#stanley #stanleyquencher #stanleyprotour #термокружка #stanleyukraine</pre></div></div>
+
+    <div class="post"><figure class="fig"><img src="i/03-compare.jpg" alt="" loading="lazy"></figure>
+      <div class="copy" style="margin:0"><div class="copy-hd"><span>Пост 3 · Яку обрати</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Яку Stanley обрати?
+
+Quencher 40 oz — на весь день: 1180 мл, холод до 11 годин.
+Quencher 30 oz — та сама класика, трохи компактніша: 887 мл.
+ProTour 30 oz — кришка Flip Straw: натиснув — п'єш, закрив — не протікає навіть у сумці.
+ProTour 20 oz — найкомпактніша, 591 мл, для авто й спортзалу.
+
+Усі моделі — нержавіюча сталь 18/8, подвійні стінки, без BPA.
+Напишіть, для чого берете кружку, — порадимо модель.
+
+#stanley #stanleyquencher #stanleyprotour #термокружка #термочашка</pre></div></div>
+
+    <div class="post"><figure class="fig"><img src="i/04-q40.jpg" alt="" loading="lazy"></figure>
+      <div class="copy" style="margin:0"><div class="copy-hd"><span>Пост 4 · Quencher 40 oz</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Stanley Quencher 40 oz — 2 200 грн
+
+• 1180 мл — вистачає на весь день без доливу
+• тримає холод до 11 годин, тепло до 7 годин, лід до 2 діб
+• кришка FlowState з трьома позиціями і трубочка
+• поміщається у підстаканник авто
+
+Кольори: Ваніль, Рожевий кварц, Чорний 2.0, Пурпуровий пил.
+Замовлення — у Direct.
+
+#stanley #stanleyquencher #stanley40oz #термокружка #stanleyukraine</pre></div></div>
+
+    <div class="post"><figure class="fig"><img src="i/05-q30.jpg" alt="" loading="lazy"></figure>
+      <div class="copy" style="margin:0"><div class="copy-hd"><span>Пост 5 · Quencher 30 oz</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Stanley Quencher 30 oz — 1 999 грн
+
+• 887 мл
+• тримає холод до 11 годин, тепло до 7 годин
+• кришка FlowState і трубочка
+• поміщається у підстаканник авто
+
+Кольори: Графітовий, Темно-синій.
+Замовлення — у Direct.
+
+#stanley #stanleyquencher #stanley30oz #термокружка #stanleyukraine</pre></div></div>
+
+    <div class="post"><figure class="fig"><img src="i/06-pt30.jpg" alt="" loading="lazy"></figure>
+      <div class="copy" style="margin:0"><div class="copy-hd"><span>Пост 6 · ProTour 30 oz</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Stanley ProTour 30 oz — 3 200 грн
+
+Кришка Flip Straw: натиснули кнопку — трубочка відкрилась, попили, закрили. Не протікає в будь-якому положенні, можна кидати в сумку.
+
+• 887 мл
+• тримає холод до 11 годин, тепло до 7 годин
+• поміщається у підстаканник авто
+
+Кольори: Ваніль, Рожевий кварц, Іній, Орхідея, Мокко-латте.
+Замовлення — у Direct.
+
+#stanley #stanleyprotour #термокружка #stanleyukraine #термочашка</pre></div></div>
+
+    <div class="post"><figure class="fig"><img src="i/07-pt20.jpg" alt="" loading="lazy"></figure>
+      <div class="copy" style="margin:0"><div class="copy-hd"><span>Пост 7 · ProTour 20 oz</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Stanley ProTour 20 oz — 2 500 грн
+
+Компактна версія з кришкою Flip Straw — для авто, спортзалу й коротких поїздок. Не протікає в сумці.
+
+• 591 мл
+• тримає холод до 9 годин, тепло до 5 годин
+• поміщається в будь-який підстаканник
+
+Кольори: Ваніль, Персик, Рожевий кварц, Іній, Орхідея.
+Замовлення — у Direct.
+
+#stanley #stanleyprotour #термокружка #stanleyukraine #термочашка</pre></div></div>
+
+    <div class="post"><figure class="fig"><img src="i/08-colors.jpg" alt="" loading="lazy"></figure>
+      <div class="copy" style="margin:0"><div class="copy-hd"><span>Пост 8 · Кольори</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Який колір ваш? Напишіть у коментарях.
+
+Quencher 40 oz: Ваніль, Рожевий кварц, Чорний 2.0, Пурпуровий пил
+ProTour 30 oz: Ваніль, Рожевий кварц, Іній, Орхідея, Мокко-латте
+ProTour 20 oz: Ваніль, Персик, Рожевий кварц, Іній, Орхідея
+
+Наявність кольору уточнюйте в Direct.
+
+#stanley #stanleyquencher #stanleyprotour #термокружка #stanleyukraine</pre></div></div>
+
+    <div class="post"><figure class="fig"><img src="i/09-how-to-order.jpg" alt="" loading="lazy"></figure>
+      <div class="copy" style="margin:0"><div class="copy-hd"><span>Пост 9 · Як замовити</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Як замовити:
+
+1. Напишіть нам у Direct модель і колір. Або оформіть самі за посиланням у профілі.
+2. Надішліть ПІБ, телефон, місто й відділення або поштомат Нової Пошти.
+3. Менеджер звʼяжеться, підтвердить замовлення й узгодить оплату. Відправляємо за 2–3 дні.
+
+#stanley #термокружка #stanleyukraine</pre></div></div>
+
+    <div class="post"><figure class="fig"><img src="i/10-delivery.jpg" alt="" loading="lazy"></figure>
+      <div class="copy" style="margin:0"><div class="copy-hd"><span>Пост 10 · Доставка та оплата</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Доставка та оплата
+
+Доставка — Новою Поштою по всій Україні: у відділення, поштомат або курʼєром. Відправка за 2–3 дні після підтвердження. Від 5 000 грн — безкоштовно.
+
+Оплата:
+• на карту — повна оплата
+• накладений платіж — передплата 200 грн, решта при отриманні
+
+Гарантія магазину — 6 місяців.
+
+#stanley #термокружка #stanleyukraine</pre></div></div>
+  </section>
+
+  <!-- ================= 4. СТОРІС ================= -->
+  <section id="stories">
+    <div class="step-hd"><span class="num">4</span><h2>Сторіс</h2></div>
+    <p>Верх і низ картинок залишено вільними під інтерфейс Instagram. На третю сторіс у пунктирну рамку додайте стікер «Посилання» (лендинг або Telegram) чи «Питання».</p>
+    <div class="grid g3">
+      <figure class="fig"><img src="i/story-1-protour.jpg" alt="Сторіс ProTour" loading="lazy"><figcaption>ProTour → в «Моделі»</figcaption></figure>
+      <figure class="fig"><img src="i/story-2-prices.jpg" alt="Сторіс ціни" loading="lazy"><figcaption>Ціни → в «Ціни»</figcaption></figure>
+      <figure class="fig"><img src="i/story-3-direct.jpg" alt="Сторіс замовлення в Direct" loading="lazy"><figcaption>Direct → в «Замовити»</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ================= 5. DIRECT ================= -->
+  <section id="direct">
+    <div class="step-hd"><span class="num">5</span><h2>Direct і замовлення</h2></div>
+    <p>Тут відбуваються продажі. Налаштуйте дві речі, тоді відповідь на типове питання займатиме кілька секунд.</p>
+
+    <h3>Швидкі відповіді</h3>
+    <p>«Налаштування» → «Бізнес-інструменти» (або «Інструменти для авторів») → «Збережені відповіді» → «+». У полі «Ярлик» — слово з таблиці. У чаті набираєте ярлик — Instagram підставляє весь текст.</p>
+
+    <div class="copy"><div class="copy-hd"><span>Ярлик: ціна</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Вітаємо! Актуальні ціни:
+Quencher 40 oz (1180 мл) — 2 200 грн
+Quencher 30 oz (887 мл) — 1 999 грн
+ProTour 30 oz (887 мл) — 3 200 грн
+ProTour 20 oz (591 мл) — 2 500 грн
+Яку модель і колір розглядаєте?</pre></div>
+
+    <div class="copy"><div class="copy-hd"><span>Ярлик: доставка</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Відправляємо Новою Поштою по всій Україні — у відділення, поштомат або курʼєром, за 2–3 дні після підтвердження. Від 5 000 грн доставка безкоштовна.
+Оплата: на карту або накладений платіж (передплата 200 грн, решта при отриманні).</pre></div>
+
+    <div class="copy"><div class="copy-hd"><span>Ярлик: замовлення</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Щоб оформити, надішліть, будь ласка, одним повідомленням:
+ПІБ:
+Телефон:
+Місто:
+Відділення або поштомат НП:
+Модель і колір:
+Оплата: на карту чи накладений платіж</pre></div>
+
+    <div class="copy"><div class="copy-hd"><span>Ярлик: прийнято</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Дякуємо, замовлення прийнято! Перевіримо наявність і напишемо вам сьогодні. Після відправки надішлемо номер ТТН.</pre></div>
+
+    <div class="copy"><div class="copy-hd"><span>Ярлик: ттн</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Ваше замовлення відправлено! Номер ТТН: ______
+Відстежити можна в застосунку Нова Пошта. Гарного дня!</pre></div>
+
+    <div class="copy"><div class="copy-hd"><span>Ярлик: відгук (через 2–3 дні після отримання)</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Вітаємо! Як вам кружка? Будемо дуже вдячні за короткий відгук або фото — це допомагає іншим покупцям обрати.</pre></div>
+
+    <h3>Часті питання (кнопки при першому повідомленні)</h3>
+    <p>«Бізнес-інструменти» → «Часті запитання» → додайте 4 питання й увімкніть автовідповіді (тексти — з ярликів вище).</p>
+    <div class="copy"><div class="copy-hd"><span>4 питання</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>Скільки коштує?
+Як замовити?
+Доставка та оплата
+Допоможіть обрати модель</pre></div>
+
+    <h3>Як замовлення з Direct перетворюється на ТТН</h3>
+    <p>Клієнт надсилає дані за шаблоном «замовлення». Менеджер переписує їх у Telegram-групу з ботом у форматі нижче — бот покаже перевірку й створить ТТН Нової Пошти.</p>
+    <div class="copy"><div class="copy-hd"><span>Формат для бота ТТН (приклад)</span><button class="btn" data-copy>Копіювати</button></div>
+<pre>ПІБ: Іванова Олена
+Тел: +380501234567
+Місто: Київ
+Відділення: 42
+Сума: 2200
+Опис: Quencher 40oz Ваніль</pre></div>
+    <p class="muted"><small>Для накладеного платежу додайте окремим рядком «Накладений». Перед першим справжнім замовленням надішліть боту цей приклад і переконайтеся, що він правильно визначив оплату.</small></p>
+
+    <h3>Відповіді на питання, які потребують вашого рішення</h3>
+    <div class="table-wrap"><table>
+      <tr><th>Питання</th><th>Що відповідати</th></tr>
+      <tr><td>«Це оригінал?»</td><td>Напишіть одну чесну фразу про походження товару й тримайтеся її. Не обіцяйте того, що не зможете показати (документи, чеки постачальника).</td></tr>
+      <tr><td>«Є в наявності?»</td><td>Перевірте склад перед відповіддю. Якщо кольору немає — запропонуйте схожий або строк поставки.</td></tr>
+      <tr><td>«Можна повернути?»</td><td>Опишіть ваші умови обміну й повернення. Їх варто один раз записати й зберегти як швидку відповідь.</td></tr>
+      <tr><td>«Знижка на дві?»</td><td>Від 5 000 грн уже безкоштовна доставка. Будь-яку іншу знижку вирішуєте ви.</td></tr>
+    </table></div>
+  </section>
+
+  <!-- ================= 6. ПЛАН ================= -->
+  <section id="plan">
+    <div class="step-hd"><span class="num">6</span><h2>Перші 2 тижні</h2></div>
+    <p>Готові пости роблять профіль зрозумілим. Нових людей приводять Reels: короткі вертикальні відео 7–15 секунд, зняті на телефон. Перша секунда має одразу показувати щось цікаве.</p>
+    <div class="table-wrap"><table>
+      <tr><th>День</th><th>Що зробити</th></tr>
+      <tr><td>1</td><td>Профіль, 10 постів (від 10 до 1), 3 закріплені, «Актуальне», швидкі відповіді.</td></tr>
+      <tr><td>2</td><td>Reels: тест з льодом у Quencher. Насипали лід → «минуло 11 годин» → лід на місці. Знімайте чесно, після реальної перевірки.</td></tr>
+      <tr><td>3</td><td>Сторіс: опитування «Який колір обрали б?» з двома фото.</td></tr>
+      <tr><td>4</td><td>Reels: ProTour догори дном над раковиною — не протікає.</td></tr>
+      <tr><td>5</td><td>Reels: усі кольори в ряд, повільна панорама під трендовий звук.</td></tr>
+      <tr><td>6</td><td>Сторіс: пакуємо замовлення (без імен і адрес покупців).</td></tr>
+      <tr><td>7</td><td>Reels: Quencher 40 oz у підстаканнику авто.</td></tr>
+      <tr><td>8</td><td>Reels: розпаковка однієї кружки.</td></tr>
+      <tr><td>9</td><td>Сторіс: «Питання» — відповідайте наступного дня окремими сторіс.</td></tr>
+      <tr><td>10</td><td>Reels: «Скільки це — 1180 мл?» — переливаєте дві пляшки по 0,5 л і ще трохи.</td></tr>
+      <tr><td>11–14</td><td>Повторіть відео, які набрали найбільше переглядів, з іншим кольором або підписом. Перші справжні відгуки — в «Актуальне».</td></tr>
+    </table></div>
+    <p class="muted"><small>Під кожним Reels — коротка фраза й «Ціна та замовлення — у Direct».</small></p>
+  </section>
+
+  <!-- ================= 7. ПЕРЕВІРИТИ ================= -->
+  <section id="check">
+    <div class="step-hd"><span class="num">7</span><h2>Перевірити до публікації</h2></div>
+    <div class="note"><b>Що взято з ваших матеріалів і потребує підтвердження.</b> Ціни — з вашого прайсу. На основному сайті вони інші (40 oz — 2 500, 30 oz — 1 799, ProTour 30 — 3 300, ProTour 20 — 2 999). Доставка 2–3 дні, безкоштовно від 5 000 грн, оплата на карту або накладений з передплатою 200 грн, гарантія 6 місяців — з основного сайту.</div>
+    <ul class="check">
+      <li>Ціни однакові в Instagram, на лендингу й на основному сайті.</li>
+      <li>Умови доставки, оплати й гарантії актуальні.</li>
+      <li>Усі 16 кольорів є в наявності. Якщо ні — приберіть зайві з постів 4–8.</li>
+      <li>«Відгуки» в «Актуальному» — лише справжні скріни від покупців, з їхньої згоди.</li>
+      <li>Реквізити карти — тільки в особистих повідомленнях, ніколи в постах і сторіс.</li>
+      <li>Назва Stanley — торгова марка. В імені акаунта вона може викликати скаргу від правовласника. Якщо Instagram заблокує профіль, назва без «stanley» (наприклад, «thermo_cups_ua») безпечніша.</li>
+    </ul>
+    <p class="muted" style="margin-top:14px"><small>Instagram Shopping (мітки товарів на фото) в Україні може бути недоступний — джерела суперечать одне одному. Продажі через Direct і посилання в профілі працюють без нього. Перевірити можна в Meta Commerce Manager.</small></p>
+  </section>
+</div>
+
+<script>
+document.querySelectorAll("[data-copy]").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var pre = btn.closest(".copy").querySelector("pre");
+    var text = pre.textContent.replace(/^\n+|\n+$/g, "");
+    var done = function () {
+      btn.textContent = "Скопійовано"; btn.classList.add("done");
+      setTimeout(function () { btn.textContent = "Копіювати"; btn.classList.remove("done"); }, 1800);
+    };
+    var fallback = function () {
+      var r = document.createRange(); r.selectNodeContents(pre);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = "Виділено — скопіюйте";
+    };
+    try {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } catch (e) { fallback(); }
+  });
+});
+</script>
